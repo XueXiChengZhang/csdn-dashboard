@@ -1,15 +1,16 @@
 {
-  "last_update": "2026-09-17T07:41:27",
+  "last_update": "2026-09-17T10:59:42",
   "total_students": 31,
   "total_posts": 71,
   "last_fetch_meta": {
-    "fetched_at": "2026-09-17T07:37:04",
-    "duration_ms": 210730,
+    "fetched_at": "2026-09-17T10:49:59",
+    "duration_ms": 1018648,
     "method_breakdown": {
-      "requests": 30
+      "requests": 136,
+      "playwright": 5
     },
-    "total_requests": 30,
-    "success_count": 30,
+    "total_requests": 141,
+    "success_count": 141,
     "fail_count": 0
   },
   "students": [
@@ -39,11 +40,11 @@
           "guid": "https://blog.csdn.net/pjl20051011/article/details/164712670"
         }
       ],
-      "total_views": 0,
+      "total_views": 265,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 4,
+      "articles_scanned": 2
     },
     {
       "sid": "240110103",
@@ -83,11 +84,11 @@
           "guid": "https://blog.csdn.net/liruisklfj/article/details/142862879"
         }
       ],
-      "total_views": 0,
+      "total_views": 5704,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 31,
+      "articles_scanned": 4
     },
     {
       "sid": "240110104",
@@ -129,11 +130,11 @@
           "guid": "https://blog.csdn.net/2401_89247021/article/details/164710927"
         }
       ],
-      "total_views": 0,
+      "total_views": 356,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 7,
+      "articles_scanned": 2
     },
     {
       "sid": "240110108",
@@ -167,11 +168,11 @@
           "guid": "https://blog.csdn.net/CY11101229/article/details/164958182"
         }
       ],
-      "total_views": 0,
+      "total_views": 356,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 8,
+      "articles_scanned": 3
     },
     {
       "sid": "240110110",
@@ -193,11 +194,11 @@
           "guid": "https://blog.csdn.net/yingsini7/article/details/165283925"
         }
       ],
-      "total_views": 0,
+      "total_views": 118,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 3,
+      "articles_scanned": 1
     },
     {
       "sid": "240110112",
@@ -231,11 +232,11 @@
           "guid": "https://blog.csdn.net/2401_88094581/article/details/164952838"
         }
       ],
-      "total_views": 0,
+      "total_views": 209,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 5,
+      "articles_scanned": 3
     },
     {
       "sid": "240110113",
@@ -263,11 +264,11 @@
           "guid": "https://blog.csdn.net/Apawn_77/article/details/164951759"
         }
       ],
-      "total_views": 0,
+      "total_views": 59,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 3,
+      "articles_scanned": 3
     },
     {
       "sid": "240110114",
@@ -295,11 +296,11 @@
           "guid": "https://blog.csdn.net/gb_00005555/article/details/164957292"
         }
       ],
-      "total_views": 0,
+      "total_views": 414,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 5,
+      "articles_scanned": 3
     },
     {
       "sid": "240110115",
@@ -321,11 +322,11 @@
           "guid": "https://blog.csdn.net/2501_92570764/article/details/164962158"
         }
       ],
-      "total_views": 0,
+      "total_views": 23,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 3,
+      "articles_scanned": 1
     },
     {
       "sid": "240110117",
@@ -359,11 +360,11 @@
           "guid": "https://blog.csdn.net/HanhanWei_/article/details/164951160"
         }
       ],
-      "total_views": 0,
+      "total_views": 338,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 8,
+      "articles_scanned": 3
     },
     {
       "sid": "240110118",
@@ -391,11 +392,11 @@
           "guid": "https://blog.csdn.net/moyangyi/article/details/164951072"
         }
       ],
-      "total_views": 0,
+      "total_views": 166,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 9,
+      "articles_scanned": 2
     },
     {
       "sid": "240110119",
@@ -423,11 +424,11 @@
           "guid": "https://blog.csdn.net/jsk4sj/article/details/164960134"
         }
       ],
-      "total_views": 0,
+      "total_views": 495,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 6,
+      "articles_scanned": 3
     },
     {
       "sid": "240110121",
@@ -455,11 +456,11 @@
           "guid": "https://blog.csdn.net/2501_94785105/article/details/164957770"
         }
       ],
-      "total_views": 0,
+      "total_views": 554,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 12,
+      "articles_scanned": 3
     },
     {
       "sid": "240110122",
@@ -487,11 +488,11 @@
           "guid": "https://blog.csdn.net/King888AA/article/details/164956014"
         }
       ],
-      "total_views": 0,
+      "total_views": 245,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 5,
+      "articles_scanned": 3
     },
     {
       "sid": "240110126",
@@ -519,11 +520,11 @@
           "guid": "https://blog.csdn.net/wanan962462/article/details/164960958"
         }
       ],
-      "total_views": 0,
+      "total_views": 317,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 3,
+      "articles_scanned": 2
     },
     {
       "sid": "240110128",
@@ -563,11 +564,11 @@
           "guid": "https://blog.csdn.net/likexin0128/article/details/164956965"
         }
       ],
-      "total_views": 0,
+      "total_views": 290,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 10,
+      "articles_scanned": 4
     },
     {
       "sid": "240110129",
@@ -601,11 +602,11 @@
           "guid": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/164952426"
         }
       ],
-      "total_views": 0,
+      "total_views": 549,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 11,
+      "articles_scanned": 3
     },
     {
       "sid": "240110130",
@@ -633,11 +634,11 @@
           "guid": "https://blog.csdn.net/Lh286364/article/details/164961256"
         }
       ],
-      "total_views": 0,
+      "total_views": 199,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 2,
+      "articles_scanned": 2
     },
     {
       "sid": "240110201",
@@ -671,11 +672,11 @@
           "guid": "https://blog.csdn.net/zx121384/article/details/164958463"
         }
       ],
-      "total_views": 0,
+      "total_views": 608,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 4,
+      "articles_scanned": 3
     },
     {
       "sid": "240110207",
@@ -703,11 +704,11 @@
           "guid": "https://blog.csdn.net/WMY2006/article/details/164957639"
         }
       ],
-      "total_views": 0,
+      "total_views": 357,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 12,
+      "articles_scanned": 3
     },
     {
       "sid": "240110209",
@@ -735,11 +736,11 @@
           "guid": "https://blog.csdn.net/2601_96938731/article/details/164951665"
         }
       ],
-      "total_views": 0,
+      "total_views": 346,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 4,
+      "articles_scanned": 3
     },
     {
       "sid": "240110212",
@@ -767,11 +768,11 @@
           "guid": "https://blog.csdn.net/bashiyegou/article/details/164962196"
         }
       ],
-      "total_views": 0,
+      "total_views": 350,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 10,
+      "articles_scanned": 3
     },
     {
       "sid": "240110213",
@@ -805,11 +806,11 @@
           "guid": "https://blog.csdn.net/jiuyu16/article/details/164954631"
         }
       ],
-      "total_views": 0,
+      "total_views": 206,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 10,
+      "articles_scanned": 3
     },
     {
       "sid": "240110215",
@@ -843,11 +844,11 @@
           "guid": "https://blog.csdn.net/2401_83893276/article/details/165280108"
         }
       ],
-      "total_views": 0,
+      "total_views": 563,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 9,
+      "articles_scanned": 3
     },
     {
       "sid": "240110220",
@@ -869,11 +870,11 @@
           "guid": "https://blog.csdn.net/2601_96956624/article/details/164955503"
         }
       ],
-      "total_views": 0,
+      "total_views": 318,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 4,
+      "articles_scanned": 2
     },
     {
       "sid": "240110221",
@@ -907,11 +908,11 @@
           "guid": "https://blog.csdn.net/dao1234_/article/details/164952223"
         }
       ],
-      "total_views": 0,
+      "total_views": 414,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 9,
+      "articles_scanned": 3
     },
     {
       "sid": "240110225",
@@ -933,11 +934,11 @@
           "guid": "https://blog.csdn.net/wty262446/article/details/165280609"
         }
       ],
-      "total_views": 0,
+      "total_views": 241,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 5,
+      "articles_scanned": 2
     },
     {
       "sid": "240110226",
@@ -977,11 +978,11 @@
           "guid": "https://blog.csdn.net/2603_96938789/article/details/164714305"
         }
       ],
-      "total_views": 0,
+      "total_views": 499,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 14,
+      "articles_scanned": 4
     },
     {
       "sid": "240110227",
@@ -1015,11 +1016,11 @@
           "guid": "https://blog.csdn.net/Zyyymmm_/article/details/164961288"
         }
       ],
-      "total_views": 0,
+      "total_views": 329,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 4,
+      "articles_scanned": 3
     },
     {
       "sid": "240110232",
@@ -1047,11 +1048,11 @@
           "guid": "https://blog.csdn.net/WH2022911/article/details/164956226"
         }
       ],
-      "total_views": 0,
+      "total_views": 221,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0
+      "total_collections": 2,
+      "articles_scanned": 2
     }
   ]
 }
