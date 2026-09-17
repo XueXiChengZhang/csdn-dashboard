@@ -599,7 +599,7 @@
   </div>
 
   <div class="toolbar">
-    <input type="text" id="search" placeholder="搜索姓名 / 学号..." />
+    <input type="text" id="search" placeholder="搜索姓名..." />
     <select id="sort">
       <option value="views-desc">阅读量 ↓</option>
       <option value="views-asc">阅读量 ↑</option>
@@ -885,7 +885,6 @@
             <div class="student-rank">#${rank}</div>
             <div class="student-head">
               <div class="student-name">${escapeHtml(s.name)}</div>
-              <div class="student-sid">${escapeHtml(s.sid)}</div>
             </div>
             <div class="student-meta">
               <span class="${postClass}"><span class="num">${s.post_count}</span> 篇</span>

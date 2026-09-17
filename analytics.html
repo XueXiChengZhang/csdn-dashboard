@@ -407,14 +407,13 @@
         <tr>
           <th class="rank">#</th>
           <th>姓名</th>
-          <th>学号</th>
           <th>文章数</th>
           <th>总阅读</th>
           <th>平均阅读/篇</th>
         </tr>
       </thead>
       <tbody id="top10-body">
-        <tr><td colspan="6" class="empty" style="border:none;background:transparent;">加载中…</td></tr>
+        <tr><td colspan="5" class="empty" style="border:none;background:transparent;">加载中…</td></tr>
       </tbody>
     </table>
   </section>
@@ -528,7 +527,7 @@ function render() {
 
   const tbody = document.getElementById('top10-body');
   if (top10.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty" style="border:none;background:transparent;">暂无阅读量数据 · 等待下一次抓取</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty" style="border:none;background:transparent;">暂无阅读量数据 · 等待下一次抓取</td></tr>';
   } else {
     tbody.innerHTML = top10.map((s, i) => {
       const avg = s.post_count ? Math.round((s.total_views || 0) / s.post_count) : 0;
@@ -537,7 +536,6 @@ function render() {
       return `<tr class="${cls}" onclick="location.href='student.html?sid=${encodeURIComponent(s.sid)}'">
         <td class="${rcls}">#${i + 1}</td>
         <td>${escapeHtml(s.name)}</td>
-        <td>${escapeHtml(s.sid)}</td>
         <td>${s.post_count || 0}</td>
         <td class="views">${fmt(s.total_views)}</td>
         <td>${fmt(avg)}</td>
@@ -575,7 +573,7 @@ function render() {
     warnBox.innerHTML = '<div class="empty">✅ 全部 31 名学生都已配置 CSDN 博客</div>';
   } else {
     const list = missing.map(s =>
-      `<li><strong>${escapeHtml(s.name)}</strong> · ${escapeHtml(s.sid)} · 暂无 CSDN 账号</li>`
+      `<li><strong>${escapeHtml(s.name)}</strong> · 暂无 CSDN 账号</li>`
     ).join('');
     warnBox.innerHTML = `<div class="warn">
       <strong>⚠️ ${missing.length} 名学生缺 CSDN 博客</strong>
@@ -593,7 +591,7 @@ function render() {
       <a class="fast-card" href="student.html?sid=${encodeURIComponent(s.sid)}">
         <div class="rank">RANK · #${i + 1}</div>
         <div class="nm">${escapeHtml(s.name)}</div>
-        <div class="sid">${escapeHtml(s.sid)} · @${escapeHtml(s.csdn_username || '—')}</div>
+        <div class="sid">@${escapeHtml(s.csdn_username || '—')}</div>
         <div class="num">${s.post_count || 0}</div>
         <div class="lbl">累计文章</div>
       </a>

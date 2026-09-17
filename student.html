@@ -393,7 +393,6 @@ function render(stu, history, lastUpdate) {
       <div class="avatar">${escapeHtml(initials)}</div>
       <div class="head-info">
         <h1>${escapeHtml(stu.name || '')}</h1>
-        <div class="sid">${escapeHtml(stu.sid)}</div>
         <div class="meta-line">CSDN · <code>${escapeHtml(stu.csdn_username || '未配置')}</code></div>
         <div class="meta-line">最近抓取 · ${escapeHtml(lastUpdate || '—')}</div>
         <div class="head-stats">
