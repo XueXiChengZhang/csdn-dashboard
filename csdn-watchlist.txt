@@ -1,0 +1,34 @@
+# CSDN + Gitee 学生项目监控名单
+# 格式: 学号	姓名	CSDN 博客 URL	Gitee 仓库 URL	备注
+# Generated: 2026-09-16
+240110102	庞嘉良	https://blog.csdn.net/pjl20051011?type=blog	https://gitee.com/pangjialiang/pjl.git	
+240110103	李瑞	https://blog.csdn.net/liruisklfj?type=blog	https://gitee.com/lirui-code/001	
+240110104	彭轩昊		https://gitee.com/pengxuanhao/pxhs-magical-warehouse.git	缺 CSDN
+240110106	武明光	https://blog.csdn.net/2401_89247021?type=blog	https://gitee.com/ovo5u110/uuuuu	
+240110108	陈艳	https://blog.csdn.net/CY11101229?spm=1010.2135.3001.5343	https://gitee.com/cy666666888888/seven-seconds-memory.git	
+240110110	李振宇	https://blog.csdn.net/yingsini7?type=blog	https://gitee.com/li-zhenyu-111	
+240110112	韩博	https://blog.csdn.net/2401_88094581	https://gitee.com/hbcc11/240110112	
+240110113	牛佳祺	https://blog.csdn.net/Apawn_77	https://gitee.com/apawn77/Apawnn	
+240110114	高宾	https://blog.csdn.net/gb_00005555	https://gitee.com/gb00005555/such-a-trivial-matter.git	
+240110115	董泽玉	https://blog.csdn.net/2501_92570764	https://gitee.com/MengRuFanHua/game-mod.git	
+240110117	韩泽威	https://blog.csdn.net/HanhanWei_	https://gitee.com/yichuangwai/hanzewei.git	
+240110118	黄中旭	https://blog.csdn.net/moyangyi	https://gitee.com/moyangyi/xuexiaozuoyeyuxiangmu.git	
+240110119	康子健	https://blog.csdn.net/jsk4sj	https://gitee.com/kang-zijian123/project	
+240110121	吕致迅	https://blog.csdn.net/2501_94785105	https://gitee.com/kkaada/fsd	
+240110122	季政科	https://blog.csdn.net/King888AA	https://gitee.com/jzk888888/jzk	
+240110126	刘名昊	https://blog.csdn.net/wanan962462	https://gitee.com/qiyuewanan/rpg-games.git	
+240110128	李可欣	https://blog.csdn.net/likexin0128	https://gitee.com/likexib/li-kexin	
+240110129	冯雪娇	https://blog.csdn.net/fxjjjjjjjjjjjj1	https://gitee.com/fxjjjjjjjjjjj/little-lucky-star-e-commerce.git	
+240110130	吕涵	https://blog.csdn.net/Lh286364	https://gitee.com/lh286364/111111	
+240110201	郑翔	https://blog.csdn.net/zx121384	https://gitee.com/zhengxiang1/zheng-xiang-zz.git	
+240110207	吴梦瑶	https://blog.csdn.net/WMY2006	https://gitee.com/kmlll/project123.git	
+240110209	沈亿	https://blog.csdn.net/2601_96938731	https://gitee.com/shenyi24/xm	
+240110212	张昊	https://blog.csdn.net/bashiyegou	https://gitee.com/suiyegou/zhdiancan.git	
+240110213	杜广庆	https://blog.csdn.net/jiuyu16	https://gitee.com/MayarDu/game-platform.git	
+240110215	郑泽镪	https://blog.csdn.net/2401_83893276	https://gitee.com/Mcqwder/zzq.git	
+240110220	任晓莉	https://blog.csdn.net/2601_96956624	https://gitee.com/ren-xiaolibnkkjjkjk/projects	
+240110221	王森	https://blog.csdn.net/dao1234_	https://gitee.com/moudaomeihaizi/warrior-dawn-fusion-war.git	
+240110225	赵丁闫	https://blog.csdn.net/wty262446	https://gitee.com/zhaodingyan/an-absolutely-epic-project	
+240110226	王明硕	https://blog.csdn.net/2603_96938789	https://gitee.com/xsgg01/hhh.git	
+240110227	张宇梦	https://blog.csdn.net/Zyyymmm_	https://gitee.com/zhhshgdhwgfhifhrefiureyhfu/project.git	
+240110232	王翼洲	https://blog.csdn.net/WH2022911	https://gitee.com/wangyizhou1/wh1314.git	

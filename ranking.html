@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>CSDN + Gitee 学生排名 · 24-10 / 24-20 · v10</title>
+  <style>
+    /* Ma: v10 - 学生排名页 (Kami 风格) */
+    :root {
+      --parchment: #f5f4ed;
+      --ivory: #faf9f5;
+      --near-black: #141413;
+      --dark-warm: #3d3d3a;
+      --olive: #504e49;
+      --stone: #6b6a64;
+      --brand: #1B365D;
+      --brand-soft: #E4ECF5;
+      --brand-deeper: #0e223d;
+      --accent: #c44d36;
+      --accent-soft: #faf3ee;
+      --gold: #c89b3c;
+      --gold-soft: #f4ebd2;
+      --border: #e8e6dc;
+      --border-soft: #e5e3d8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--parchment);
+      color: var(--near-black);
+      font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
+      line-height: 1.6;
+      padding: 0 0 60px 0;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .topnav {
+      background: var(--ivory);
+      border-bottom: 0.6pt solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(6px);
+    }
+    .topnav .brand { font-weight: 600; color: var(--brand); margin-right: 12px; }
+    .topnav a.tab {
+      color: var(--olive);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 2px;
+      border: 0.6pt solid transparent;
+      transition: all 0.15s;
+    }
+    .topnav a.tab:hover { background: var(--brand-soft); color: var(--brand); }
+    .topnav a.tab.active {
+      background: var(--brand);
+      color: var(--ivory);
+      border-color: var(--brand);
+    }
+    .topnav .ver {
+      margin-left: auto;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--stone);
+    }
+    .header {
+      padding: 32px 24px 16px 24px;
+      border-bottom: 0.6pt solid var(--border);
+      margin-bottom: 32px;
+    }
+    .eyebrow {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone);
+      margin-bottom: 8px;
+    }
+    h1 { font-size: 30px; font-weight: 600; margin-bottom: 8px; }
+    .subtitle { font-size: 16px; color: var(--olive); }
+    .meta { margin-top: 12px; font-size: 13px; color: var(--stone); }
+    .meta strong { color: var(--brand); }
+    main { padding: 0 24px; }
+
+    .ranking-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    .ranking-card {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 22px 26px;
+    }
+    .ranking-card h2 {
+      font-size: 18px;
+      color: var(--brand);
+      margin-bottom: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ranking-card h2 .ico {
+      font-size: 22px;
+    }
+    .ranking-list { list-style: none; padding: 0; }
+    .ranking-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 0.6pt dashed var(--border-soft);
+      font-size: 14px;
+    }
+    .ranking-list li:last-child { border-bottom: none; }
+    .ranking-list .rank-num {
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      color: var(--stone);
+      width: 32px;
+      flex: 0 0 auto;
+      text-align: right;
+    }
+    .ranking-list li.top3 .rank-num {
+      color: var(--brand);
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .ranking-list .name {
+      flex: 1;
+      color: var(--near-black);
+      text-decoration: none;
+    }
+    .ranking-list .name:hover { color: var(--brand); text-decoration: underline; }
+    .ranking-list .metric {
+      font-family: ui-monospace, monospace;
+      color: var(--olive);
+      font-size: 13px;
+    }
+    .ranking-list .metric strong {
+      color: var(--brand);
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .ranking-list li.muted { opacity: 0.5; }
+    .ranking-list li.muted .metric { color: var(--stone); }
+    .ranking-list li.empty {
+      color: var(--stone);
+      font-style: italic;
+      padding: 14px 0;
+      border-bottom: none;
+      justify-content: center;
+    }
+
+    .ranking-card.wide { grid-column: 1 / -1; }
+    .ranking-card.fail h2 { color: var(--accent); }
+
+    @media (max-width: 720px) {
+      .ranking-grid { grid-template-columns: 1fr; }
+      main { padding: 0 16px; }
+      .header { padding: 24px 16px 12px 16px; }
+      h1 { font-size: 22px; }
+      .topnav { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="brand">📚 CSDN 监控</span>
+  <a class="tab" href="index.html">学生列表</a>
+  <a class="tab" href="analytics.html">班级分析</a>
+  <a class="tab active" href="ranking.html">学生排名</a>
+  <a class="tab" href="student.html?sid=240110103">个人详情</a>
+  <span class="ver">v10.0 · RANKING</span>
+</nav>
+
+<div class="header">
+  <div class="eyebrow">学生排名 · Rankings</div>
+  <h1>🏆 班级活跃榜</h1>
+  <div class="subtitle">31 名学生 · CSDN + Gitee 维度 · TOP 10 视图</div>
+  <div class="meta">最近抓取 · <strong id="last-update">加载中...</strong></div>
+</div>
+
+<main>
+  <div class="ranking-grid">
+    <div class="ranking-card">
+      <h2><span class="ico">👁</span> 阅读量 TOP 10</h2>
+      <ul class="ranking-list" id="rank-views"></ul>
+    </div>
+
+    <div class="ranking-card">
+      <h2><span class="ico">📝</span> 文章数 TOP 10</h2>
+      <ul class="ranking-list" id="rank-posts"></ul>
+    </div>
+
+    <div class="ranking-card">
+      <h2><span class="ico">💾</span> Gitee commit TOP 10</h2>
+      <ul class="ranking-list" id="rank-gitee-commits"></ul>
+    </div>
+
+    <div class="ranking-card">
+      <h2><span class="ico">⭐</span> Gitee star TOP 10</h2>
+      <ul class="ranking-list" id="rank-gitee-stars"></ul>
+    </div>
+
+    <div class="ranking-card">
+      <h2><span class="ico">🔥</span> 最勤奋 (综合分 TOP 10)</h2>
+      <ul class="ranking-list" id="rank-diligent"></ul>
+    </div>
+
+    <div class="ranking-card fail">
+      <h2><span class="ico">😴</span> 最懒 (需提升 TOP 10)</h2>
+      <ul class="ranking-list" id="rank-lazy"></ul>
+    </div>
+  </div>
+</main>
+
+<script>
+const VERSION = 'v10.0-ranking';
+let DATA = null;
+
+async function loadData() {
+  try {
+    const r = await fetch('data.json?t=' + Date.now() + '&r=' + Math.random().toString(36).slice(2, 8), {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+    });
+    DATA = await r.json();
+    render();
+    document.getElementById('last-update').textContent = formatTime(DATA.last_update);
+  } catch (e) {
+    console.error('loadData failed', e);
+    document.getElementById('last-update').textContent = '加载失败 ' + e.message;
+  }
+}
+
+function fmt(n) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('en-US');
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+}
+
+function formatTime(iso) {
+  if (!iso) return '未知';
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false });
+  } catch { return iso; }
+}
+
+function linkStudent(s) {
+  return `<a class="name" href="student.html?sid=${encodeURIComponent(s.sid)}">${escapeHtml(s.name)}</a>`;
+}
+
+function renderList(containerId, items, metricFn, opts = {}) {
+  const el = document.getElementById(containerId);
+  if (!items || items.length === 0) {
+    el.innerHTML = '<li class="empty">暂无数据</li>';
+    return;
+  }
+  el.innerHTML = items.map((s, i) => {
+    const rank = i + 1;
+    const cls = i < 3 ? 'top3' : (opts.mutedBottom && i >= items.length - 3 ? 'muted' : '');
+    const m = metricFn(s);
+    return `<li class="${cls}">
+      <span class="rank-num">#${rank}</span>
+      ${linkStudent(s)}
+      <span class="metric">${m}</span>
+    </li>`;
+  }).join('');
+}
+
+function render() {
+  if (!DATA) return;
+  const stu = DATA.students || [];
+
+  // 1) 阅读量 TOP 10 (无阅读量的排最后)
+  const byViews = [...stu].sort((a, b) => {
+    const av = a.total_views || 0;
+    const bv = b.total_views || 0;
+    if (av === 0 && bv === 0) return b.post_count - a.post_count;
+    if (av === 0) return 1;
+    if (bv === 0) return -1;
+    return bv - av;
+  });
+  renderList('rank-views', byViews.slice(0, 10),
+    s => `<strong>${fmt(s.total_views || 0)}</strong> 阅读 · ${s.post_count || 0} 篇`);
+
+  // 2) 文章数 TOP 10
+  const byPosts = [...stu].sort((a, b) => (b.post_count || 0) - (a.post_count || 0));
+  renderList('rank-posts', byPosts.slice(0, 10),
+    s => `<strong>${s.post_count || 0}</strong> 篇`);
+
+  // 3) Gitee commit TOP 10
+  const byCommits = [...stu].sort((a, b) => {
+    const ac = (a.gitee && a.gitee.commit_count) || 0;
+    const bc = (b.gitee && b.gitee.commit_count) || 0;
+    return bc - ac;
+  });
+  renderList('rank-gitee-commits', byCommits.slice(0, 10),
+    s => {
+      const g = s.gitee || {};
+      const dateShort = g.date ? g.date.slice(5, 10) : '—';
+      return `<strong>${fmt(g.commit_count || 0)}</strong> commit · ${escapeHtml(dateShort)}`;
+    });
+
+  // 4) Gitee star TOP 10
+  const byStars = [...stu].sort((a, b) => {
+    const as = (a.gitee && a.gitee.stars) || 0;
+    const bs = (b.gitee && b.gitee.stars) || 0;
+    return bs - as;
+  });
+  renderList('rank-gitee-stars', byStars.slice(0, 10),
+    s => `<strong>${fmt((s.gitee && s.gitee.stars) || 0)}</strong> ⭐`);
+
+  // 5) 最勤奋 (综合分): 文章数 × 10 + Gitee commit × 2 + 阅读 / 100
+  const diligent = [...stu].map(s => {
+    const score = (s.post_count || 0) * 10
+                + ((s.gitee && s.gitee.commit_count) || 0) * 2
+                + Math.floor((s.total_views || 0) / 100);
+    return { ...s, _score: score };
+  }).sort((a, b) => b._score - a._score);
+  renderList('rank-diligent', diligent.slice(0, 10),
+    s => `<strong>${s._score}</strong> 分 · ${s.post_count || 0} 篇 · ${fmt(s.total_views || 0)} 阅读`,
+    { mutedBottom: true });
+
+  // 6) 最懒: 综合分升序, 排除 0 阅读且 0 commit 的(完全空)
+  const lazy = [...stu].map(s => {
+    const score = (s.post_count || 0) * 10
+                + ((s.gitee && s.gitee.commit_count) || 0) * 2
+                + Math.floor((s.total_views || 0) / 100);
+    return { ...s, _score: score };
+  }).filter(s => s._score > 0 || (s.csdn_url && s.post_count > 0))  // 至少有点东西
+    .sort((a, b) => a._score - b._score);
+  // 反向取:最懒 = 综合分最低
+  renderList('rank-lazy', lazy.slice(0, 10),
+    s => `<strong>${s._score}</strong> 分 · ${s.post_count || 0} 篇 · ${fmt(s.total_views || 0)} 阅读`);
+}
+
+loadData();
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>

@@ -6,9 +6,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN 个人详情 · v8</title>
+  <title>CSDN + Gitee 个人详情 · v10</title>
   <style>
-    /* Ma: v8 - 个人详情页 (Kami 风格) */
+    /* Ma: v10 - 个人详情页 (Kami 风格) */
     :root {
       --parchment: #f5f4ed;
       --ivory: #faf9f5;
@@ -141,6 +141,78 @@
     }
     .btn-csdn:hover { background: var(--brand-deeper); }
     .btn-csdn[disabled] { background: var(--stone); border-color: var(--stone); cursor: not-allowed; }
+
+    /* v10: Gitee 卡片样式 */
+    .gitee-card-detail {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 18px 22px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .gitee-card-detail .gitee-ico {
+      font-size: 32px;
+      color: var(--brand);
+      width: 56px; height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--brand-soft);
+      border-radius: 2px;
+    }
+    .gitee-card-detail .gitee-info { flex: 1; }
+    .gitee-card-detail .gitee-info h3 {
+      font-size: 17px;
+      color: var(--brand);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .gitee-card-detail .gitee-info .repo {
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--stone);
+      margin-bottom: 6px;
+    }
+    .gitee-card-detail .gitee-info .stats {
+      display: flex;
+      gap: 14px;
+      font-size: 13px;
+      color: var(--olive);
+      flex-wrap: wrap;
+    }
+    .gitee-card-detail .gitee-info .stats strong {
+      color: var(--brand);
+      font-weight: 600;
+      font-size: 16px;
+      margin-right: 4px;
+    }
+    .gitee-card-detail .gitee-info .msg {
+      font-size: 12px;
+      color: var(--stone);
+      margin-top: 6px;
+      font-style: italic;
+    }
+    .gitee-card-detail .gitee-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .gitee-card-detail .gitee-actions a {
+      background: var(--brand);
+      color: var(--ivory);
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 2px;
+      font-size: 13px;
+      border: 0.6pt solid var(--brand);
+    }
+    .gitee-card-detail .gitee-actions a:hover { background: var(--brand-deeper); }
+    .gitee-card-detail.fail { border-color: var(--accent); background: var(--accent-soft); }
+    .gitee-card-detail.fail .gitee-ico { background: var(--accent); color: var(--ivory); }
+    .gitee-card-detail.empty { text-align: center; padding: 24px; color: var(--stone); }
     .head-stats {
       display: flex;
       gap: 18px;
@@ -318,8 +390,9 @@
   <span class="brand">📚 CSDN 监控</span>
   <a class="tab" href="index.html">学生列表</a>
   <a class="tab" href="analytics.html">班级分析</a>
+  <a class="tab" href="ranking.html">学生排名</a>
   <a class="tab active" id="nav-active">个人详情</a>
-  <span class="ver">v8.0 · STUDENT-DETAIL</span>
+  <span class="ver">v10.0 · STUDENT-DETAIL</span>
 </nav>
 
 <main>
@@ -418,8 +491,12 @@ function render(stu, history, lastUpdate) {
   // 4) 文章详细
   const postsHtml = renderPosts(stu);
 
+  // v10: Gitee 仓库卡片
+  const giteeHtml = renderGitee(stu);
+
   root.innerHTML = `
     ${headHtml}
+    ${giteeHtml}
     <section class="section">
       <div class="section-title">
         <span>📈 个人发文时间轴</span>
@@ -442,6 +519,47 @@ function render(stu, history, lastUpdate) {
       ${postsHtml}
     </section>
   `;
+}
+
+// v10: Gitee 仓库卡片
+function renderGitee(stu) {
+  const g = stu.gitee;
+  if (!g || !g.url) {
+    return `<div class="gitee-card-detail empty">未配置 Gitee 仓库</div>`;
+  }
+  if (g.ok) {
+    const dateStr = g.date ? g.date.slice(0, 10) : '—';
+    const shaShort = g.sha ? `<code style="font-size:11px;background:var(--brand-soft);color:var(--brand);padding:1px 5px;border-radius:2px;">${escapeHtml(g.sha)}</code>` : '';
+    return `<div class="gitee-card-detail">
+      <div class="gitee-ico">💾</div>
+      <div class="gitee-info">
+        <h3>Gitee 仓库</h3>
+        <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · 抓取自 <code>${escapeHtml(g.source || '?')}</code></div>
+        <div class="stats">
+          <span><strong>${fmt(g.commit_count || 0)}</strong>commit</span>
+          <span><strong>${fmt(g.stars || 0)}</strong>⭐ star</span>
+          <span><strong>${fmt(g.forks || 0)}</strong>🍴 fork</span>
+          <span style="color:var(--stone);">最后 commit ${escapeHtml(dateStr)} ${shaShort}</span>
+        </div>
+        ${g.msg ? `<div class="msg">"${escapeHtml(g.msg)}"</div>` : ''}
+      </div>
+      <div class="gitee-actions">
+        <a href="${escapeHtml(g.url)}" target="_blank" rel="noopener">访问仓库 ↗</a>
+        <a href="analytics.html" style="background:var(--ivory);color:var(--brand);">← 返回班级分析</a>
+      </div>
+    </div>`;
+  }
+  return `<div class="gitee-card-detail fail">
+    <div class="gitee-ico">⚠️</div>
+    <div class="gitee-info">
+      <h3 style="color:var(--accent);">Gitee 抓取失败</h3>
+      <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · ${escapeHtml(g.source || 'all sources failed')}</div>
+      <div class="msg">${escapeHtml(g.err || '未知错误 - 可能 Gitee 限流或仓库不可访问')}</div>
+    </div>
+    <div class="gitee-actions">
+      <a href="${escapeHtml(g.url)}" target="_blank" rel="noopener">直接打开 ↗</a>
+    </div>
+  </div>`;
 }
 
 function renderTrend(history, stu) {

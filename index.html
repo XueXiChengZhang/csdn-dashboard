@@ -6,9 +6,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN 学生项目监控 · 24-10 / 24-20 · v7</title>
+  <title>CSDN + Gitee 学生项目监控 · 24-10 / 24-20 · v10</title>
   <style>
-    /* Ma: 仪表板样式 - Kami 风格(米黄 + 衬线 + 深蓝) v7 */
+    /* Ma: 仪表板样式 - Kami 风格(米黄 + 衬线 + 深蓝) v10 */
     :root {
       --parchment: #f5f4ed;
       --ivory: #faf9f5;
@@ -194,6 +194,113 @@
       color: var(--ivory);
     }
     .toolbar .refresh-btn:active { transform: translateY(1px); }
+
+    /* Ma v10: 时间筛选 chips */
+    .time-filter {
+      display: inline-flex;
+      gap: 4px;
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 2px;
+    }
+    .time-filter button {
+      font-family: inherit;
+      font-size: 12px;
+      background: transparent;
+      border: none;
+      color: var(--olive);
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.12s;
+      letter-spacing: 0.04em;
+    }
+    .time-filter button:hover { background: var(--brand-soft); color: var(--brand); }
+    .time-filter button.active {
+      background: var(--brand);
+      color: var(--ivory);
+      font-weight: 600;
+    }
+
+    /* Ma v10: Gitee card mini */
+    .gitee-mini {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--olive);
+      padding-top: 8px;
+      margin-top: 6px;
+      border-top: 0.6pt dashed var(--border-soft);
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    .gitee-mini .gitee-link {
+      color: var(--brand);
+      text-decoration: none;
+      flex: 0 0 auto;
+    }
+    .gitee-mini .gitee-link:hover { text-decoration: underline; }
+    .gitee-mini .gitee-stat { color: var(--stone); }
+    .gitee-mini .gitee-stat strong { color: var(--brand); font-weight: 600; }
+    .gitee-mini .gitee-sha {
+      background: var(--brand-soft);
+      color: var(--brand);
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-size: 10px;
+    }
+    .gitee-mini .gitee-fail {
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-size: 10px;
+    }
+
+    /* Ma v10: Gitee 卡片样式 (与 CSDN 平行) */
+    .gitee-card {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+    .gitee-card-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .gitee-card-head h3 {
+      font-size: 16px;
+      color: var(--brand);
+      font-weight: 600;
+    }
+    .gitee-card-head .meta {
+      font-size: 12px;
+      color: var(--stone);
+      font-family: ui-monospace, monospace;
+    }
+    .gitee-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .gitee-grid-item {
+      background: var(--parchment);
+      border: 0.6pt solid var(--border-soft);
+      border-radius: 2px;
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+    .gitee-grid-item .name { font-weight: 600; color: var(--near-black); margin-bottom: 4px; }
+    .gitee-grid-item .repo { font-size: 11px; color: var(--stone); font-family: ui-monospace, monospace; margin-bottom: 6px; }
+    .gitee-grid-item .stats { display: flex; gap: 10px; font-size: 11px; color: var(--olive); flex-wrap: wrap; }
+    .gitee-grid-item .stats strong { color: var(--brand); font-weight: 600; }
+    .gitee-grid-item .stats .gitee-date { color: var(--stone); }
+    .gitee-grid-item a { color: var(--brand); text-decoration: none; }
+    .gitee-grid-item a:hover { text-decoration: underline; }
     .student-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -534,12 +641,13 @@
 </head>
 <body>
   <nav class="topnav">
-    <span class="brand">📚 CSDN 监控</span>
-    <a class="tab active" href="index.html">学生列表</a>
-    <a class="tab" href="analytics.html">班级分析</a>
-    <a class="tab" href="student.html?sid=240110103">个人详情</a>
-    <span class="ver">v8.0 · DASHBOARD</span>
-  </nav>
+      <span class="brand">📚 CSDN 监控</span>
+      <a class="tab active" href="index.html">学生列表</a>
+      <a class="tab" href="analytics.html">班级分析</a>
+      <a class="tab" href="ranking.html">学生排名</a>
+      <a class="tab" href="student.html?sid=240110103">个人详情</a>
+      <span class="ver">v10.0 · DASHBOARD</span>
+    </nav>
   <div class="header">
     <div class="header-main">
       <div class="eyebrow">CSDN 学生项目监控</div>
@@ -547,7 +655,7 @@
       <div class="subtitle">31 名学生 · 每日自动抓取 CSDN 文章 · 8:00 推送飞书</div>
       <div class="meta">最近更新 · <strong id="last-update">加载中...</strong></div>
     </div>
-    <div class="version-badge">DASHBOARD v7</div>
+    <div class="version-badge">DASHBOARD v10</div>
   </div>
 
   <div id="alert-box"></div>
@@ -599,26 +707,45 @@
   </div>
 
   <div class="toolbar">
-    <input type="text" id="search" placeholder="搜索姓名..." />
-    <select id="sort">
-      <option value="views-desc">阅读量 ↓</option>
-      <option value="views-asc">阅读量 ↑</option>
-      <option value="posts-desc">文章数 ↓</option>
-      <option value="posts-asc">文章数 ↑</option>
-      <option value="name-asc">姓名 A-Z</option>
-      <option value="sid-asc">学号顺序</option>
-    </select>
-    <select id="filter">
-      <option value="all">全部</option>
-      <option value="active">仅活跃</option>
-      <option value="zero">无文章</option>
-      <option value="missing">缺 CSDN</option>
-    </select>
-    <button class="refresh-btn" id="refresh-btn" title="强制重新加载数据">↻ 刷新</button>
-    <span class="count" id="count"></span>
-  </div>
+      <input type="text" id="search" placeholder="搜索姓名..." />
+      <select id="sort">
+        <option value="views-desc">阅读量 ↓</option>
+        <option value="views-asc">阅读量 ↑</option>
+        <option value="posts-desc">文章数 ↓</option>
+        <option value="posts-asc">文章数 ↑</option>
+        <option value="gitee-commits-desc">Gitee commit ↓</option>
+        <option value="gitee-stars-desc">Gitee star ↓</option>
+        <option value="gitee-fresh">Gitee 最新活动</option>
+        <option value="name-asc">姓名 A-Z</option>
+        <option value="sid-asc">学号顺序</option>
+      </select>
+      <select id="filter">
+        <option value="all">全部</option>
+        <option value="active">仅活跃</option>
+        <option value="zero">无文章</option>
+        <option value="missing">缺 CSDN</option>
+        <option value="gitee-ok">Gitee 抓取成功</option>
+        <option value="gitee-fail">Gitee 抓取失败</option>
+      </select>
+      <div class="time-filter" id="time-filter" title="时间筛选(基于最近抓取快照)">
+        <button data-range="all" class="active">全部</button>
+        <button data-range="7">7 天</button>
+        <button data-range="30">30 天</button>
+      </div>
+      <button class="refresh-btn" id="refresh-btn" title="强制重新加载数据">↻ 刷新</button>
+      <span class="count" id="count"></span>
+    </div>
 
-  <div id="students" class="student-grid">
+    <!-- v10: Gitee 最近活动卡片 (今日 commit 概览) -->
+      <section class="gitee-card" id="gitee-card" style="display:none;">
+        <div class="gitee-card-head">
+          <h3>💾 Gitee 最近活动</h3>
+          <span class="meta" id="gitee-card-meta">—</span>
+        </div>
+        <div class="gitee-grid" id="gitee-grid"></div>
+      </section>
+
+      <div id="students" class="student-grid">
     <div class="loading">加载中...</div>
   </div>
 
@@ -631,159 +758,163 @@
   </div>
 
   <script>
-    // Ma: 仪表板 v7 - 抓取健康度 + fetch_meta 折叠面板
-    const DASHBOARD_VERSION = 'v7.0';
+    // Ma: 仪表板 v10 - 抓取健康度 + fetch_meta + Gitee + 时间筛选
+    const DASHBOARD_VERSION = 'v10.0';
     let ALL_STUDENTS = [];
     let LAST_UPDATE_ISO = null;
+    let CLASS_STATS = null;
+    let TIME_RANGE = 'all';  // 'all' | 7 | 30
 
     async function loadData() {
-      const btn = document.getElementById('refresh-btn');
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ 刷新中...'; }
-      try {
-        // Ma v9: 加时间戳 + 随机数 + headers,解决 GitHub Pages CDN 缓存
-        const url = 'data.json?t=' + Date.now() + '&r=' + Math.random().toString(36).slice(2, 8);
-        const resp = await fetch(url, {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-          },
-        });
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const data = await resp.json();
-        LAST_UPDATE_ISO = data.last_update;
-        ALL_STUDENTS = data.students.map(s => ({
-          ...s,
-          csdn: !!s.csdn_url,
-        }));
-        renderStats(data);
-        renderAlert(data);
-        render();
-        document.getElementById('last-update').textContent = formatTime(data.last_update);
-        document.getElementById('footer-update').innerHTML =
-          `<span>最后更新: ${formatTime(data.last_update)}</span>` +
-          `<span>·</span>` +
-          `<span>自动每 60 秒刷新</span>` +
-          `<span>·</span>` +
-          `<span>仪表板 ${DASHBOARD_VERSION}</span>` +
-          `<span>·</span>` +
-          `<span>看到旧版? 按 <code>Ctrl + F5</code> 强制刷新</span>`;
-      } catch (e) {
-        document.getElementById('students').innerHTML =
-          '<div class="loading">加载失败: ' + e.message + '<br><br>直接打开 index.html 可能因 file:// 协议无法 fetch data.json。<br>请运行: <code>python -m http.server 8765</code> 在此目录</div>';
-      } finally {
-        if (btn) { btn.disabled = false; btn.textContent = '↻ 刷新'; }
-      }
+    const btn = document.getElementById('refresh-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 刷新中...'; }
+    try {
+    // Ma v9: 加时间戳 + 随机数 + headers,解决 GitHub Pages CDN 缓存
+    const url = 'data.json?t=' + Date.now() + '&r=' + Math.random().toString(36).slice(2, 8);
+    const resp = await fetch(url, {
+    cache: 'no-store',
+    headers: {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    },
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    LAST_UPDATE_ISO = data.last_update;
+    ALL_STUDENTS = data.students.map(s => ({
+    ...s,
+    csdn: !!s.csdn_url,
+    }));
+    CLASS_STATS = data.class_stats || null;
+    renderStats(data);
+    renderAlert(data);
+    renderGiteeCard();
+    render();
+    document.getElementById('last-update').textContent = formatTime(data.last_update);
+    document.getElementById('footer-update').innerHTML =
+    `<span>最后更新: ${formatTime(data.last_update)}</span>` +
+    `<span>·</span>` +
+    `<span>自动每 60 秒刷新</span>` +
+    `<span>·</span>` +
+    `<span>仪表板 ${DASHBOARD_VERSION}</span>` +
+    `<span>·</span>` +
+    `<span>看到旧版? 按 <code>Ctrl + F5</code> 强制刷新</span>`;
+    } catch (e) {
+    document.getElementById('students').innerHTML =
+    '<div class="loading">加载失败: ' + e.message + '<br><br>直接打开 index.html 可能因 file:// 协议无法 fetch data.json。<br>请运行: <code>python -m http.server 8765</code> 在此目录</div>';
+    } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↻ 刷新'; }
+    }
     }
 
     function renderStats(data) {
-      const total = data.total_students;
-      const posts = data.total_posts;
-      const active = ALL_STUDENTS.filter(s => s.post_count > 0).length;
-      const avg = active > 0 ? (posts / active).toFixed(1) : 0;
-      document.getElementById('stat-total').textContent = total;
-      document.getElementById('stat-posts').textContent = posts;
-      document.getElementById('stat-active').textContent = active;
-      document.getElementById('stat-avg').textContent = avg;
-      // v7: 健康度 + fetch_meta
-      renderFetchMeta(data.last_fetch_meta || {});
+    const total = data.total_students;
+    const posts = data.total_posts;
+    const active = ALL_STUDENTS.filter(s => s.post_count > 0).length;
+    const avg = active > 0 ? (posts / active).toFixed(1) : 0;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-posts').textContent = posts;
+    document.getElementById('stat-active').textContent = active;
+    document.getElementById('stat-avg').textContent = avg;
+    // v7: 健康度 + fetch_meta
+    renderFetchMeta(data.last_fetch_meta || {});
     }
 
     // v7: 渲染 fetch_meta (抓取健康度 + 折叠面板)
     function renderFetchMeta(fm) {
-      const card = document.getElementById('stat-health-card');
-      const healthEl = document.getElementById('stat-health');
-      const healthMeta = document.getElementById('stat-health-meta');
-      const lfVal = document.getElementById('stat-last-fetch');
-      const lfMeta = document.getElementById('stat-last-fetch-meta');
-      const grid = document.getElementById('fetch-meta-grid');
-      const summary = document.getElementById('fm-summary');
+    const card = document.getElementById('stat-health-card');
+    const healthEl = document.getElementById('stat-health');
+    const healthMeta = document.getElementById('stat-health-meta');
+    const lfVal = document.getElementById('stat-last-fetch');
+    const lfMeta = document.getElementById('stat-last-fetch-meta');
+    const grid = document.getElementById('fetch-meta-grid');
+    const summary = document.getElementById('fm-summary');
 
-      const total = Number(fm.total_requests || 0);
-      const ok = Number(fm.success_count || 0);
-      const fail = Number(fm.fail_count || 0);
-      const ts = fm.fetched_at || '';
-      const ms = Number(fm.duration_ms || 0);
-      const methods = fm.method_breakdown || {};
+    const total = Number(fm.total_requests || 0);
+    const ok = Number(fm.success_count || 0);
+    const fail = Number(fm.fail_count || 0);
+    const ts = fm.fetched_at || '';
+    const ms = Number(fm.duration_ms || 0);
+    const methods = fm.method_breakdown || {};
 
-      // 健康度卡片
-      card.classList.remove('health-good', 'health-warn', 'health-fail');
-      if (total === 0) {
-        healthEl.textContent = '—';
-        healthMeta.textContent = '尚未运行抓取任务';
-      } else {
-        const ratio = ok / total;
-        healthEl.textContent = `${ok} / ${total}`;
-        healthMeta.innerHTML =
-          `<span class="pill">失败 ${fail}</span>` +
-          `<span class="pill">今日 ${total} 次请求</span>`;
-        if (ratio >= 0.9) {
-          card.classList.add('health-good');
-        } else if (ratio >= 0.7) {
-          card.classList.add('health-warn');
-        } else {
-          card.classList.add('health-fail');
-        }
-      }
+    // 健康度卡片
+    card.classList.remove('health-good', 'health-warn', 'health-fail');
+    if (total === 0) {
+    healthEl.textContent = '—';
+    healthMeta.textContent = '尚未运行抓取任务';
+    } else {
+    const ratio = ok / total;
+    healthEl.textContent = `${ok} / ${total}`;
+    healthMeta.innerHTML =
+    `<span class="pill">失败 ${fail}</span>` +
+    `<span class="pill">今日 ${total} 次请求</span>`;
+    if (ratio >= 0.9) {
+    card.classList.add('health-good');
+    } else if (ratio >= 0.7) {
+    card.classList.add('health-warn');
+    } else {
+    card.classList.add('health-fail');
+    }
+    }
 
-      // 上次抓取时间
-      if (ts) {
-        lfVal.textContent = relativeTime(ts);
-        lfMeta.textContent = ts.replace('T', ' ').slice(0, 16);
-      } else {
-        lfVal.textContent = '—';
-        lfMeta.textContent = '未知';
-      }
+    // 上次抓取时间
+    if (ts) {
+    lfVal.textContent = relativeTime(ts);
+    lfMeta.textContent = ts.replace('T', ' ').slice(0, 16);
+    } else {
+    lfVal.textContent = '—';
+    lfMeta.textContent = '未知';
+    }
 
-      // 折叠面板: 摘要 + 网格
-      if (total === 0) {
-        summary.textContent = '暂无抓取记录';
-        grid.innerHTML = '<div class="empty">尚未运行抓取任务 — 跑一次 csdn-monitor.py 会自动出现</div>';
-      } else {
-        summary.textContent =
-          `${ok}/${total} 成功 · ${ms}ms · ${Object.keys(methods).map(k => `${k}=${methods[k]}`).join(', ')}`;
-        const mReqs = methods.requests || 0;
-        const mPw = methods.playwright || 0;
-        const mNone = methods.none || methods.failed || 0;
-        grid.innerHTML = `
-          <div><span class="k">抓取时间</span><span class="v">${escapeHtml(ts.replace('T',' ').slice(0,19))}</span></div>
-          <div><span class="k">总请求</span><span class="v">${total}</span></div>
-          <div><span class="k">成功</span><span class="v">${ok}</span></div>
-          <div><span class="k">失败</span><span class="v">${fail}</span></div>
-          <div><span class="k">耗时</span><span class="v">${ms} ms</span></div>
-          <div><span class="k">requests</span><span class="v">${mReqs}</span></div>
-          <div><span class="k">playwright</span><span class="v">${mPw}</span></div>
-          <div><span class="k">失败/无方法</span><span class="v">${mNone}</span></div>
-        `;
-      }
+    // 折叠面板: 摘要 + 网格
+    if (total === 0) {
+    summary.textContent = '暂无抓取记录';
+    grid.innerHTML = '<div class="empty">尚未运行抓取任务 — 跑一次 csdn-monitor.py 会自动出现</div>';
+    } else {
+    summary.textContent =
+    `${ok}/${total} 成功 · ${ms}ms · ${Object.keys(methods).map(k => `${k}=${methods[k]}`).join(', ')}`;
+    const mReqs = methods.requests || 0;
+    const mPw = methods.playwright || 0;
+    const mNone = methods.none || methods.failed || 0;
+    grid.innerHTML = `
+    <div><span class="k">抓取时间</span><span class="v">${escapeHtml(ts.replace('T',' ').slice(0,19))}</span></div>
+    <div><span class="k">总请求</span><span class="v">${total}</span></div>
+    <div><span class="k">成功</span><span class="v">${ok}</span></div>
+    <div><span class="k">失败</span><span class="v">${fail}</span></div>
+    <div><span class="k">耗时</span><span class="v">${ms} ms</span></div>
+    <div><span class="k">requests</span><span class="v">${mReqs}</span></div>
+    <div><span class="k">playwright</span><span class="v">${mPw}</span></div>
+    <div><span class="k">失败/无方法</span><span class="v">${mNone}</span></div>
+    `;
+    }
     }
 
     // v7: 相对时间 (多久前)
     function relativeTime(iso) {
-      if (!iso) return '—';
-      try {
-        const d = new Date(iso);
-        const diffMs = Date.now() - d.getTime();
-        const sec = Math.floor(diffMs / 1000);
-        if (sec < 60) return `${sec}秒前`;
-        const min = Math.floor(sec / 60);
-        if (min < 60) return `${min}分钟前`;
-        const hr = Math.floor(min / 60);
-        if (hr < 24) return `${hr}小时前`;
-        const day = Math.floor(hr / 24);
-        return `${day}天前`;
-      } catch { return iso; }
+    if (!iso) return '—';
+    try {
+    const d = new Date(iso);
+    const diffMs = Date.now() - d.getTime();
+    const sec = Math.floor(diffMs / 1000);
+    if (sec < 60) return `${sec}秒前`;
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}分钟前`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}小时前`;
+    const day = Math.floor(hr / 24);
+    return `${day}天前`;
+    } catch { return iso; }
     }
 
     function renderAlert(data) {
-      const missing = ALL_STUDENTS.filter(s => !s.csdn).length;
-      const box = document.getElementById('alert-box');
-      if (missing > 0) {
-        box.innerHTML = `<div class="alert">⚠️ ${missing} 名学生缺 CSDN 博客 - 见下方"缺 CSDN"标签</div>`;
-      } else {
-        box.innerHTML = '';
-      }
+    const missing = ALL_STUDENTS.filter(s => !s.csdn).length;
+    const box = document.getElementById('alert-box');
+    if (missing > 0) {
+    box.innerHTML = `<div class="alert">⚠️ ${missing} 名学生缺 CSDN 博客 - 见下方"缺 CSDN"标签</div>`;
+    } else {
+    box.innerHTML = '';
+    }
     }
 
     // v4: 派生"最近更新"集合(简化:post_count > 0 且 guid 中 details/ 数字 > 某阈值? 不可靠)
@@ -791,174 +922,296 @@
     // 这太复杂,简化为:post_count > 0 就给个"N 篇"作为信息密度。NEW 标记改成:
     // 如果 last_update 是今天,且该学生 post_count > 0,就标记 NEW(说明今天抓到了内容)
     function isNewlyPosted(s) {
-      if (!LAST_UPDATE_ISO || s.post_count === 0) return false;
-      try {
-        const lu = new Date(LAST_UPDATE_ISO);
-        const today = new Date();
-        return lu.toDateString() === today.toDateString();
-      } catch { return false; }
+    if (!LAST_UPDATE_ISO || s.post_count === 0) return false;
+    try {
+    const lu = new Date(LAST_UPDATE_ISO);
+    const today = new Date();
+    return lu.toDateString() === today.toDateString();
+    } catch { return false; }
+    }
+
+    // v10: Gitee 顶部活动卡片 - 显示最近 commit 的仓库
+    function renderGiteeCard() {
+    const card = document.getElementById('gitee-card');
+    const meta = document.getElementById('gitee-card-meta');
+    const grid = document.getElementById('gitee-grid');
+    if (!card || !grid) return;
+    // 取所有 gitee.ok=true 的学生,按 date 倒序
+    const ok = ALL_STUDENTS
+    .filter(s => s.gitee && s.gitee.ok)
+    .sort((a, b) => {
+    const da = (a.gitee && a.gitee.date) || '';
+    const db = (b.gitee && b.gitee.date) || '';
+    return db.localeCompare(da);
+    })
+    .slice(0, 8);
+    if (ok.length === 0) {
+    card.style.display = 'none';
+    return;
+    }
+    card.style.display = '';
+    const okAll = ALL_STUDENTS.filter(s => s.gitee && s.gitee.ok).length;
+    const totalG = ALL_STUDENTS.filter(s => s.gitee && (s.gitee.commit_count || 0) > 0)
+    .reduce((s, x) => s + (x.gitee.commit_count || 0), 0);
+    meta.textContent = `抓取成功 ${okAll} / ${ALL_STUDENTS.length} · 总 commit ${totalG}`;
+    grid.innerHTML = ok.map(s => {
+    const g = s.gitee;
+    const ownerRepo = `${g.owner}/${g.repo}`;
+    const shortMsg = (g.msg || '').slice(0, 36);
+    return `<div class="gitee-grid-item">
+    <div class="name">${escapeHtml(s.name)}</div>
+    <div class="repo"><a href="${escapeHtml(g.url)}" target="_blank" rel="noopener">${escapeHtml(ownerRepo)}</a></div>
+    <div class="stats">
+    <span>⭐ <strong>${g.stars || 0}</strong></span>
+    <span>🍴 <strong>${g.forks || 0}</strong></span>
+    <span>📦 commit <strong>${g.commit_count || 0}</strong></span>
+    <span class="gitee-date">${escapeHtml(fmtRel(g.date))}</span>
+    </div>
+    ${shortMsg ? `<div class="repo" style="margin-top:6px;">${escapeHtml(shortMsg)}</div>` : ''}
+    </div>`;
+    }).join('');
+    }
+
+    // v10: 相对时间
+    function fmtRel(iso) {
+    if (!iso) return '';
+    try {
+    const d = new Date(iso);
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return '刚刚';
+    if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
+    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)}天前`;
+    return iso.slice(0, 10);
+    } catch { return iso.slice(0, 10) || ''; }
+    }
+
+    // v10: 时间筛选 - 命中最近 N 天有 Gitee commit 或 CSDN 新文章的学生
+    function inTimeRange(s) {
+    if (TIME_RANGE === 'all') return true;
+    const days = Number(TIME_RANGE);
+    const cutoff = Date.now() - days * 86400 * 1000;
+    // 1) CSDN: posts 中 pubDate 在范围内, 或 last_update 在范围内
+    try {
+    const lu = LAST_UPDATE_ISO ? new Date(LAST_UPDATE_ISO).getTime() : 0;
+    if (lu >= cutoff) return true;
+    } catch {}
+    // 2) Gitee: gitee.date 在范围内
+    if (s.gitee && s.gitee.date) {
+    try {
+    const d = new Date(s.gitee.date).getTime();
+    if (d >= cutoff) return true;
+    } catch {}
+    }
+    return false;
     }
 
     function render() {
-      const search = document.getElementById('search').value.toLowerCase();
-      const sort = document.getElementById('sort').value;
-      const filter = document.getElementById('filter').value;
+    const search = document.getElementById('search').value.toLowerCase();
+    const sort = document.getElementById('sort').value;
+    const filter = document.getElementById('filter').value;
 
-      let list = ALL_STUDENTS.slice();
-      if (filter === 'active') list = list.filter(s => s.post_count > 0);
-      else if (filter === 'zero') list = list.filter(s => s.post_count === 0);
-      else if (filter === 'missing') list = list.filter(s => !s.csdn);
-      if (search) {
-        list = list.filter(s =>
-          s.name.toLowerCase().includes(search) ||
-          s.sid.includes(search)
-        );
-      }
-      // v6: 阅读量排序 - 无数据(null/0)排到最后
-      const viewsOf = (s) => (s.total_views != null && s.total_views > 0) ? s.total_views : 0;
-      const viewsKey = (s) => (s.total_views != null && s.total_views > 0) ? 0 : 1;
-      if (sort === 'views-desc') list.sort((a, b) => {
-        const ka = viewsKey(a), kb = viewsKey(b);
-        if (ka !== kb) return ka - kb; // 有数据的(0) 排前
-        return viewsOf(b) - viewsOf(a);
-      });
-      else if (sort === 'views-asc') list.sort((a, b) => {
-        const ka = viewsKey(a), kb = viewsKey(b);
-        if (ka !== kb) return ka - kb; // 有数据的(0) 排前
-        return viewsOf(a) - viewsOf(b);
-      });
-      else if (sort === 'posts-desc') list.sort((a, b) => b.post_count - a.post_count);
-      else if (sort === 'posts-asc') list.sort((a, b) => a.post_count - b.post_count);
-      else if (sort === 'name-asc') list.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-      else if (sort === 'sid-asc') list.sort((a, b) => a.sid.localeCompare(b.sid));
+    let list = ALL_STUDENTS.slice();
+    if (filter === 'active') list = list.filter(s => s.post_count > 0);
+    else if (filter === 'zero') list = list.filter(s => s.post_count === 0);
+    else if (filter === 'missing') list = list.filter(s => !s.csdn);
+    else if (filter === 'gitee-ok') list = list.filter(s => s.gitee && s.gitee.ok);
+    else if (filter === 'gitee-fail') list = list.filter(s => !(s.gitee && s.gitee.ok));
+    // v10: 时间筛选
+    if (TIME_RANGE !== 'all') list = list.filter(inTimeRange);
+    if (search) {
+    list = list.filter(s =>
+    s.name.toLowerCase().includes(search) ||
+    s.sid.includes(search)
+    );
+    }
+    // v6: 阅读量排序 - 无数据(null/0)排到最后
+    const viewsOf = (s) => (s.total_views != null && s.total_views > 0) ? s.total_views : 0;
+    const viewsKey = (s) => (s.total_views != null && s.total_views > 0) ? 0 : 1;
+    if (sort === 'views-desc') list.sort((a, b) => {
+    const ka = viewsKey(a), kb = viewsKey(b);
+    if (ka !== kb) return ka - kb; // 有数据的(0) 排前
+    return viewsOf(b) - viewsOf(a);
+    });
+    else if (sort === 'views-asc') list.sort((a, b) => {
+    const ka = viewsKey(a), kb = viewsKey(b);
+    if (ka !== kb) return ka - kb; // 有数据的(0) 排前
+    return viewsOf(a) - viewsOf(b);
+    });
+    else if (sort === 'posts-desc') list.sort((a, b) => b.post_count - a.post_count);
+    else if (sort === 'posts-asc') list.sort((a, b) => a.post_count - b.post_count);
+    else if (sort === 'gitee-commits-desc') list.sort((a, b) => {
+    const ca = (a.gitee && a.gitee.commit_count) || 0;
+    const cb = (b.gitee && b.gitee.commit_count) || 0;
+    return cb - ca;
+    });
+    else if (sort === 'gitee-stars-desc') list.sort((a, b) => {
+    const sa = (a.gitee && a.gitee.stars) || 0;
+    const sb = (b.gitee && b.gitee.stars) || 0;
+    return sb - sa;
+    });
+    else if (sort === 'gitee-fresh') list.sort((a, b) => {
+    const da = (a.gitee && a.gitee.date) || '';
+    const db = (b.gitee && b.gitee.date) || '';
+    return db.localeCompare(da);
+    });
+    else if (sort === 'name-asc') list.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    else if (sort === 'sid-asc') list.sort((a, b) => a.sid.localeCompare(b.sid));
 
-      const html = list.map((s, idx) => {
-        const postClass = s.post_count === 0 ? 'post-count zero' : 'post-count';
-        const handle = s.csdn_username ? `@${s.csdn_username}` : '无 CSDN';
-        const hasCsdn = !!s.csdn_url;
-        // v4.1: 卡片外层用 <div>(避免 <a> 嵌套 <a> 触发 HTML 解析器自动闭合)
-        // 主页跳转通过 onclick + data-href 实现,内部 <a> 仍可独立点击
-        const cardTag = 'div';
-        const cardAttrs = hasCsdn
-          ? `data-href="${escapeHtml(s.csdn_url)}" role="link" tabindex="0"`
-          : '';
-        const cardClass = hasCsdn ? 'student' : 'student no-csdn';
-        const rank = idx + 1;
-        const isNew = isNewlyPosted(s);
+    const html = list.map((s, idx) => {
+    const postClass = s.post_count === 0 ? 'post-count zero' : 'post-count';
+    const handle = s.csdn_username ? `@${s.csdn_username}` : '无 CSDN';
+    const hasCsdn = !!s.csdn_url;
+    // v4.1: 卡片外层用 <div>(避免 <a> 嵌套 <a> 触发 HTML 解析器自动闭合)
+    // 主页跳转通过 onclick + data-href 实现,内部 <a> 仍可独立点击
+    const cardTag = 'div';
+    const cardAttrs = hasCsdn
+    ? `data-href="${escapeHtml(s.csdn_url)}" role="link" tabindex="0"`
+    : '';
+    const cardClass = hasCsdn ? 'student' : 'student no-csdn';
+    const rank = idx + 1;
+    const isNew = isNewlyPosted(s);
 
-        // v4: 卡片下半部分 - 最新 3 篇小列表
-        let latestHtml;
-        if (!s.csdn) {
-          latestHtml = `<div class="latest-section"><div class="empty-latest">— 未配置 CSDN —</div></div>`;
-        } else if (!s.posts || s.posts.length === 0) {
-          latestHtml = `<div class="latest-section"><div class="empty-latest">— 暂无文章 —</div></div>`;
-        } else {
-          // 取最新 3 篇
-          const top3 = s.posts.slice(0, 3);
-          const total = s.posts.length;
-          const items = top3.map((p, i) => {
-            const title = (p.title || '(无标题)').trim();
-            const showTitle = title || extractGuidTitle(p.guid);
-            const newCls = (isNew && i === 0) ? 'latest-post-item is-new' : 'latest-post-item';
-            return `<li class="${newCls}">
-              <span class="idx">${i + 1}.</span>
-              <a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener"
-                 title="${escapeHtml(showTitle)}"
-                 onclick="event.stopPropagation();">${escapeHtml(showTitle)}</a>
-            </li>`;
-          }).join('');
-          const moreCount = Math.max(0, total - 3);
-          const moreHtml = moreCount > 0
-            ? `<li class="latest-post-item" style="justify-content:flex-end;"><span class="idx" style="flex:1;text-align:right;color:var(--stone);">+ ${moreCount} 篇更早</span></li>`
-            : '';
-          latestHtml = `
-            <div class="latest-section">
-              <div class="latest-section-header">
-                <span class="latest-section-label">最新文章</span>
-                <span class="latest-section-count">${total} / 共 ${total} 篇</span>
-              </div>
-              <ul class="latest-posts">${items}${moreHtml}</ul>
-            </div>
-          `;
-        }
+    // v4: 卡片下半部分 - 最新 3 篇小列表
+    let latestHtml;
+    if (!s.csdn) {
+    latestHtml = `<div class="latest-section"><div class="empty-latest">— 未配置 CSDN —</div></div>`;
+    } else if (!s.posts || s.posts.length === 0) {
+    latestHtml = `<div class="latest-section"><div class="empty-latest">— 暂无文章 —</div></div>`;
+    } else {
+    // 取最新 3 篇
+    const top3 = s.posts.slice(0, 3);
+    const total = s.posts.length;
+    const items = top3.map((p, i) => {
+    const title = (p.title || '(无标题)').trim();
+    const showTitle = title || extractGuidTitle(p.guid);
+    const newCls = (isNew && i === 0) ? 'latest-post-item is-new' : 'latest-post-item';
+    return `<li class="${newCls}">
+    <span class="idx">${i + 1}.</span>
+    <a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener"
+    title="${escapeHtml(showTitle)}"
+    onclick="event.stopPropagation();">${escapeHtml(showTitle)}</a>
+    </li>`;
+    }).join('');
+    const moreCount = Math.max(0, total - 3);
+    const moreHtml = moreCount > 0
+    ? `<li class="latest-post-item" style="justify-content:flex-end;"><span class="idx" style="flex:1;text-align:right;color:var(--stone);">+ ${moreCount} 篇更早</span></li>`
+    : '';
+    latestHtml = `
+    <div class="latest-section">
+    <div class="latest-section-header">
+    <span class="latest-section-label">最新文章</span>
+    <span class="latest-section-count">${total} / 共 ${total} 篇</span>
+    </div>
+    <ul class="latest-posts">${items}${moreHtml}</ul>
+    </div>
+    `;
+    }
 
-        const newBadgeHtml = isNew ? `<span class="new-badge">NEW</span>` : '';
+    const newBadgeHtml = isNew ? `<span class="new-badge">NEW</span>` : '';
 
-        // v6: 总统计 row - 仅阅读量
-        const statsRowHtml = renderStatsRow(s);
+    // v6: 总统计 row - 仅阅读量
+    const statsRowHtml = renderStatsRow(s);
 
-        return `
-          <${cardTag} class="${cardClass}" ${cardAttrs}>
-            <div class="student-rank">#${rank}</div>
-            <div class="student-head">
-              <div class="student-name">${escapeHtml(s.name)}</div>
-            </div>
-            <div class="student-meta">
-              <span class="${postClass}"><span class="num">${s.post_count}</span> 篇</span>
-              ${newBadgeHtml}
-              <span class="student-handle">${escapeHtml(handle)}</span>
-              ${hasCsdn ? '<span class="external-icon">↗ 主页</span>' : ''}
-            </div>
-            ${latestHtml}
-            ${statsRowHtml}
-          </${cardTag}>
-        `;
-      }).join('');
+    // v10: Gitee mini 行
+    const giteeMiniHtml = renderGiteeMini(s);
 
-      const target = document.getElementById('students');
-      target.innerHTML = html || '<div class="loading">无匹配学生</div>';
-      document.getElementById('count').textContent = `显示 ${list.length} / ${ALL_STUDENTS.length} 人`;
+    return `
+    <${cardTag} class="${cardClass}" ${cardAttrs}>
+    <div class="student-rank">#${rank}</div>
+    <div class="student-head">
+    <div class="student-name">${escapeHtml(s.name)}</div>
+    </div>
+    <div class="student-meta">
+    <span class="${postClass}"><span class="num">${s.post_count}</span> 篇</span>
+    ${newBadgeHtml}
+    <span class="student-handle">${escapeHtml(handle)}</span>
+    ${hasCsdn ? '<span class="external-icon">↗ 主页</span>' : ''}
+    </div>
+    ${latestHtml}
+    ${statsRowHtml}
+    ${giteeMiniHtml}
+    </${cardTag}>
+    `;
+    }).join('');
+
+    const target = document.getElementById('students');
+    target.innerHTML = html || '<div class="loading">无匹配学生</div>';
+    document.getElementById('count').textContent = `显示 ${list.length} / ${ALL_STUDENTS.length} 人`;
     }
 
     function extractGuidTitle(guid) {
-      if (!guid) return '(无标题)';
-      // 从 CSDN guid 提取 details/ 后的数字作为 ID
-      const m = guid.match(/details\/(\d+)/);
-      return m ? `#${m[1]}` : '(无标题)';
+    if (!guid) return '(无标题)';
+    // 从 CSDN guid 提取 details/ 后的数字作为 ID
+    const m = guid.match(/details\/(\d+)/);
+    return m ? `#${m[1]}` : '(无标题)';
     }
 
     function fmtNum(n) {
-      // 千分位: 1234 -> "1,234"
-      if (n == null) return '—';
-      const v = Number(n);
-      if (!Number.isFinite(v)) return '—';
-      return v.toLocaleString('en-US');
+    // 千分位: 1234 -> "1,234"
+    if (n == null) return '—';
+    const v = Number(n);
+    if (!Number.isFinite(v)) return '—';
+    return v.toLocaleString('en-US');
     }
 
     // v6: 总统计 row 渲染 - 仅显示阅读量(其他维度不可靠)
     function renderStatsRow(s) {
-      if (!s.csdn_url) {
-        // 缺 CSDN - 显示 "—"
-        return `<div class="stats-row" title="未配置 CSDN">
-          <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>无数据</span></span>
-        </div>`;
-      }
-      const tv = s.total_views;
-      const haveAny = tv != null && tv > 0;
-      if (!haveAny) {
-        // 有 CSDN 但阅读量为 0 - 可能是抓取失败或新博客
-        return `<div class="stats-row" title="尚无阅读量">
-          <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>暂无数据</span></span>
-        </div>`;
-      }
-      return `<div class="stats-row">
-        <span class="stats-item"><span class="ico">👁</span><span class="num">${fmtNum(tv)}</span><span>阅读</span></span>
-      </div>`;
+    if (!s.csdn_url) {
+    // 缺 CSDN - 显示 "—"
+    return `<div class="stats-row" title="未配置 CSDN">
+    <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>无数据</span></span>
+    </div>`;
+    }
+    const tv = s.total_views;
+    const haveAny = tv != null && tv > 0;
+    if (!haveAny) {
+    // 有 CSDN 但阅读量为 0 - 可能是抓取失败或新博客
+    return `<div class="stats-row" title="尚无阅读量">
+    <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>暂无数据</span></span>
+    </div>`;
+    }
+    return `<div class="stats-row">
+    <span class="stats-item"><span class="ico">👁</span><span class="num">${fmtNum(tv)}</span><span>阅读</span></span>
+    </div>`;
+    }
+
+    // v10: 单学生卡片底部 Gitee mini 行
+    function renderGiteeMini(s) {
+    const g = s.gitee;
+    if (!g || !g.url) {
+    // 没 Gitee URL (240110104 缺 - 但其实他也有, 看 watchlist)
+    return '';
+    }
+    if (g.ok) {
+    const ownerRepo = `${g.owner}/${g.repo}`;
+    return `<div class="gitee-mini" title="${escapeHtml(g.msg || '')}">
+    <a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(ownerRepo)}</a>
+    <span class="gitee-stat">⭐ <strong>${g.stars || 0}</strong></span>
+    <span class="gitee-stat">📦 <strong>${g.commit_count || 0}</strong></span>
+    ${g.sha ? `<span class="gitee-sha">${escapeHtml(g.sha)}</span>` : ''}
+    <span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(g.date))}</span>
+    </div>`;
+    }
+    return `<div class="gitee-mini" title="${escapeHtml(g.err || '抓取失败')}">
+    <a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(g.owner + '/' + g.repo)}</a>
+    <span class="gitee-fail">抓取失败</span>
+    </div>`;
     }
 
     function formatTime(iso) {
-      if (!iso) return '未知';
-      try {
-        const d = new Date(iso);
-        return d.toLocaleString('zh-CN', { hour12: false });
-      } catch { return iso; }
+    if (!iso) return '未知';
+    try {
+    const d = new Date(iso);
+    return d.toLocaleString('zh-CN', { hour12: false });
+    } catch { return iso; }
     }
 
     function escapeHtml(s) {
-      if (s == null) return '';
-      return String(s).replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[c]));
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
     }
 
     document.getElementById('search').addEventListener('input', render);
@@ -967,28 +1220,38 @@
     document.getElementById('refresh-btn').addEventListener('click', () => loadData());
     document.addEventListener('dblclick', () => loadData());
 
+    // v10: 时间筛选按钮事件
+    document.querySelectorAll('#time-filter button').forEach(btn => {
+    btn.addEventListener('click', () => {
+    document.querySelectorAll('#time-filter button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    TIME_RANGE = btn.dataset.range;
+    render();
+    });
+    });
+
     // v7: fetch_meta 折叠面板点击
     document.getElementById('fetch-meta-toggle').addEventListener('click', () => {
-      document.getElementById('fetch-meta-panel').classList.toggle('open');
+    document.getElementById('fetch-meta-panel').classList.toggle('open');
     });
 
     // v4.1: 卡片点击跳转(委托到 #students)
     // 内部 <a> 点击不触发(浏览器原生行为优先)
     document.getElementById('students').addEventListener('click', (e) => {
-      // 如果点中的是 <a> 链接,让浏览器处理
-      if (e.target.closest('a')) return;
-      const card = e.target.closest('.student[data-href]');
-      if (card) window.open(card.dataset.href, '_blank', 'noopener');
+    // 如果点中的是 <a> 链接,让浏览器处理
+    if (e.target.closest('a')) return;
+    const card = e.target.closest('.student[data-href]');
+    if (card) window.open(card.dataset.href, '_blank', 'noopener');
     });
     document.getElementById('students').addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      if (e.target.closest('a')) return;
-      const card = e.target.closest('.student[data-href]');
-      if (card) { e.preventDefault(); window.open(card.dataset.href, '_blank', 'noopener'); }
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.target.closest('a')) return;
+    const card = e.target.closest('.student[data-href]');
+    if (card) { e.preventDefault(); window.open(card.dataset.href, '_blank', 'noopener'); }
     });
 
     loadData();
     setInterval(loadData, 60000);
-  </script>
+</script>
 </body>
 </html>

@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN 班级分析 · 24-10 / 24-20 · v8</title>
+  <title>CSDN + Gitee 班级分析 · 24-10 / 24-20 · v10</title>
   <style>
     /* Ma: 仪表板 v8 - 班级分析页 (Kami 风格延续 index.html) */
     :root {
@@ -362,8 +362,9 @@
   <span class="brand">📚 CSDN 监控</span>
   <a class="tab" href="index.html">学生列表</a>
   <a class="tab active" href="analytics.html">班级分析</a>
-  <a class="tab" href="student.html?sid=240110103">个人详情</a>
-  <span class="ver">v8.0 · DASHBOARD-ANALYTICS</span>
+    <a class="tab" href="ranking.html">学生排名</a>
+    <a class="tab" href="student.html?sid=240110103">个人详情</a>
+  <span class="ver">v10.0 · DASHBOARD-ANALYTICS</span>
 </nav>
 
 <main>
@@ -394,6 +395,16 @@
       <div class="stat-label">互动总数</div>
       <div class="stat-value" id="stat-engage">—</div>
       <div class="stat-meta">点赞 + 评论 + 收藏</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Gitee 总 commit</div>
+      <div class="stat-value" id="stat-gitee-commits">—</div>
+      <div class="stat-meta" id="stat-gitee-commits-meta">所有仓库 commit 累计</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Gitee ⭐ / 🍴</div>
+      <div class="stat-value" id="stat-gitee-stars">—</div>
+      <div class="stat-meta" id="stat-gitee-stars-meta">star + fork 累计</div>
     </div>
   </section>
 
@@ -468,6 +479,38 @@
       <div class="empty" style="grid-column: 1 / -1;">加载中…</div>
     </div>
   </section>
+
+  <section class="section">
+    <div class="section-title">
+      <span>💾 Gitee commit TOP 10</span>
+      <span class="hint">按 commit 数降序 · 点击跳 Gitee 仓库</span>
+    </div>
+    <table class="top-table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th>姓名</th>
+          <th>仓库</th>
+          <th>commit</th>
+          <th>⭐ / 🍴</th>
+          <th>最后 commit</th>
+        </tr>
+      </thead>
+      <tbody id="gitee-top-body">
+        <tr><td colspan="6" class="empty" style="border:none;background:transparent;">加载中…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <span>🫧 Gitee × CSDN 活跃度散点</span>
+      <span class="hint">X=commit 数 · Y=阅读量 · hover 显示姓名</span>
+    </div>
+    <div class="scatter-wrap">
+      <svg class="scatter-svg" id="gitee-scatter" viewBox="0 0 760 280" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -519,6 +562,17 @@ function render() {
     : '暂无阅读量数据';
   document.getElementById('stat-engage').textContent = fmt(engage);
 
+  // v10: Gitee 班级统计
+  const gOk = stu.filter(s => s.gitee && s.gitee.ok);
+  const gTotalCommits = stu.reduce((s, x) => s + ((x.gitee && x.gitee.commit_count) || 0), 0);
+  const gTotalStars = stu.reduce((s, x) => s + ((x.gitee && x.gitee.stars) || 0), 0);
+  const gTotalForks = stu.reduce((s, x) => s + ((x.gitee && x.gitee.forks) || 0), 0);
+  document.getElementById('stat-gitee-commits').textContent = fmt(gTotalCommits);
+  document.getElementById('stat-gitee-commits-meta').textContent =
+    `${gOk.length} 仓库抓取成功`;
+  document.getElementById('stat-gitee-stars').textContent = `${fmt(gTotalStars)} / ${fmt(gTotalForks)}`;
+  document.getElementById('stat-gitee-stars-meta').textContent = `star · fork`;
+
   // TOP 10 by views
   const sorted = [...stu]
     .filter(x => (x.total_views || 0) > 0)
@@ -565,6 +619,7 @@ function render() {
 
   // Scatter
   renderScatter(stu);
+  renderGiteeScatter(stu);
 
   // Missing CSDN
   const missing = stu.filter(s => !s.csdn_username);
@@ -596,6 +651,37 @@ function render() {
         <div class="lbl">累计文章</div>
       </a>
     `).join('');
+  }
+
+  // v10: Gitee TOP 10 by commit count
+  const gTop = [...stu]
+    .filter(s => s.gitee && s.gitee.ok)
+    .sort((a, b) => {
+      const ca = (a.gitee && a.gitee.commit_count) || 0;
+      const cb = (b.gitee && b.gitee.commit_count) || 0;
+      if (ca !== cb) return cb - ca;
+      return ((b.gitee && b.gitee.stars) || 0) - ((a.gitee && a.gitee.stars) || 0);
+    })
+    .slice(0, 10);
+  const gtBody = document.getElementById('gitee-top-body');
+  if (gTop.length === 0) {
+    gtBody.innerHTML = '<tr><td colspan="6" class="empty" style="border:none;background:transparent;">暂无 Gitee 数据 — 等待下次抓取</td></tr>';
+  } else {
+    gtBody.innerHTML = gTop.map((s, i) => {
+      const g = s.gitee;
+      const rcls = i < 3 ? 'rank top' : 'rank';
+      const cls = i < 3 ? 'top3' : '';
+      const dateShort = g.date ? g.date.slice(5, 16).replace('T', ' ') : '—';
+      const shaShort = g.sha ? `<code style="font-size:10px;color:var(--brand);">${escapeHtml(g.sha)}</code>` : '—';
+      return `<tr class="${cls}" onclick="window.open('${escapeHtml(g.url)}','_blank','noopener')">
+        <td class="${rcls}">#${i + 1}</td>
+        <td><a href="student.html?sid=${encodeURIComponent(s.sid)}" style="color:var(--brand);text-decoration:none;" onclick="event.stopPropagation();">${escapeHtml(s.name)}</a></td>
+        <td><a href="${escapeHtml(g.url)}" target="_blank" rel="noopener" style="color:var(--olive);text-decoration:none;font-family:ui-monospace,monospace;font-size:11px;" onclick="event.stopPropagation();">${escapeHtml(g.owner + '/' + g.repo)}</a></td>
+        <td class="views">${fmt(g.commit_count || 0)}</td>
+        <td>⭐ ${fmt(g.stars || 0)} / 🍴 ${fmt(g.forks || 0)}</td>
+        <td>${dateShort} ${shaShort}</td>
+      </tr>`;
+    }).join('');
   }
 }
 
@@ -674,6 +760,91 @@ function renderScatter(stu) {
       tip.classList.add('show');
     });
     c.addEventListener('mouseleave', () => tip.classList.remove('show'));
+    c.addEventListener('click', () => location.href = `student.html?sid=${encodeURIComponent(c.dataset.sid)}`);
+  });
+}
+
+// v10: Gitee × CSDN 散点 (X=commit, Y=阅读)
+function renderGiteeScatter(stu) {
+  const svg = document.getElementById('gitee-scatter');
+  if (!svg) return;
+  const W = 760, H = 280, PAD = { l: 56, r: 16, t: 14, b: 36 };
+  const pts = stu.filter(s => (s.gitee && s.gitee.ok) || (s.total_views || 0) > 0);
+  if (pts.length === 0) {
+    svg.innerHTML = '<text x="' + W / 2 + '" y="' + H / 2 + '" text-anchor="middle" fill="var(--stone)" font-size="13">暂无数据</text>';
+    return;
+  }
+  const maxX = Math.max(5, ...pts.map(p => (p.gitee && p.gitee.commit_count) || 0));
+  const maxY = Math.max(100, ...pts.map(p => p.total_views || 0));
+  const xScale = v => PAD.l + (v / maxX) * (W - PAD.l - PAD.r);
+  const yScale = v => H - PAD.b - (v / maxY) * (H - PAD.t - PAD.b);
+  const colorFor = v => {
+    const t = Math.min(1, v / Math.max(maxY, 1));
+    const palette = ['#E4ECF5', '#C5D4E8', '#9DB7D4', '#5C7DA6', '#1B365D'];
+    return palette[Math.min(palette.length - 1, Math.floor(t * palette.length))];
+  };
+
+  let g = '';
+  // grid
+  g += '<g class="grid">';
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD.t + (H - PAD.t - PAD.b) * (i / 4);
+    g += `<line x1="${PAD.l}" y1="${y}" x2="${W - PAD.r}" y2="${y}" />`;
+  }
+  g += '</g>';
+  // axes
+  g += `<line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${H - PAD.b}" stroke="#999"/>`;
+  g += `<line x1="${PAD.l}" y1="${H - PAD.b}" x2="${W - PAD.r}" y2="${H - PAD.b}" stroke="#999"/>`;
+  // X ticks
+  const xSteps = Math.min(maxX, 5);
+  for (let i = 0; i <= xSteps; i++) {
+    const v = Math.round((maxX / xSteps) * i);
+    const x = xScale(v);
+    g += `<text x="${x}" y="${H - PAD.b + 16}" text-anchor="middle" fill="var(--stone)" font-size="10">${v}</text>`;
+  }
+  // Y ticks
+  for (let i = 0; i <= 4; i++) {
+    const yv = Math.round(maxY * (i / 4));
+    const y = yScale(yv);
+    g += `<text x="${PAD.l - 8}" y="${y + 3}" text-anchor="end" fill="var(--stone)" font-size="10">${fmt(yv)}</text>`;
+  }
+  // axis labels
+  g += `<text class="axis-label" x="${W / 2}" y="${H - 4}" text-anchor="middle">Gitee commit 数</text>`;
+  g += `<text class="axis-label" x="14" y="${PAD.t + 6}" text-anchor="start">CSDN 阅读量</text>`;
+  // points
+  for (const s of pts) {
+    const cc = (s.gitee && s.gitee.commit_count) || 0;
+    const tv = s.total_views || 0;
+    const x = xScale(cc);
+    const y = yScale(tv);
+    const c = colorFor(tv);
+    const nm = (s.name || '').replace(/'/g, '&#39;');
+    g += `<circle class="pt" cx="${x}" cy="${y}" r="6" fill="${c}"
+      data-nm="${nm}" data-c="${cc}" data-v="${tv}" data-sid="${s.sid}"/>`;
+  }
+  svg.innerHTML = g;
+
+  // hover tooltip (reuse if exists)
+  let tip = document.getElementById('gitee-scatter-tip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'gitee-scatter-tip';
+    tip.style.cssText = 'position:absolute;background:var(--brand);color:var(--ivory);padding:6px 10px;border-radius:2px;font-size:12px;pointer-events:none;opacity:0;transition:opacity 0.15s;font-family:ui-monospace,monospace;z-index:50;';
+    svg.parentElement.style.position = 'relative';
+    svg.parentElement.appendChild(tip);
+  }
+  const wrap = svg.parentElement;
+  svg.querySelectorAll('circle.pt').forEach(c => {
+    c.addEventListener('mouseenter', () => {
+      const r = c.getBoundingClientRect();
+      const wr = wrap.getBoundingClientRect();
+      tip.innerHTML = `<strong>${c.dataset.nm}</strong><br>📦 ${c.dataset.c} commit · 👁 ${fmt(Number(c.dataset.v))}`;
+      tip.style.left = (r.left - wr.left + r.width / 2) + 'px';
+      tip.style.top = (r.top - wr.top - 8) + 'px';
+      tip.style.transform = 'translate(-50%, -100%)';
+      tip.style.opacity = '1';
+    });
+    c.addEventListener('mouseleave', () => tip.style.opacity = '0');
     c.addEventListener('click', () => location.href = `student.html?sid=${encodeURIComponent(c.dataset.sid)}`);
   });
 }
