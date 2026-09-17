@@ -34,3 +34,6 @@ credentials/
 .env
 .env.local
 secrets/
+
+.vercel
+.env*

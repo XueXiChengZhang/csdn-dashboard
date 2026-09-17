@@ -1,0 +1,14 @@
+history-test/
+history-real/
+*.bak-*
+.vercelignore
+.vercel/
+.git/
+.gitignore
+.openclaw/
+credentials/
+*.env
+.env*
+__pycache__/
+deploy.sh
+deploy.ps1
