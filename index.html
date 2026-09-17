@@ -640,9 +640,16 @@
       const btn = document.getElementById('refresh-btn');
       if (btn) { btn.disabled = true; btn.textContent = '⏳ 刷新中...'; }
       try {
-        // v4: 加时间戳 + 强制 no-store 防缓存
-        const url = 'data.json?t=' + Date.now();
-        const resp = await fetch(url, { cache: 'no-store' });
+        // Ma v9: 加时间戳 + 随机数 + headers,解决 GitHub Pages CDN 缓存
+        const url = 'data.json?t=' + Date.now() + '&r=' + Math.random().toString(36).slice(2, 8);
+        const resp = await fetch(url, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
         LAST_UPDATE_ISO = data.last_update;
