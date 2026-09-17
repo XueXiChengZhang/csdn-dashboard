@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>CSDN 班级分析 · 24-10 / 24-20 · v8</title>
+  <style>
+    /* Ma: 仪表板 v8 - 班级分析页 (Kami 风格延续 index.html) */
+    :root {
+      --parchment: #f5f4ed;
+      --ivory: #faf9f5;
+      --near-black: #141413;
+      --dark-warm: #3d3d3a;
+      --olive: #504e49;
+      --stone: #6b6a64;
+      --brand: #1B365D;
+      --brand-soft: #E4ECF5;
+      --brand-deeper: #0e223d;
+      --accent: #c44d36;
+      --accent-soft: #faf3ee;
+      --gold: #c89b3c;
+      --gold-soft: #f4ebd2;
+      --border: #e8e6dc;
+      --border-soft: #e5e3d8;
+      --warn-bg: #fff7e0;
+      --warn-border: #e9c772;
+      --warn-fg: #8b6914;
+      --shadow: 0 1px 0 rgba(0,0,0,0.02);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--parchment);
+      color: var(--near-black);
+      font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
+      line-height: 1.6;
+      padding: 0 0 60px 0;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    /* Ma: v8 顶导航条 (3 页通用) */
+    .topnav {
+      background: var(--ivory);
+      border-bottom: 0.6pt solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(6px);
+    }
+    .topnav .brand {
+      font-weight: 600;
+      color: var(--brand);
+      margin-right: 12px;
+      letter-spacing: 0.02em;
+    }
+    .topnav a.tab {
+      color: var(--olive);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 2px;
+      border: 0.6pt solid transparent;
+      transition: all 0.15s;
+      font-variant-numeric: tabular-nums;
+    }
+    .topnav a.tab:hover {
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+    .topnav a.tab.active {
+      background: var(--brand);
+      color: var(--ivory);
+      border-color: var(--brand);
+    }
+    .topnav .ver {
+      margin-left: auto;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: var(--stone);
+      letter-spacing: 0.04em;
+    }
+
+    main { padding: 28px 24px 0 24px; }
+
+    .header {
+      border-bottom: 0.6pt solid var(--border);
+      padding-bottom: 18px;
+      margin-bottom: 26px;
+    }
+    .eyebrow {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone);
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 30px;
+      font-weight: 600;
+      color: var(--near-black);
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 15px;
+      color: var(--olive);
+    }
+    .meta {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--stone);
+    }
+    .meta strong { color: var(--brand); }
+
+    /* 4 stat */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+    .stat {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      padding: 18px 22px;
+      border-radius: 2px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--stone);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 30px;
+      font-weight: 600;
+      color: var(--brand);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-meta { font-size: 12px; color: var(--olive); margin-top: 8px; }
+
+    /* section */
+    .section {
+      margin-bottom: 36px;
+    }
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--near-black);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 0.6pt solid var(--border);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .section-title .hint {
+      font-size: 12px;
+      color: var(--stone);
+      font-weight: 400;
+    }
+
+    /* TOP 10 表格 */
+    table.top-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .top-table th, .top-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 0.6pt solid var(--border-soft);
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+    .top-table th {
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .top-table tbody tr {
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .top-table tbody tr:hover { background: var(--accent-soft); }
+    .top-table tbody tr.top3 td:first-child {
+      border-left: 3px solid var(--gold);
+    }
+    .top-table tbody tr.top3 {
+      background: linear-gradient(90deg, rgba(200,155,60,0.04) 0%, transparent 100%);
+    }
+    .top-table tbody tr:last-child td { border-bottom: none; }
+    .top-table .rank {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      color: var(--stone);
+      width: 50px;
+    }
+    .top-table .rank.top { color: var(--gold); font-weight: 700; }
+    .top-table td.views { color: var(--brand); font-weight: 600; }
+
+    /* histogram */
+    .hist {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .hist-bar {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .hist-bar .lbl { font-size: 12px; color: var(--stone); text-transform: uppercase; letter-spacing: 0.06em; }
+    .hist-bar .count { font-size: 28px; font-weight: 600; color: var(--brand); margin: 6px 0 2px 0; font-variant-numeric: tabular-nums; }
+    .hist-bar .pct { font-size: 11px; color: var(--olive); margin-bottom: 10px; }
+    .hist-bar .track {
+      flex: 1;
+      background: var(--border-soft);
+      height: 8px;
+      border-radius: 1px;
+      overflow: hidden;
+      position: relative;
+    }
+    .hist-bar .fill {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      background: linear-gradient(90deg, var(--brand), var(--brand-deeper));
+      border-radius: 1px;
+      transition: width 0.4s;
+    }
+
+    /* scatter */
+    .scatter-wrap {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 18px;
+      position: relative;
+    }
+    .scatter-svg { width: 100%; height: 360px; display: block; }
+    .scatter-svg .axis line { stroke: var(--border); stroke-width: 0.6; }
+    .scatter-svg .axis text { fill: var(--stone); font-size: 10px; font-family: ui-monospace, monospace; }
+    .scatter-svg .grid line { stroke: var(--border-soft); stroke-width: 0.4; stroke-dasharray: 2 3; }
+    .scatter-svg circle.pt { cursor: pointer; transition: r 0.15s; }
+    .scatter-svg circle.pt:hover { stroke: var(--near-black); stroke-width: 1.5; }
+    .scatter-svg .axis-label { fill: var(--olive); font-size: 11px; }
+    .scatter-tip {
+      position: absolute;
+      background: var(--near-black);
+      color: var(--ivory);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 2px;
+      pointer-events: none;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translate(-50%, -110%);
+      transition: opacity 0.12s;
+      z-index: 10;
+      font-variant-numeric: tabular-nums;
+    }
+    .scatter-tip.show { opacity: 1; }
+    .scatter-legend {
+      margin-top: 10px;
+      display: flex;
+      gap: 14px;
+      font-size: 11px;
+      color: var(--stone);
+      flex-wrap: wrap;
+    }
+    .scatter-legend .swatch {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+
+    /* warn box */
+    .warn {
+      background: var(--warn-bg);
+      border-left: 3px solid var(--warn-border);
+      padding: 14px 18px;
+      border-radius: 2px;
+      color: var(--warn-fg);
+      font-size: 14px;
+    }
+    .warn strong { color: #6b4f10; }
+    .warn ul { margin: 6px 0 0 18px; }
+    .warn li { padding: 2px 0; }
+
+    /* fastest posters - cards */
+    .fast-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .fast-card {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .fast-card:hover { border-color: var(--brand); transform: translateY(-1px); }
+    .fast-card .rank {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+    }
+    .fast-card .nm { font-size: 16px; font-weight: 600; margin: 4px 0; }
+    .fast-card .sid { font-size: 11px; color: var(--stone); font-variant-numeric: tabular-nums; }
+    .fast-card .num { font-size: 22px; color: var(--brand); font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 6px; }
+    .fast-card .lbl { font-size: 10px; color: var(--olive); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .empty {
+      background: var(--ivory);
+      border: 0.6pt dashed var(--border);
+      padding: 32px;
+      text-align: center;
+      color: var(--stone);
+      border-radius: 2px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 720px) {
+      .topnav { padding: 12px 16px; }
+      main { padding: 20px 16px 0 16px; }
+      h1 { font-size: 24px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .hist { grid-template-columns: repeat(2, 1fr); }
+      .top-table { font-size: 12px; }
+      .top-table th, .top-table td { padding: 8px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="brand">📚 CSDN 监控</span>
+  <a class="tab" href="index.html">学生列表</a>
+  <a class="tab active" href="analytics.html">班级分析</a>
+  <a class="tab" href="student.html?sid=240110103">个人详情</a>
+  <span class="ver">v8.0 · DASHBOARD-ANALYTICS</span>
+</nav>
+
+<main>
+  <div class="header">
+    <div class="eyebrow">CSDN 班级分析</div>
+    <h1>软件 24-10 / 24-20 · 班级数据画像</h1>
+    <div class="subtitle">31 名学生 · 阅读量分布 · 发文活跃度 · TOP 榜</div>
+    <div class="meta">最近抓取 · <strong id="last-update">加载中...</strong></div>
+  </div>
+
+  <section class="stats">
+    <div class="stat">
+      <div class="stat-label">总学生</div>
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-meta" id="stat-total-meta">软件 24-10 / 24-20</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">累计文章</div>
+      <div class="stat-value" id="stat-posts">—</div>
+      <div class="stat-meta">所有博客汇总</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">平均阅读</div>
+      <div class="stat-value" id="stat-avg-views">—</div>
+      <div class="stat-meta" id="stat-avg-views-meta">有阅读量学生人均</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">互动总数</div>
+      <div class="stat-value" id="stat-engage">—</div>
+      <div class="stat-meta">点赞 + 评论 + 收藏</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <span>🏆 阅读量 TOP 10 学生</span>
+      <span class="hint">按 total_views 降序 · 点击行跳个人页</span>
+    </div>
+    <table class="top-table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th>姓名</th>
+          <th>学号</th>
+          <th>文章数</th>
+          <th>总阅读</th>
+          <th>平均阅读/篇</th>
+        </tr>
+      </thead>
+      <tbody id="top10-body">
+        <tr><td colspan="6" class="empty" style="border:none;background:transparent;">加载中…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <span>📊 阅读量分布</span>
+      <span class="hint">4 区间 · 0 / 1-100 / 100-1K / 1K+</span>
+    </div>
+    <div class="hist" id="hist">
+      <div class="hist-bar"><div class="lbl">0 阅读</div><div class="count">—</div><div class="pct">—</div><div class="track"><div class="fill"></div></div></div>
+      <div class="hist-bar"><div class="lbl">1-100</div><div class="count">—</div><div class="pct">—</div><div class="track"><div class="fill"></div></div></div>
+      <div class="hist-bar"><div class="lbl">100-1K</div><div class="count">—</div><div class="pct">—</div><div class="track"><div class="fill"></div></div></div>
+      <div class="hist-bar"><div class="lbl">1K+</div><div class="count">—</div><div class="pct">—</div><div class="track"><div class="fill"></div></div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <span>🫧 文章活跃度散点</span>
+      <span class="hint">X=文章数 · Y=阅读量 · hover 显示姓名</span>
+    </div>
+    <div class="scatter-wrap">
+      <svg class="scatter-svg" id="scatter" viewBox="0 0 800 360" preserveAspectRatio="none"></svg>
+      <div class="scatter-tip" id="scatter-tip"></div>
+      <div class="scatter-legend">
+        <span><span class="swatch" style="background:#E4ECF5;"></span>低</span>
+        <span><span class="swatch" style="background:#9DB7D4;"></span></span>
+        <span><span class="swatch" style="background:#5C7DA6;"></span></span>
+        <span><span class="swatch" style="background:#2F4F7A;"></span></span>
+        <span><span class="swatch" style="background:#1B365D;"></span>高阅读量</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <span>⚠️ 缺 CSDN 学生</span>
+      <span class="hint">未配置 CSDN 博客 / 抓取失败</span>
+    </div>
+    <div id="warn-box">
+      <div class="empty">加载中…</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <span>🚀 最快发文人 TOP 5</span>
+      <span class="hint">按 post_count 降序</span>
+    </div>
+    <div class="fast-cards" id="fast-cards">
+      <div class="empty" style="grid-column: 1 / -1;">加载中…</div>
+    </div>
+  </section>
+</main>
+
+<script>
+// Ma: 仪表板 v8 - 班级分析页
+const VERSION = 'v8.0-analytics';
+let DATA = null;
+
+async function loadData() {
+  try {
+    const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
+    DATA = await r.json();
+    render();
+  } catch (e) {
+    console.error('loadData failed', e);
+    document.getElementById('last-update').textContent = '加载失败 ' + e.message;
+  }
+}
+
+function fmt(n) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('en-US');
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+}
+
+function render() {
+  if (!DATA) return;
+  const stu = DATA.students || [];
+  document.getElementById('last-update').textContent = DATA.last_update || '—';
+
+  // Stats
+  const totalPosts = stu.reduce((s, x) => s + (x.post_count || 0), 0);
+  const withViews = stu.filter(x => (x.total_views || 0) > 0);
+  const avgViews = withViews.length
+    ? Math.round(withViews.reduce((s, x) => s + x.total_views, 0) / withViews.length)
+    : 0;
+  const engage = stu.reduce((s, x) =>
+    s + (x.total_likes || 0) + (x.total_comments || 0) + (x.total_collections || 0), 0);
+
+  document.getElementById('stat-total').textContent = stu.length;
+  document.getElementById('stat-total-meta').textContent = `${withViews.length} 人有阅读数据`;
+  document.getElementById('stat-posts').textContent = fmt(totalPosts);
+  document.getElementById('stat-avg-views').textContent = fmt(avgViews);
+  document.getElementById('stat-avg-views-meta').textContent = withViews.length
+    ? `${withViews.length} 名学生人均`
+    : '暂无阅读量数据';
+  document.getElementById('stat-engage').textContent = fmt(engage);
+
+  // TOP 10 by views
+  const sorted = [...stu]
+    .filter(x => (x.total_views || 0) > 0)
+    .sort((a, b) => (b.total_views || 0) - (a.total_views || 0));
+  const top10 = sorted.slice(0, 10);
+
+  const tbody = document.getElementById('top10-body');
+  if (top10.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty" style="border:none;background:transparent;">暂无阅读量数据 · 等待下一次抓取</td></tr>';
+  } else {
+    tbody.innerHTML = top10.map((s, i) => {
+      const avg = s.post_count ? Math.round((s.total_views || 0) / s.post_count) : 0;
+      const cls = i < 3 ? 'top3' : '';
+      const rcls = i < 3 ? 'rank top' : 'rank';
+      return `<tr class="${cls}" onclick="location.href='student.html?sid=${encodeURIComponent(s.sid)}'">
+        <td class="${rcls}">#${i + 1}</td>
+        <td>${escapeHtml(s.name)}</td>
+        <td>${escapeHtml(s.sid)}</td>
+        <td>${s.post_count || 0}</td>
+        <td class="views">${fmt(s.total_views)}</td>
+        <td>${fmt(avg)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Histogram
+  const bins = [0, 0, 0, 0];
+  for (const s of stu) {
+    const v = s.total_views || 0;
+    if (v === 0) bins[0]++;
+    else if (v < 100) bins[1]++;
+    else if (v < 1000) bins[2]++;
+    else bins[3]++;
+  }
+  const maxBin = Math.max(...bins, 1);
+  const histLabels = ['0 阅读', '1-100', '100-1K', '1K+'];
+  const histEls = document.querySelectorAll('#hist .hist-bar');
+  histEls.forEach((el, i) => {
+    el.querySelector('.count').textContent = fmt(bins[i]);
+    el.querySelector('.pct').textContent = stu.length
+      ? `${Math.round(bins[i] / stu.length * 100)}% · ${bins[i]}人`
+      : '—';
+    el.querySelector('.fill').style.width = `${(bins[i] / maxBin) * 100}%`;
+  });
+
+  // Scatter
+  renderScatter(stu);
+
+  // Missing CSDN
+  const missing = stu.filter(s => !s.csdn_username);
+  const warnBox = document.getElementById('warn-box');
+  if (missing.length === 0) {
+    warnBox.innerHTML = '<div class="empty">✅ 全部 31 名学生都已配置 CSDN 博客</div>';
+  } else {
+    const list = missing.map(s =>
+      `<li><strong>${escapeHtml(s.name)}</strong> · ${escapeHtml(s.sid)} · 暂无 CSDN 账号</li>`
+    ).join('');
+    warnBox.innerHTML = `<div class="warn">
+      <strong>⚠️ ${missing.length} 名学生缺 CSDN 博客</strong>
+      <ul>${list}</ul>
+    </div>`;
+  }
+
+  // Fastest posters
+  const byPost = [...stu].sort((a, b) => (b.post_count || 0) - (a.post_count || 0)).slice(0, 5);
+  const fc = document.getElementById('fast-cards');
+  if (byPost.filter(x => (x.post_count || 0) > 0).length === 0) {
+    fc.innerHTML = '<div class="empty" style="grid-column: 1 / -1;">暂无发文数据</div>';
+  } else {
+    fc.innerHTML = byPost.map((s, i) => `
+      <a class="fast-card" href="student.html?sid=${encodeURIComponent(s.sid)}">
+        <div class="rank">RANK · #${i + 1}</div>
+        <div class="nm">${escapeHtml(s.name)}</div>
+        <div class="sid">${escapeHtml(s.sid)} · @${escapeHtml(s.csdn_username || '—')}</div>
+        <div class="num">${s.post_count || 0}</div>
+        <div class="lbl">累计文章</div>
+      </a>
+    `).join('');
+  }
+}
+
+function renderScatter(stu) {
+  const svg = document.getElementById('scatter');
+  const W = 800, H = 360, PAD = { l: 50, r: 16, t: 14, b: 36 };
+  const pts = stu.filter(s => (s.post_count || 0) > 0 || (s.total_views || 0) > 0);
+  const maxX = Math.max(4, ...pts.map(p => p.post_count || 0));
+  const maxY = Math.max(100, ...pts.map(p => p.total_views || 0));
+
+  const xScale = v => PAD.l + (v / maxX) * (W - PAD.l - PAD.r);
+  const yScale = v => H - PAD.b - (v / maxY) * (H - PAD.t - PAD.b);
+
+  const colorFor = v => {
+    if (!maxY) return '#E4ECF5';
+    const t = Math.min(1, v / Math.max(maxY, 1));
+    // 浅黄 -> 深蓝 (5 档)
+    const palette = ['#E4ECF5', '#C5D4E8', '#9DB7D4', '#5C7DA6', '#1B365D'];
+    const idx = Math.min(palette.length - 1, Math.floor(t * palette.length));
+    return palette[idx];
+  };
+
+  let g = '';
+  // grid
+  g += '<g class="grid">';
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD.t + (H - PAD.t - PAD.b) * (i / 4);
+    g += `<line x1="${PAD.l}" y1="${y}" x2="${W - PAD.r}" y2="${y}" />`;
+  }
+  g += '</g>';
+
+  // axes
+  g += '<g class="axis">';
+  g += `<line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${H - PAD.b}" />`;
+  g += `<line x1="${PAD.l}" y1="${H - PAD.b}" x2="${W - PAD.r}" y2="${H - PAD.b}" />`;
+  // X ticks
+  for (let i = 0; i <= maxX; i++) {
+    const x = xScale(i);
+    g += `<line x1="${x}" y1="${H - PAD.b}" x2="${x}" y2="${H - PAD.b + 4}" stroke="#999"/>`;
+    g += `<text x="${x}" y="${H - PAD.b + 16}" text-anchor="middle">${i}</text>`;
+  }
+  // Y ticks (4)
+  for (let i = 0; i <= 4; i++) {
+    const yv = Math.round(maxY * (i / 4));
+    const y = yScale(yv);
+    g += `<line x1="${PAD.l - 4}" y1="${y}" x2="${PAD.l}" y2="${y}" stroke="#999"/>`;
+    g += `<text x="${PAD.l - 8}" y="${y + 3}" text-anchor="end">${fmt(yv)}</text>`;
+  }
+  g += '</g>';
+
+  // axis labels
+  g += `<text class="axis-label" x="${W / 2}" y="${H - 4}" text-anchor="middle">文章数</text>`;
+  g += `<text class="axis-label" x="${14}" y="${PAD.t + 6}" text-anchor="start">阅读量</text>`;
+
+  // points
+  for (const s of pts) {
+    const x = xScale(s.post_count || 0);
+    const y = yScale(s.total_views || 0);
+    const c = colorFor(s.total_views || 0);
+    const nm = (s.name || '').replace(/'/g, '&#39;');
+    g += `<circle class="pt" cx="${x}" cy="${y}" r="6" fill="${c}"
+            data-nm="${nm}" data-v="${s.total_views || 0}" data-p="${s.post_count || 0}" data-sid="${s.sid}"/>`;
+  }
+  svg.innerHTML = g;
+
+  // hover tooltip
+  const tip = document.getElementById('scatter-tip');
+  const wrap = svg.parentElement;
+  svg.querySelectorAll('circle.pt').forEach(c => {
+    c.addEventListener('mouseenter', (e) => {
+      const r = c.getBoundingClientRect();
+      const wr = wrap.getBoundingClientRect();
+      tip.textContent = `${c.dataset.nm} · 阅读 ${fmt(c.dataset.v)} · 文章 ${c.dataset.p}`;
+      tip.style.left = (r.left - wr.left + r.width / 2) + 'px';
+      tip.style.top = (r.top - wr.top) + 'px';
+      tip.classList.add('show');
+    });
+    c.addEventListener('mouseleave', () => tip.classList.remove('show'));
+    c.addEventListener('click', () => location.href = `student.html?sid=${encodeURIComponent(c.dataset.sid)}`);
+  });
+}
+
+loadData();
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>

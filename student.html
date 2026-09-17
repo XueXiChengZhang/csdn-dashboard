@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>CSDN 个人详情 · v8</title>
+  <style>
+    /* Ma: v8 - 个人详情页 (Kami 风格) */
+    :root {
+      --parchment: #f5f4ed;
+      --ivory: #faf9f5;
+      --near-black: #141413;
+      --dark-warm: #3d3d3a;
+      --olive: #504e49;
+      --stone: #6b6a64;
+      --brand: #1B365D;
+      --brand-soft: #E4ECF5;
+      --brand-deeper: #0e223d;
+      --accent: #c44d36;
+      --accent-soft: #faf3ee;
+      --border: #e8e6dc;
+      --border-soft: #e5e3d8;
+      --warn-bg: #fff7e0;
+      --warn-border: #e9c772;
+      --warn-fg: #8b6914;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--parchment);
+      color: var(--near-black);
+      font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
+      line-height: 1.6;
+      padding: 0 0 60px 0;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    /* nav */
+    .topnav {
+      background: var(--ivory);
+      border-bottom: 0.6pt solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(6px);
+    }
+    .topnav .brand { font-weight: 600; color: var(--brand); margin-right: 12px; }
+    .topnav a.tab {
+      color: var(--olive);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 2px;
+      border: 0.6pt solid transparent;
+      transition: all 0.15s;
+    }
+    .topnav a.tab:hover { background: var(--brand-soft); color: var(--brand); }
+    .topnav a.tab.active {
+      background: var(--brand);
+      color: var(--ivory);
+      border-color: var(--brand);
+    }
+    .topnav .ver {
+      margin-left: auto;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--stone);
+      letter-spacing: 0.04em;
+    }
+
+    main { padding: 28px 24px 0 24px; }
+
+    /* 头部 */
+    .student-head {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 4px;
+      padding: 24px 28px;
+      display: flex;
+      gap: 22px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    .avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-deeper) 100%);
+      color: var(--ivory);
+      font-size: 32px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      letter-spacing: 0.02em;
+    }
+    .head-info { flex: 1 1 280px; min-width: 0; }
+    .head-info h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .head-info .sid { font-size: 14px; color: var(--stone); font-variant-numeric: tabular-nums; margin-bottom: 10px; }
+    .head-info .meta-line {
+      font-size: 13px;
+      color: var(--olive);
+      margin-bottom: 4px;
+    }
+    .head-info .meta-line code {
+      font-family: ui-monospace, monospace;
+      background: var(--brand-soft);
+      color: var(--brand);
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-size: 12px;
+    }
+    .head-cta {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .btn-csdn {
+      display: inline-block;
+      background: var(--brand);
+      color: var(--ivory);
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 2px;
+      font-size: 14px;
+      transition: background 0.15s;
+      border: 0.6pt solid var(--brand);
+    }
+    .btn-csdn:hover { background: var(--brand-deeper); }
+    .btn-csdn[disabled] { background: var(--stone); border-color: var(--stone); cursor: not-allowed; }
+    .head-stats {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .head-stat { font-size: 13px; color: var(--olive); }
+    .head-stat strong {
+      display: block;
+      font-size: 22px;
+      color: var(--brand);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* section */
+    .section { margin-bottom: 32px; }
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 0.6pt solid var(--border);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .section-title .hint { font-size: 12px; color: var(--stone); font-weight: 400; }
+
+    /* 时间轴 SVG */
+    .trend-wrap {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 18px;
+    }
+    .trend-svg { width: 100%; height: 200px; display: block; }
+    .trend-svg .axis line { stroke: var(--border); stroke-width: 0.6; }
+    .trend-svg .axis text { fill: var(--stone); font-size: 10px; font-family: ui-monospace, monospace; }
+    .trend-svg .grid line { stroke: var(--border-soft); stroke-width: 0.4; stroke-dasharray: 2 3; }
+    .trend-svg .line { fill: none; stroke: var(--brand); stroke-width: 2; }
+    .trend-svg .area { fill: rgba(27, 54, 93, 0.08); }
+    .trend-svg .pt { fill: var(--brand); }
+    .trend-svg .pt-label { fill: var(--near-black); font-size: 10px; font-family: ui-monospace, monospace; }
+    .trend-empty {
+      background: var(--accent-soft);
+      border-left: 3px solid var(--accent);
+      padding: 14px 18px;
+      border-radius: 2px;
+      color: var(--accent);
+      font-size: 13px;
+    }
+    .trend-empty strong { color: var(--near-black); }
+
+    /* heatmap */
+    .heat-wrap {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      padding: 18px;
+      overflow-x: auto;
+    }
+    .heat-grid {
+      display: grid;
+      grid-template-rows: repeat(7, 1fr);
+      grid-auto-flow: column;
+      grid-auto-columns: 14px;
+      gap: 3px;
+      margin: 10px 0 6px 24px;
+    }
+    .heat-cell {
+      width: 14px; height: 14px;
+      background: var(--border-soft);
+      border-radius: 2px;
+      cursor: default;
+      transition: all 0.12s;
+    }
+    .heat-cell:hover { outline: 1.5px solid var(--near-black); }
+    .heat-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--stone);
+      margin-top: 6px;
+      font-family: ui-monospace, monospace;
+    }
+    .heat-week {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      margin-right: 4px;
+      font-size: 9px;
+      color: var(--stone);
+      font-family: ui-monospace, monospace;
+    }
+    .heat-meta {
+      display: flex;
+      gap: 14px;
+      font-size: 11px;
+      color: var(--stone);
+      margin-top: 8px;
+      align-items: center;
+    }
+    .heat-meta .swatch {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+
+    /* 文章表格 */
+    table.posts {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+    table.posts th, table.posts td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 0.6pt solid var(--border-soft);
+    }
+    table.posts th {
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    table.posts tr:last-child td { border-bottom: none; }
+    table.posts .ttl a {
+      color: var(--brand);
+      text-decoration: none;
+    }
+    table.posts .ttl a:hover { text-decoration: underline; }
+    table.posts .num { font-variant-numeric: tabular-nums; text-align: right; color: var(--olive); }
+    table.posts .num.read { color: var(--brand); font-weight: 600; }
+    table.posts .ts { font-family: ui-monospace, monospace; font-size: 11px; color: var(--stone); }
+    .empty-state {
+      background: var(--ivory);
+      border: 0.6pt dashed var(--border);
+      padding: 32px;
+      text-align: center;
+      color: var(--stone);
+      border-radius: 2px;
+      font-size: 13px;
+    }
+    .err-state {
+      background: #faf3ee;
+      border-left: 3px solid var(--accent);
+      padding: 18px;
+      color: var(--accent);
+      border-radius: 2px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 720px) {
+      .topnav { padding: 12px 16px; }
+      main { padding: 20px 16px 0 16px; }
+      .student-head { padding: 18px; }
+      .head-info h1 { font-size: 22px; }
+      .avatar { width: 64px; height: 64px; font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="brand">📚 CSDN 监控</span>
+  <a class="tab" href="index.html">学生列表</a>
+  <a class="tab" href="analytics.html">班级分析</a>
+  <a class="tab active" id="nav-active">个人详情</a>
+  <span class="ver">v8.0 · STUDENT-DETAIL</span>
+</nav>
+
+<main>
+  <div id="root">
+    <div class="empty-state">加载中…</div>
+  </div>
+</main>
+
+<script>
+// Ma: v8 - 个人详情页
+const VERSION = 'v8.0-student';
+const SID = new URLSearchParams(location.search).get('sid') || '';
+
+function fmt(n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-US'); }
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+}
+
+async function loadAll() {
+  try {
+    // 1) load main data.json
+    const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
+    const DATA = await r.json();
+    const stu = (DATA.students || []).find(s => s.sid === SID);
+
+    // 2) load history snapshots (尝试 history-test/ 优先, history/ 其次)
+    let history = await loadHistory();
+
+    render(stu, history, DATA.last_update);
+  } catch (e) {
+    document.getElementById('root').innerHTML =
+      `<div class="err-state">❌ 加载失败: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function loadHistory() {
+  // Ma: 优先尝试 history-test/ (开发期), 失败回退 history/
+  const tries = ['history-test', 'history'];
+  for (const dir of tries) {
+    try {
+      const idx = await fetch(`${dir}/_index.json?t=${Date.now()}`, { cache: 'no-store' });
+      if (idx.ok) {
+        const arr = await idx.json();
+        return arr;
+      }
+    } catch (e) {}
+  }
+  // 没 _index.json - 直接尝试已知文件名
+  return [];
+}
+
+function render(stu, history, lastUpdate) {
+  const root = document.getElementById('root');
+
+  if (!stu) {
+    root.innerHTML = `<div class="err-state">
+      ❌ 未找到学号 <code>${escapeHtml(SID)}</code> 的学生 · <a href="index.html" style="color:var(--brand);">返回列表</a>
+    </div>`;
+    return;
+  }
+
+  // 更新 nav active 文字
+  document.getElementById('nav-active').textContent = `${stu.name || ''} · 个人详情`;
+
+  // 1) 头
+  const initials = (stu.name || '').slice(0, 1) || '?';
+  const csdn = stu.csdn_url;
+  const headHtml = `
+    <div class="student-head">
+      <div class="avatar">${escapeHtml(initials)}</div>
+      <div class="head-info">
+        <h1>${escapeHtml(stu.name || '')}</h1>
+        <div class="sid">${escapeHtml(stu.sid)}</div>
+        <div class="meta-line">CSDN · <code>${escapeHtml(stu.csdn_username || '未配置')}</code></div>
+        <div class="meta-line">最近抓取 · ${escapeHtml(lastUpdate || '—')}</div>
+        <div class="head-stats">
+          <div class="head-stat"><strong>${fmt(stu.post_count || 0)}</strong>文章数</div>
+          <div class="head-stat"><strong>${fmt(stu.total_views || 0)}</strong>总阅读</div>
+          <div class="head-stat"><strong>${fmt((stu.total_likes || 0) + (stu.total_comments || 0) + (stu.total_collections || 0))}</strong>互动</div>
+          <div class="head-stat"><strong>${stu.post_count ? fmt(Math.round((stu.total_views || 0) / stu.post_count)) : '—'}</strong>平均阅读/篇</div>
+        </div>
+      </div>
+      <div class="head-cta">
+        ${csdn ? `<a class="btn-csdn" href="${escapeHtml(csdn)}" target="_blank" rel="noopener">访问 CSDN 主页 ↗</a>` : '<span class="btn-csdn" disabled>未配置 CSDN</span>'}
+        <a class="btn-csdn" href="analytics.html" style="background:var(--ivory);color:var(--brand);">← 返回班级分析</a>
+      </div>
+    </div>
+  `;
+
+  // 2) 时间轴
+  const trendHtml = renderTrend(history, stu);
+
+  // 3) 热力图
+  const heatHtml = renderHeat(stu);
+
+  // 4) 文章详细
+  const postsHtml = renderPosts(stu);
+
+  root.innerHTML = `
+    ${headHtml}
+    <section class="section">
+      <div class="section-title">
+        <span>📈 个人发文时间轴</span>
+        <span class="hint">按历史快照 · ≥2 天画趋势</span>
+      </div>
+      ${trendHtml}
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <span>🗓 发文日历热力图</span>
+        <span class="hint">最近 12 周 · 颜色越深发文越多</span>
+      </div>
+      ${heatHtml}
+    </section>
+    <section class="section">
+      <div class="section-title">
+        <span>📝 文章详细</span>
+        <span class="hint">按 total_views 降序</span>
+      </div>
+      ${postsHtml}
+    </section>
+  `;
+}
+
+function renderTrend(history, stu) {
+  // history: [{date: '2026-09-13', students: {...}}, ...] - 排序
+  if (!history || history.length === 0) {
+    return `<div class="trend-empty"><strong>暂无历史数据</strong><br>
+      请先在 <code>csdn-monitor.py</code> 跑几天, 或将示例文件放入 <code>history-test/</code></div>`;
+  }
+  if (history.length === 1) {
+    return `<div class="trend-empty"><strong>只有 1 天数据</strong><br>
+      需要 2+ 天数据才能显示趋势 · 当前: <code>${escapeHtml(history[0].date)}</code></div>`;
+  }
+
+  // 排序
+  const series = history.slice().sort((a, b) => a.date.localeCompare(b.date));
+  // 取每个 snapshot 中该 sid 的 post_count
+  const data = series.map(s => ({
+    date: s.date,
+    posts: (s.students && s.students[stu.sid] && s.students[stu.sid].posts)
+      ? s.students[stu.sid].posts.length
+      : 0
+  }));
+
+  const W = 760, H = 200, PAD = { l: 36, r: 16, t: 16, b: 28 };
+  const maxY = Math.max(2, ...data.map(d => d.posts));
+  const xStep = (W - PAD.l - PAD.r) / Math.max(1, data.length - 1);
+  const xOf = i => PAD.l + i * xStep;
+  const yOf = v => H - PAD.b - (v / maxY) * (H - PAD.t - PAD.b);
+
+  let path = data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xOf(i)} ${yOf(d.posts)}`).join(' ');
+  let area = path + ` L ${xOf(data.length - 1)} ${H - PAD.b} L ${xOf(0)} ${H - PAD.b} Z`;
+
+  let svg = `<svg class="trend-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">`;
+  // grid
+  svg += '<g class="grid">';
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD.t + (H - PAD.t - PAD.b) * (i / 4);
+    svg += `<line x1="${PAD.l}" y1="${y}" x2="${W - PAD.r}" y2="${y}" />`;
+  }
+  svg += '</g>';
+  // axes
+  svg += '<g class="axis">';
+  svg += `<line x1="${PAD.l}" y1="${H - PAD.b}" x2="${W - PAD.r}" y2="${H - PAD.b}" />`;
+  svg += `<line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${H - PAD.b}" />`;
+  for (let i = 0; i <= 4; i++) {
+    const yv = Math.round(maxY * (i / 4));
+    const y = yOf(yv);
+    svg += `<text x="${PAD.l - 8}" y="${y + 3}" text-anchor="end">${yv}</text>`;
+  }
+  // x labels
+  data.forEach((d, i) => {
+    const x = xOf(i);
+    if (i % Math.max(1, Math.floor(data.length / 6)) === 0 || i === data.length - 1) {
+      svg += `<text x="${x}" y="${H - PAD.b + 14}" text-anchor="middle">${escapeHtml(d.date.slice(5))}</text>`;
+    }
+  });
+  svg += '</g>';
+  // area + line
+  svg += `<path class="area" d="${area}" />`;
+  svg += `<path class="line" d="${path}" />`;
+  // points + labels
+  data.forEach((d, i) => {
+    const x = xOf(i), y = yOf(d.posts);
+    svg += `<circle class="pt" cx="${x}" cy="${y}" r="3.5" />`;
+    if (d.posts > 0) {
+      svg += `<text class="pt-label" x="${x}" y="${y - 8}" text-anchor="middle">${d.posts}</text>`;
+    }
+  });
+  svg += '</svg>';
+
+  return `<div class="trend-wrap">${svg}<div class="meta" style="margin-top:6px;font-size:11px;color:var(--stone);">
+    共 ${data.length} 天数据 · 最近: ${escapeHtml(data[data.length - 1].date)}
+  </div></div>`;
+}
+
+function renderHeat(stu) {
+  // 最近 12 周 (84 天), 每格一天. 周日到周六
+  const today = new Date();
+  const days = 84;
+  const counts = {}; // 'YYYY-MM-DD' -> count
+  // 计算发文日期 (取 posts 的日期 - 如果没有就用 link 末尾日期 fallback)
+  for (const p of (stu.posts || [])) {
+    let d = p.pubDate || '';
+    // pubDate 可能是空, 用 link 中的 /details/XXXXXX 提取
+    if (!d && p.link) {
+      // 没真实日期就放 latest post 那天
+      d = (stu.latest_post && stu.latest_post.link === p.link)
+        ? today.toISOString().slice(0, 10)
+        : '';
+    }
+    if (d && d.length >= 10) counts[d.slice(0, 10)] = (counts[d.slice(0, 10)] || 0) + 1;
+  }
+
+  // 构造 12 周 x 7 天 网格, 从最早的周日到 today
+  const start = new Date(today);
+  start.setDate(start.getDate() - (days - 1));
+  // 调整到周日
+  const dayOfWeek = start.getDay();
+  start.setDate(start.getDate() - dayOfWeek);
+
+  const cells = [];
+  let cursor = new Date(start);
+  for (let i = 0; i < days + 7; i++) {
+    if (cursor > today) break;
+    const ds = cursor.toISOString().slice(0, 10);
+    const cnt = counts[ds] || 0;
+    cells.push({ date: ds, count: cnt });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  const colorOf = c => {
+    if (c === 0) return 'var(--border-soft)';
+    if (c === 1) return '#C5D4E8';
+    if (c === 2) return '#9DB7D4';
+    if (c <= 4) return '#5C7DA6';
+    return '#1B365D';
+  };
+
+  // 构造网格: 7 行 (周日..周六), 列由 grid-auto-flow: column 自动
+  const cellsHtml = cells.map(c =>
+    `<div class="heat-cell" style="background:${colorOf(c.count)}"
+         title="${escapeHtml(c.date)} · ${c.count} 篇"></div>`
+  ).join('');
+
+  return `
+    <div class="heat-wrap">
+      <div style="display:flex;gap:14px;font-size:10px;color:var(--stone);margin-bottom:6px;font-family:ui-monospace,monospace;">
+        <span>周日</span><span style="visibility:hidden">一</span>
+        <span>周一</span><span style="visibility:hidden">二</span>
+        <span>周二</span><span style="visibility:hidden">三</span>
+        <span>周三</span><span style="visibility:hidden">四</span>
+        <span>周四</span><span style="visibility:hidden">五</span>
+        <span>周五</span><span style="visibility:hidden">六</span>
+        <span>周六</span>
+      </div>
+      <div class="heat-grid">${cellsHtml}</div>
+      <div class="heat-meta">
+        <span>少</span>
+        <span class="swatch" style="background:#C5D4E8;"></span>
+        <span class="swatch" style="background:#9DB7D4;"></span>
+        <span class="swatch" style="background:#5C7DA6;"></span>
+        <span class="swatch" style="background:#1B365D;"></span>
+        <span>多</span>
+        <span style="margin-left:auto;">共 ${cells.length} 天</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderPosts(stu) {
+  const posts = (stu.posts || []).slice();
+  // 按 total_views 降序 (没有此字段的排最后)
+  posts.sort((a, b) => (b.total_views || 0) - (a.total_views || 0));
+
+  if (posts.length === 0) {
+    return '<div class="empty-state">暂无文章</div>';
+  }
+
+  const rows = posts.map((p, i) => {
+    const ts = p.pubDate || (p.guid ? p.guid.slice(-10) : '—');
+    return `<tr>
+      <td>${i + 1}</td>
+      <td class="ttl"><a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener">${escapeHtml(p.title || '(无标题)')}</a></td>
+      <td class="num read">${fmt(p.total_views)}</td>
+      <td class="num">${fmt(p.total_likes)}</td>
+      <td class="num">${fmt(p.total_comments)}</td>
+      <td class="num">${fmt(p.total_collections)}</td>
+      <td class="ts">${escapeHtml(ts)}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <table class="posts">
+      <thead><tr>
+        <th>#</th><th>标题</th>
+        <th style="text-align:right;">阅读</th>
+        <th style="text-align:right;">点赞</th>
+        <th style="text-align:right;">评论</th>
+        <th style="text-align:right;">收藏</th>
+        <th>抓取时间</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+if (!SID) {
+  document.getElementById('root').innerHTML =
+    `<div class="err-state">⚠️ 缺少参数 <code>?sid=XXX</code><br>
+     请从 <a href="index.html" style="color:var(--brand);">学生列表</a> 或
+     <a href="analytics.html" style="color:var(--brand);">班级分析</a> 进入</div>`;
+} else {
+  loadAll();
+  // 注: history 每天只刷一次, 不每分钟 reload
+}
+</script>
+</body>
+</html>

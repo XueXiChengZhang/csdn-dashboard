@@ -1,0 +1,36 @@
+# 历史快照 - 示例数据,不部署
+history-test/
+history-real/
+
+# 备份文件
+*.bak-*
+*.bak
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 编辑器/系统
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vs/
+
+# 临时文件
+*.tmp
+*.log
+.cache/
+
+# OpenClaw / 凭证(绝对不推)
+.openclaw/
+.firecrawl/
+credentials/
+*.env
+.env
+.env.local
+secrets/

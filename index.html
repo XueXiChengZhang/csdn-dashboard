@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>CSDN 学生项目监控 · 24-10 / 24-20 · v7</title>
+  <style>
+    /* Ma: 仪表板样式 - Kami 风格(米黄 + 衬线 + 深蓝) v7 */
+    :root {
+      --parchment: #f5f4ed;
+      --ivory: #faf9f5;
+      --near-black: #141413;
+      --dark-warm: #3d3d3a;
+      --olive: #504e49;
+      --stone: #6b6a64;
+      --brand: #1B365D;
+      --brand-soft: #E4ECF5;
+      --accent: #c44d36;
+      --accent-soft: #faf3ee;
+      --border: #e8e6dc;
+      --border-soft: #e5e3d8;
+      --tag-bg: #E4ECF5;
+      --new-bg: #fff4e6;
+      --new-fg: #b8521c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--parchment);
+      color: var(--near-black);
+      font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
+      line-height: 1.6;
+      padding: 32px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      border-bottom: 0.6pt solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .header-main { flex: 1 1 auto; }
+    .version-badge {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: var(--brand);
+      background: var(--brand-soft);
+      padding: 4px 10px;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+      flex: 0 0 auto;
+      align-self: flex-start;
+    }
+    .eyebrow {
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone);
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--near-black);
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: var(--olive);
+    }
+    .meta {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--stone);
+    }
+    .meta strong { color: var(--brand); }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      padding: 20px 24px;
+      border-radius: 2px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--stone);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--brand);
+      line-height: 1;
+    }
+    .stat-meta {
+      font-size: 12px;
+      color: var(--olive);
+      margin-top: 8px;
+    }
+    /* Ma: v8 - 顶导航 (3 页通用) */
+    .topnav {
+      background: var(--ivory);
+      border-bottom: 0.6pt solid var(--border);
+      padding: 14px 24px;
+      margin: -32px -24px 20px -24px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 14px;
+    }
+    .topnav .brand {
+      font-weight: 600;
+      color: var(--brand);
+      margin-right: 12px;
+    }
+    .topnav a.tab {
+      color: var(--olive);
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 2px;
+      border: 0.6pt solid transparent;
+      transition: all 0.15s;
+    }
+    .topnav a.tab:hover {
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+    .topnav a.tab.active {
+      background: var(--brand);
+      color: var(--ivory);
+      border-color: var(--brand);
+    }
+    .topnav .ver {
+      margin-left: auto;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      color: var(--stone);
+      letter-spacing: 0.04em;
+    }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .toolbar input, .toolbar select {
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px 14px;
+      border: 0.6pt solid var(--border);
+      background: var(--ivory);
+      color: var(--near-black);
+      border-radius: 2px;
+      min-width: 200px;
+    }
+    .toolbar input:focus, .toolbar select:focus {
+      outline: 1px solid var(--brand);
+      border-color: var(--brand);
+    }
+    .toolbar .count {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--stone);
+    }
+    .toolbar .refresh-btn {
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 14px;
+      border: 0.6pt solid var(--brand);
+      background: var(--ivory);
+      color: var(--brand);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .toolbar .refresh-btn:hover {
+      background: var(--brand);
+      color: var(--ivory);
+    }
+    .toolbar .refresh-btn:active { transform: translateY(1px); }
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      grid-auto-rows: 1fr;  /* v4: 卡片同高 */
+      gap: 16px;
+      align-items: stretch;
+    }
+    .student {
+      display: flex;
+      flex-direction: column;  /* v4: 垂直 flex 让 latest 推到底 */
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 4px;
+      padding: 16px 18px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      position: relative;
+      color: inherit;
+      text-decoration: none;
+      height: 100%;
+      min-height: 200px;
+    }
+    a.student:hover, .student:hover {
+      border-color: var(--brand);
+      box-shadow: 0 4px 14px rgba(27, 54, 93, 0.08);
+      transform: translateY(-1px);
+    }
+    a.student:focus, .student:focus {
+      outline: 2px solid var(--brand);
+      outline-offset: 2px;
+    }
+    .student-rank {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 10px;
+      color: var(--stone);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.05em;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    .student-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      padding-right: 30px;
+    }
+    .student-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--near-black);
+    }
+    .student-sid {
+      font-size: 12px;
+      color: var(--stone);
+      font-variant-numeric: tabular-nums;
+    }
+    .student-meta {
+      font-size: 12px;
+      color: var(--stone);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .post-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      background: var(--tag-bg);
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 10px;
+    }
+    .post-count.zero {
+      background: var(--border-soft);
+      color: var(--stone);
+    }
+    .post-count .num { font-weight: 700; font-size: 13px; }
+    .new-badge {
+      display: inline-block;
+      padding: 1px 7px;
+      background: var(--new-bg);
+      color: var(--new-fg);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      border-radius: 2px;
+      border: 0.6pt solid #f0d9b8;
+    }
+    .student-handle {
+      color: var(--stone);
+      font-size: 11px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    /* === v4: 卡片下半部分重做 - 最新文章小列表 === */
+    .latest-section {
+      margin-top: auto;  /* 推到卡片底部 */
+      padding-top: 10px;
+      border-top: 0.25pt solid var(--border-soft);
+    }
+    .latest-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .latest-section-label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--stone);
+      font-weight: 600;
+    }
+    .latest-section-count {
+      font-size: 10px;
+      color: var(--stone);
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    .latest-posts {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .latest-post-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 3px 0;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .latest-post-item .idx {
+      flex: 0 0 14px;
+      color: var(--stone);
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      padding-top: 1px;
+    }
+    .latest-post-item a {
+      flex: 1;
+      color: var(--brand);
+      text-decoration: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      word-break: break-word;
+    }
+    .latest-post-item a:hover { text-decoration: underline; }
+    .latest-post-item.is-new a {
+      color: var(--near-black);
+      font-weight: 500;
+    }
+    .empty-latest {
+      font-size: 12px;
+      color: var(--stone);
+      font-style: italic;
+      padding: 4px 0;
+    }
+    /* === v6: 总统计 row - 仅阅读量 === */
+    .stats-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0 0;
+      margin-top: 8px;
+      border-top: 0.25pt solid var(--border-soft);
+      font-size: 11px;
+      color: var(--olive);
+      flex-wrap: wrap;
+    }
+    .stats-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stats-item .ico {
+      font-size: 12px;
+      opacity: 0.75;
+    }
+    .stats-item .num {
+      font-weight: 600;
+      color: var(--brand);
+      font-size: 12px;
+    }
+    .stats-item.empty .num {
+      color: var(--stone);
+      font-weight: 400;
+    }
+    .stats-sep {
+      color: var(--border);
+      font-size: 10px;
+      user-select: none;
+    }
+    .external-icon {
+      display: inline-block;
+      margin-left: 3px;
+      font-size: 9px;
+      color: var(--stone);
+      opacity: 0.6;
+    }
+    .student:hover .external-icon { opacity: 1; color: var(--brand); }
+    .no-csdn {
+      background: repeating-linear-gradient(
+        45deg,
+        var(--ivory),
+        var(--ivory) 8px,
+        var(--border-soft) 8px,
+        var(--border-soft) 9px
+      );
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .no-csdn:hover { transform: none; box-shadow: none; border-color: var(--border); }
+    .alert {
+      background: var(--accent-soft);
+      border-left: 3px solid var(--accent);
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 24px;
+      border-radius: 2px;
+    }
+    .loading {
+      text-align: center;
+      padding: 60px 0;
+      color: var(--stone);
+      font-size: 14px;
+    }
+    .last-update {
+      text-align: center;
+      font-size: 12px;
+      color: var(--stone);
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 0.25pt solid var(--border-soft);
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .last-update code {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      color: var(--brand);
+      background: var(--brand-soft);
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-size: 11px;
+    }
+    @media (max-width: 600px) {
+      body { padding: 20px 16px; }
+      h1 { font-size: 24px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .student-grid { grid-template-columns: 1fr; }
+    }
+    /* === v7: 抓取健康度卡片 === */
+    .stat.health-good .stat-value { color: #2c7a4b; }
+    .stat.health-warn .stat-value { color: #b8521c; }
+    .stat.health-fail .stat-value { color: #c44d36; }
+    .stat-meta .pill {
+      display: inline-block;
+      padding: 1px 8px;
+      background: var(--brand-soft);
+      color: var(--brand);
+      border-radius: 8px;
+      font-size: 11px;
+      margin-right: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    /* === v7: fetch_meta 折叠面板 === */
+    .fetch-meta-panel {
+      background: var(--ivory);
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .fetch-meta-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+      color: var(--olive);
+      background: var(--ivory);
+      transition: background 0.15s;
+    }
+    .fetch-meta-toggle:hover { background: var(--brand-soft); }
+    .fetch-meta-toggle .arrow {
+      transition: transform 0.2s;
+      font-size: 11px;
+      color: var(--stone);
+    }
+    .fetch-meta-panel.open .fetch-meta-toggle .arrow { transform: rotate(90deg); }
+    .fetch-meta-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+    .fetch-meta-panel.open .fetch-meta-body {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .fetch-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px 18px;
+      padding: 8px 18px 16px;
+      border-top: 0.25pt solid var(--border-soft);
+      font-size: 13px;
+      color: var(--dark-warm);
+    }
+    .fetch-meta-grid div span.k {
+      color: var(--stone);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .fetch-meta-grid div span.v {
+      color: var(--near-black);
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    .fetch-meta-grid .empty { color: var(--stone); font-style: italic; }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <span class="brand">📚 CSDN 监控</span>
+    <a class="tab active" href="index.html">学生列表</a>
+    <a class="tab" href="analytics.html">班级分析</a>
+    <a class="tab" href="student.html?sid=240110103">个人详情</a>
+    <span class="ver">v8.0 · DASHBOARD</span>
+  </nav>
+  <div class="header">
+    <div class="header-main">
+      <div class="eyebrow">CSDN 学生项目监控</div>
+      <h1>软件 24-10 / 24-20 博客更新</h1>
+      <div class="subtitle">31 名学生 · 每日自动抓取 CSDN 文章 · 8:00 推送飞书</div>
+      <div class="meta">最近更新 · <strong id="last-update">加载中...</strong></div>
+    </div>
+    <div class="version-badge">DASHBOARD v7</div>
+  </div>
+
+  <div id="alert-box"></div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">总学生</div>
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-meta">软件 24-10 / 24-20</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">累计文章</div>
+      <div class="stat-value" id="stat-posts">—</div>
+      <div class="stat-meta">所有博客汇总</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">活跃学生</div>
+      <div class="stat-value" id="stat-active">—</div>
+      <div class="stat-meta">有 CSDN 文章</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">平均文章</div>
+      <div class="stat-value" id="stat-avg">—</div>
+      <div class="stat-meta">活跃学生人均</div>
+    </div>
+    <div class="stat" id="stat-health-card">
+      <div class="stat-label">抓取健康度</div>
+      <div class="stat-value" id="stat-health">—</div>
+      <div class="stat-meta" id="stat-health-meta">暂无抓取记录</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">上次抓取</div>
+      <div class="stat-value" id="stat-last-fetch" style="font-size:18px;">—</div>
+      <div class="stat-meta" id="stat-last-fetch-meta">未知</div>
+    </div>
+  </div>
+
+  <!-- v7: fetch_meta 折叠面板 -->
+  <div class="fetch-meta-panel" id="fetch-meta-panel">
+    <div class="fetch-meta-toggle" id="fetch-meta-toggle">
+      <span>📡 <strong>抓取元数据</strong> · <span id="fm-summary">点击展开</span></span>
+      <span class="arrow">▶</span>
+    </div>
+    <div class="fetch-meta-body">
+      <div class="fetch-meta-grid" id="fetch-meta-grid">
+        <div class="empty">尚未运行抓取任务</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="搜索姓名 / 学号..." />
+    <select id="sort">
+      <option value="views-desc">阅读量 ↓</option>
+      <option value="views-asc">阅读量 ↑</option>
+      <option value="posts-desc">文章数 ↓</option>
+      <option value="posts-asc">文章数 ↑</option>
+      <option value="name-asc">姓名 A-Z</option>
+      <option value="sid-asc">学号顺序</option>
+    </select>
+    <select id="filter">
+      <option value="all">全部</option>
+      <option value="active">仅活跃</option>
+      <option value="zero">无文章</option>
+      <option value="missing">缺 CSDN</option>
+    </select>
+    <button class="refresh-btn" id="refresh-btn" title="强制重新加载数据">↻ 刷新</button>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div id="students" class="student-grid">
+    <div class="loading">加载中...</div>
+  </div>
+
+  <div class="last-update" id="footer-update">
+    <span>最后更新: 加载中...</span>
+    <span>·</span>
+    <span>自动每 60 秒刷新</span>
+    <span>·</span>
+    <span>看到旧版? 按 <code>Ctrl + F5</code> 强制刷新</span>
+  </div>
+
+  <script>
+    // Ma: 仪表板 v7 - 抓取健康度 + fetch_meta 折叠面板
+    const DASHBOARD_VERSION = 'v7.0';
+    let ALL_STUDENTS = [];
+    let LAST_UPDATE_ISO = null;
+
+    async function loadData() {
+      const btn = document.getElementById('refresh-btn');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ 刷新中...'; }
+      try {
+        // v4: 加时间戳 + 强制 no-store 防缓存
+        const url = 'data.json?t=' + Date.now();
+        const resp = await fetch(url, { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        LAST_UPDATE_ISO = data.last_update;
+        ALL_STUDENTS = data.students.map(s => ({
+          ...s,
+          csdn: !!s.csdn_url,
+        }));
+        renderStats(data);
+        renderAlert(data);
+        render();
+        document.getElementById('last-update').textContent = formatTime(data.last_update);
+        document.getElementById('footer-update').innerHTML =
+          `<span>最后更新: ${formatTime(data.last_update)}</span>` +
+          `<span>·</span>` +
+          `<span>自动每 60 秒刷新</span>` +
+          `<span>·</span>` +
+          `<span>仪表板 ${DASHBOARD_VERSION}</span>` +
+          `<span>·</span>` +
+          `<span>看到旧版? 按 <code>Ctrl + F5</code> 强制刷新</span>`;
+      } catch (e) {
+        document.getElementById('students').innerHTML =
+          '<div class="loading">加载失败: ' + e.message + '<br><br>直接打开 index.html 可能因 file:// 协议无法 fetch data.json。<br>请运行: <code>python -m http.server 8765</code> 在此目录</div>';
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '↻ 刷新'; }
+      }
+    }
+
+    function renderStats(data) {
+      const total = data.total_students;
+      const posts = data.total_posts;
+      const active = ALL_STUDENTS.filter(s => s.post_count > 0).length;
+      const avg = active > 0 ? (posts / active).toFixed(1) : 0;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-posts').textContent = posts;
+      document.getElementById('stat-active').textContent = active;
+      document.getElementById('stat-avg').textContent = avg;
+      // v7: 健康度 + fetch_meta
+      renderFetchMeta(data.last_fetch_meta || {});
+    }
+
+    // v7: 渲染 fetch_meta (抓取健康度 + 折叠面板)
+    function renderFetchMeta(fm) {
+      const card = document.getElementById('stat-health-card');
+      const healthEl = document.getElementById('stat-health');
+      const healthMeta = document.getElementById('stat-health-meta');
+      const lfVal = document.getElementById('stat-last-fetch');
+      const lfMeta = document.getElementById('stat-last-fetch-meta');
+      const grid = document.getElementById('fetch-meta-grid');
+      const summary = document.getElementById('fm-summary');
+
+      const total = Number(fm.total_requests || 0);
+      const ok = Number(fm.success_count || 0);
+      const fail = Number(fm.fail_count || 0);
+      const ts = fm.fetched_at || '';
+      const ms = Number(fm.duration_ms || 0);
+      const methods = fm.method_breakdown || {};
+
+      // 健康度卡片
+      card.classList.remove('health-good', 'health-warn', 'health-fail');
+      if (total === 0) {
+        healthEl.textContent = '—';
+        healthMeta.textContent = '尚未运行抓取任务';
+      } else {
+        const ratio = ok / total;
+        healthEl.textContent = `${ok} / ${total}`;
+        healthMeta.innerHTML =
+          `<span class="pill">失败 ${fail}</span>` +
+          `<span class="pill">今日 ${total} 次请求</span>`;
+        if (ratio >= 0.9) {
+          card.classList.add('health-good');
+        } else if (ratio >= 0.7) {
+          card.classList.add('health-warn');
+        } else {
+          card.classList.add('health-fail');
+        }
+      }
+
+      // 上次抓取时间
+      if (ts) {
+        lfVal.textContent = relativeTime(ts);
+        lfMeta.textContent = ts.replace('T', ' ').slice(0, 16);
+      } else {
+        lfVal.textContent = '—';
+        lfMeta.textContent = '未知';
+      }
+
+      // 折叠面板: 摘要 + 网格
+      if (total === 0) {
+        summary.textContent = '暂无抓取记录';
+        grid.innerHTML = '<div class="empty">尚未运行抓取任务 — 跑一次 csdn-monitor.py 会自动出现</div>';
+      } else {
+        summary.textContent =
+          `${ok}/${total} 成功 · ${ms}ms · ${Object.keys(methods).map(k => `${k}=${methods[k]}`).join(', ')}`;
+        const mReqs = methods.requests || 0;
+        const mPw = methods.playwright || 0;
+        const mNone = methods.none || methods.failed || 0;
+        grid.innerHTML = `
+          <div><span class="k">抓取时间</span><span class="v">${escapeHtml(ts.replace('T',' ').slice(0,19))}</span></div>
+          <div><span class="k">总请求</span><span class="v">${total}</span></div>
+          <div><span class="k">成功</span><span class="v">${ok}</span></div>
+          <div><span class="k">失败</span><span class="v">${fail}</span></div>
+          <div><span class="k">耗时</span><span class="v">${ms} ms</span></div>
+          <div><span class="k">requests</span><span class="v">${mReqs}</span></div>
+          <div><span class="k">playwright</span><span class="v">${mPw}</span></div>
+          <div><span class="k">失败/无方法</span><span class="v">${mNone}</span></div>
+        `;
+      }
+    }
+
+    // v7: 相对时间 (多久前)
+    function relativeTime(iso) {
+      if (!iso) return '—';
+      try {
+        const d = new Date(iso);
+        const diffMs = Date.now() - d.getTime();
+        const sec = Math.floor(diffMs / 1000);
+        if (sec < 60) return `${sec}秒前`;
+        const min = Math.floor(sec / 60);
+        if (min < 60) return `${min}分钟前`;
+        const hr = Math.floor(min / 60);
+        if (hr < 24) return `${hr}小时前`;
+        const day = Math.floor(hr / 24);
+        return `${day}天前`;
+      } catch { return iso; }
+    }
+
+    function renderAlert(data) {
+      const missing = ALL_STUDENTS.filter(s => !s.csdn).length;
+      const box = document.getElementById('alert-box');
+      if (missing > 0) {
+        box.innerHTML = `<div class="alert">⚠️ ${missing} 名学生缺 CSDN 博客 - 见下方"缺 CSDN"标签</div>`;
+      } else {
+        box.innerHTML = '';
+      }
+    }
+
+    // v4: 派生"最近更新"集合(简化:post_count > 0 且 guid 中 details/ 数字 > 某阈值? 不可靠)
+    // 改成:用所有学生中最大 guid 数字做基准,guid 数字靠后的算 NEW。
+    // 这太复杂,简化为:post_count > 0 就给个"N 篇"作为信息密度。NEW 标记改成:
+    // 如果 last_update 是今天,且该学生 post_count > 0,就标记 NEW(说明今天抓到了内容)
+    function isNewlyPosted(s) {
+      if (!LAST_UPDATE_ISO || s.post_count === 0) return false;
+      try {
+        const lu = new Date(LAST_UPDATE_ISO);
+        const today = new Date();
+        return lu.toDateString() === today.toDateString();
+      } catch { return false; }
+    }
+
+    function render() {
+      const search = document.getElementById('search').value.toLowerCase();
+      const sort = document.getElementById('sort').value;
+      const filter = document.getElementById('filter').value;
+
+      let list = ALL_STUDENTS.slice();
+      if (filter === 'active') list = list.filter(s => s.post_count > 0);
+      else if (filter === 'zero') list = list.filter(s => s.post_count === 0);
+      else if (filter === 'missing') list = list.filter(s => !s.csdn);
+      if (search) {
+        list = list.filter(s =>
+          s.name.toLowerCase().includes(search) ||
+          s.sid.includes(search)
+        );
+      }
+      // v6: 阅读量排序 - 无数据(null/0)排到最后
+      const viewsOf = (s) => (s.total_views != null && s.total_views > 0) ? s.total_views : 0;
+      const viewsKey = (s) => (s.total_views != null && s.total_views > 0) ? 0 : 1;
+      if (sort === 'views-desc') list.sort((a, b) => {
+        const ka = viewsKey(a), kb = viewsKey(b);
+        if (ka !== kb) return ka - kb; // 有数据的(0) 排前
+        return viewsOf(b) - viewsOf(a);
+      });
+      else if (sort === 'views-asc') list.sort((a, b) => {
+        const ka = viewsKey(a), kb = viewsKey(b);
+        if (ka !== kb) return ka - kb; // 有数据的(0) 排前
+        return viewsOf(a) - viewsOf(b);
+      });
+      else if (sort === 'posts-desc') list.sort((a, b) => b.post_count - a.post_count);
+      else if (sort === 'posts-asc') list.sort((a, b) => a.post_count - b.post_count);
+      else if (sort === 'name-asc') list.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+      else if (sort === 'sid-asc') list.sort((a, b) => a.sid.localeCompare(b.sid));
+
+      const html = list.map((s, idx) => {
+        const postClass = s.post_count === 0 ? 'post-count zero' : 'post-count';
+        const handle = s.csdn_username ? `@${s.csdn_username}` : '无 CSDN';
+        const hasCsdn = !!s.csdn_url;
+        // v4.1: 卡片外层用 <div>(避免 <a> 嵌套 <a> 触发 HTML 解析器自动闭合)
+        // 主页跳转通过 onclick + data-href 实现,内部 <a> 仍可独立点击
+        const cardTag = 'div';
+        const cardAttrs = hasCsdn
+          ? `data-href="${escapeHtml(s.csdn_url)}" role="link" tabindex="0"`
+          : '';
+        const cardClass = hasCsdn ? 'student' : 'student no-csdn';
+        const rank = idx + 1;
+        const isNew = isNewlyPosted(s);
+
+        // v4: 卡片下半部分 - 最新 3 篇小列表
+        let latestHtml;
+        if (!s.csdn) {
+          latestHtml = `<div class="latest-section"><div class="empty-latest">— 未配置 CSDN —</div></div>`;
+        } else if (!s.posts || s.posts.length === 0) {
+          latestHtml = `<div class="latest-section"><div class="empty-latest">— 暂无文章 —</div></div>`;
+        } else {
+          // 取最新 3 篇
+          const top3 = s.posts.slice(0, 3);
+          const total = s.posts.length;
+          const items = top3.map((p, i) => {
+            const title = (p.title || '(无标题)').trim();
+            const showTitle = title || extractGuidTitle(p.guid);
+            const newCls = (isNew && i === 0) ? 'latest-post-item is-new' : 'latest-post-item';
+            return `<li class="${newCls}">
+              <span class="idx">${i + 1}.</span>
+              <a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener"
+                 title="${escapeHtml(showTitle)}"
+                 onclick="event.stopPropagation();">${escapeHtml(showTitle)}</a>
+            </li>`;
+          }).join('');
+          const moreCount = Math.max(0, total - 3);
+          const moreHtml = moreCount > 0
+            ? `<li class="latest-post-item" style="justify-content:flex-end;"><span class="idx" style="flex:1;text-align:right;color:var(--stone);">+ ${moreCount} 篇更早</span></li>`
+            : '';
+          latestHtml = `
+            <div class="latest-section">
+              <div class="latest-section-header">
+                <span class="latest-section-label">最新文章</span>
+                <span class="latest-section-count">${total} / 共 ${total} 篇</span>
+              </div>
+              <ul class="latest-posts">${items}${moreHtml}</ul>
+            </div>
+          `;
+        }
+
+        const newBadgeHtml = isNew ? `<span class="new-badge">NEW</span>` : '';
+
+        // v6: 总统计 row - 仅阅读量
+        const statsRowHtml = renderStatsRow(s);
+
+        return `
+          <${cardTag} class="${cardClass}" ${cardAttrs}>
+            <div class="student-rank">#${rank}</div>
+            <div class="student-head">
+              <div class="student-name">${escapeHtml(s.name)}</div>
+              <div class="student-sid">${escapeHtml(s.sid)}</div>
+            </div>
+            <div class="student-meta">
+              <span class="${postClass}"><span class="num">${s.post_count}</span> 篇</span>
+              ${newBadgeHtml}
+              <span class="student-handle">${escapeHtml(handle)}</span>
+              ${hasCsdn ? '<span class="external-icon">↗ 主页</span>' : ''}
+            </div>
+            ${latestHtml}
+            ${statsRowHtml}
+          </${cardTag}>
+        `;
+      }).join('');
+
+      const target = document.getElementById('students');
+      target.innerHTML = html || '<div class="loading">无匹配学生</div>';
+      document.getElementById('count').textContent = `显示 ${list.length} / ${ALL_STUDENTS.length} 人`;
+    }
+
+    function extractGuidTitle(guid) {
+      if (!guid) return '(无标题)';
+      // 从 CSDN guid 提取 details/ 后的数字作为 ID
+      const m = guid.match(/details\/(\d+)/);
+      return m ? `#${m[1]}` : '(无标题)';
+    }
+
+    function fmtNum(n) {
+      // 千分位: 1234 -> "1,234"
+      if (n == null) return '—';
+      const v = Number(n);
+      if (!Number.isFinite(v)) return '—';
+      return v.toLocaleString('en-US');
+    }
+
+    // v6: 总统计 row 渲染 - 仅显示阅读量(其他维度不可靠)
+    function renderStatsRow(s) {
+      if (!s.csdn_url) {
+        // 缺 CSDN - 显示 "—"
+        return `<div class="stats-row" title="未配置 CSDN">
+          <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>无数据</span></span>
+        </div>`;
+      }
+      const tv = s.total_views;
+      const haveAny = tv != null && tv > 0;
+      if (!haveAny) {
+        // 有 CSDN 但阅读量为 0 - 可能是抓取失败或新博客
+        return `<div class="stats-row" title="尚无阅读量">
+          <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>暂无数据</span></span>
+        </div>`;
+      }
+      return `<div class="stats-row">
+        <span class="stats-item"><span class="ico">👁</span><span class="num">${fmtNum(tv)}</span><span>阅读</span></span>
+      </div>`;
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '未知';
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString('zh-CN', { hour12: false });
+      } catch { return iso; }
+    }
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    document.getElementById('search').addEventListener('input', render);
+    document.getElementById('sort').addEventListener('change', render);
+    document.getElementById('filter').addEventListener('change', render);
+    document.getElementById('refresh-btn').addEventListener('click', () => loadData());
+    document.addEventListener('dblclick', () => loadData());
+
+    // v7: fetch_meta 折叠面板点击
+    document.getElementById('fetch-meta-toggle').addEventListener('click', () => {
+      document.getElementById('fetch-meta-panel').classList.toggle('open');
+    });
+
+    // v4.1: 卡片点击跳转(委托到 #students)
+    // 内部 <a> 点击不触发(浏览器原生行为优先)
+    document.getElementById('students').addEventListener('click', (e) => {
+      // 如果点中的是 <a> 链接,让浏览器处理
+      if (e.target.closest('a')) return;
+      const card = e.target.closest('.student[data-href]');
+      if (card) window.open(card.dataset.href, '_blank', 'noopener');
+    });
+    document.getElementById('students').addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      if (e.target.closest('a')) return;
+      const card = e.target.closest('.student[data-href]');
+      if (card) { e.preventDefault(); window.open(card.dataset.href, '_blank', 'noopener'); }
+    });
+
+    loadData();
+    setInterval(loadData, 60000);
+  </script>
+</body>
+</html>
