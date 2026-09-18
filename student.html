@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN + Gitee 个人详情 · v10</title>
+  <title>CSDN + Gitee 个人详情 · v11</title>
   <style>
     /* Ma: v10 - 个人详情页 (Kami 风格) */
     :root {
@@ -213,6 +213,9 @@
     .gitee-card-detail.fail { border-color: var(--accent); background: var(--accent-soft); }
     .gitee-card-detail.fail .gitee-ico { background: var(--accent); color: var(--ivory); }
     .gitee-card-detail.empty { text-align: center; padding: 24px; color: var(--stone); }
+    /* Ma v11: Gitee empty vs fail 区分 (学生刚建 vs 抓取失败) */
+    .gitee-card-detail.empty-repo { border-color: #fbbf24; background: #fef3c7; color: #92400e; }
+    .gitee-card-detail.empty-repo .gitee-ico { background: #fbbf24; color: white; }
     .head-stats {
       display: flex;
       gap: 18px;
@@ -549,11 +552,26 @@ function renderGitee(stu) {
       </div>
     </div>`;
   }
+  // Ma v11: 区分 empty 仓库 vs 抓取失败
+  if (g.status === 'empty') {
+    return `<div class="gitee-card-detail empty-repo">
+      <div class="gitee-ico">📭</div>
+      <div class="gitee-info">
+        <h3 style="color:#92400e;">Gitee 仓库存在, 但还没有 commit</h3>
+        <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · 仓库刚创建, 等学生 push 代码后会显示 commit</div>
+        <div class="msg" style="color:#92400e;">提示: 学生需要在仓库里至少 commit 一次 (git commit) 然后 push</div>
+      </div>
+      <div class="gitee-actions">
+        <a href="${escapeHtml(g.url)}" target="_blank" rel="noopener" style="background:#92400e;">访问空仓库 ↗</a>
+        <a href="analytics.html" style="background:var(--ivory);color:var(--brand);">← 返回班级分析</a>
+      </div>
+    </div>`;
+  }
   return `<div class="gitee-card-detail fail">
     <div class="gitee-ico">⚠️</div>
     <div class="gitee-info">
       <h3 style="color:var(--accent);">Gitee 抓取失败</h3>
-      <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · ${escapeHtml(g.source || 'all sources failed')}</div>
+      <div class="repo">${escapeHtml((g.owner||'?') + '/' + (g.repo||'?'))} · ${escapeHtml(g.source || 'all sources failed')}</div>
       <div class="msg">${escapeHtml(g.err || '未知错误 - 可能 Gitee 限流或仓库不可访问')}</div>
     </div>
     <div class="gitee-actions">

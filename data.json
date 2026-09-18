@@ -1,17 +1,29 @@
 {
-  "last_update": "2026-09-18T09:50:54",
+  "last_update": "2026-09-18T10:04:45",
   "total_students": 31,
   "total_posts": 100,
   "last_fetch_meta": {
-    "fetched_at": "2026-09-18T08:00:01",
-    "duration_ms": 1182220,
+    "fetched_at": "2026-09-18T09:46:16",
+    "duration_ms": 1278882,
     "method_breakdown": {
-      "requests": 163,
-      "playwright": 2
+      "requests": 173,
+      "playwright": 4
     },
-    "total_requests": 165,
-    "success_count": 165,
+    "total_requests": 177,
+    "success_count": 177,
     "fail_count": 0
+  },
+  "gitee_stats": {
+    "total_urls": 31,
+    "ok": 0,
+    "empty": 22,
+    "notfound": 1,
+    "failed": 0,
+    "rate_limit": 8,
+    "total_stars": 0,
+    "total_forks": 0,
+    "duration_s": 26.4,
+    "fetched_at": "2026-09-18T10:02:32"
   },
   "students": [
     {
@@ -40,11 +52,28 @@
           "guid": "https://blog.csdn.net/pjl20051011/article/details/164712670"
         }
       ],
-      "total_views": 271,
+      "total_views": 273,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 4,
-      "articles_scanned": 2
+      "articles_scanned": 2,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/pangjialiang/pjl.git",
+        "owner": "pangjialiang",
+        "repo": "pjl",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110103",
@@ -90,11 +119,28 @@
           "guid": "https://blog.csdn.net/liruisklfj/article/details/142862879"
         }
       ],
-      "total_views": 5807,
+      "total_views": 5812,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 32,
-      "articles_scanned": 5
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/lirui-code/001.git",
+        "owner": "lirui-code",
+        "repo": "001",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110104",
@@ -108,7 +154,24 @@
       "total_likes": null,
       "total_comments": null,
       "total_collections": null,
-      "articles_scanned": 0
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/pengxuanhao/pxhs-magical-warehouse.git",
+        "owner": "pengxuanhao",
+        "repo": "pxhs-magical-warehouse",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110106",
@@ -148,11 +211,28 @@
           "guid": "https://blog.csdn.net/2401_89247021/article/details/164710927"
         }
       ],
-      "total_views": 401,
+      "total_views": 405,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 8,
-      "articles_scanned": 4
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/ovo5u110/uuuuu.git",
+        "owner": "ovo5u110",
+        "repo": "uuuuu",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110108",
@@ -192,11 +272,28 @@
           "guid": "https://blog.csdn.net/CY11101229/article/details/164958182"
         }
       ],
-      "total_views": 458,
+      "total_views": 481,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 13,
-      "articles_scanned": 4
+      "total_collections": 15,
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/cy666666888888/seven-seconds-memory.git",
+        "owner": "cy666666888888",
+        "repo": "seven-seconds-memory",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110110",
@@ -218,11 +315,26 @@
           "guid": "https://blog.csdn.net/yingsini7/article/details/165283925"
         }
       ],
-      "total_views": 121,
+      "total_views": 122,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 3,
-      "articles_scanned": 1
+      "articles_scanned": 1,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com//",
+        "owner": "",
+        "repo": "",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "bad gitee url",
+        "status": "notfound"
+      }
     },
     {
       "sid": "240110112",
@@ -262,11 +374,28 @@
           "guid": "https://blog.csdn.net/2401_88094581/article/details/164952838"
         }
       ],
-      "total_views": 226,
+      "total_views": 233,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 7,
-      "articles_scanned": 4
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/hbcc11/240110112.git",
+        "owner": "hbcc11",
+        "repo": "240110112",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110113",
@@ -300,11 +429,28 @@
           "guid": "https://blog.csdn.net/Apawn_77/article/details/164951759"
         }
       ],
-      "total_views": 79,
+      "total_views": 83,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 6,
-      "articles_scanned": 4
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/apawn77/Apawnn.git",
+        "owner": "apawn77",
+        "repo": "Apawnn",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110114",
@@ -344,11 +490,28 @@
           "guid": "https://blog.csdn.net/gb_00005555/article/details/164957292"
         }
       ],
-      "total_views": 470,
+      "total_views": 492,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 7,
-      "articles_scanned": 4
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/gb00005555/such-a-trivial-matter.git",
+        "owner": "gb00005555",
+        "repo": "such-a-trivial-matter",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110115",
@@ -370,11 +533,28 @@
           "guid": "https://blog.csdn.net/2501_92570764/article/details/164962158"
         }
       ],
-      "total_views": 25,
+      "total_views": 41,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 3,
-      "articles_scanned": 1
+      "total_collections": 4,
+      "articles_scanned": 2,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/MengRuFanHua/game-mod.git",
+        "owner": "MengRuFanHua",
+        "repo": "game-mod",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110117",
@@ -414,11 +594,28 @@
           "guid": "https://blog.csdn.net/HanhanWei_/article/details/164951160"
         }
       ],
-      "total_views": 354,
+      "total_views": 360,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 9,
-      "articles_scanned": 4
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/yichuangwai/hanzewei.git",
+        "owner": "yichuangwai",
+        "repo": "hanzewei",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110118",
@@ -452,11 +649,28 @@
           "guid": "https://blog.csdn.net/moyangyi/article/details/164951072"
         }
       ],
-      "total_views": 237,
+      "total_views": 240,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 12,
-      "articles_scanned": 3
+      "articles_scanned": 3,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/moyangyi/xuexiaozuoyeyuxiangmu.git",
+        "owner": "moyangyi",
+        "repo": "xuexiaozuoyeyuxiangmu",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110119",
@@ -490,11 +704,28 @@
           "guid": "https://blog.csdn.net/jsk4sj/article/details/164960134"
         }
       ],
-      "total_views": 518,
+      "total_views": 521,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 10,
-      "articles_scanned": 3
+      "articles_scanned": 3,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/kang-zijian123/project.git",
+        "owner": "kang-zijian123",
+        "repo": "project",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": "master",
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110121",
@@ -534,11 +765,28 @@
           "guid": "https://blog.csdn.net/2501_94785105/article/details/164957770"
         }
       ],
-      "total_views": 604,
+      "total_views": 609,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 14,
-      "articles_scanned": 4
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/kkaada/fsd.git",
+        "owner": "kkaada",
+        "repo": "fsd",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110122",
@@ -572,11 +820,28 @@
           "guid": "https://blog.csdn.net/King888AA/article/details/164956014"
         }
       ],
-      "total_views": 257,
+      "total_views": 261,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 6,
-      "articles_scanned": 3
+      "articles_scanned": 3,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/jzk888888/jzk.git",
+        "owner": "jzk888888",
+        "repo": "jzk",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110126",
@@ -604,11 +869,28 @@
           "guid": "https://blog.csdn.net/wanan962462/article/details/164960958"
         }
       ],
-      "total_views": 321,
+      "total_views": 325,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 6,
-      "articles_scanned": 2
+      "articles_scanned": 3,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/qiyuewanan/rpg-games.git",
+        "owner": "qiyuewanan",
+        "repo": "rpg-games",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110128",
@@ -648,11 +930,28 @@
           "guid": "https://blog.csdn.net/likexin0128/article/details/164956965"
         }
       ],
-      "total_views": 476,
+      "total_views": 496,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 12,
-      "articles_scanned": 5
+      "total_collections": 13,
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/likexib/li-kexin.git",
+        "owner": "likexib",
+        "repo": "li-kexin",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110129",
@@ -692,11 +991,28 @@
           "guid": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/164952426"
         }
       ],
-      "total_views": 636,
+      "total_views": 647,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 14,
-      "articles_scanned": 4
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/fxjjjjjjjjjjj/little-lucky-star-e-commerce.git",
+        "owner": "fxjjjjjjjjjjj",
+        "repo": "little-lucky-star-e-commerce",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110130",
@@ -730,11 +1046,28 @@
           "guid": "https://blog.csdn.net/Lh286364/article/details/164961256"
         }
       ],
-      "total_views": 254,
+      "total_views": 265,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 4,
-      "articles_scanned": 3
+      "total_collections": 5,
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/lh286364/111111.git",
+        "owner": "lh286364",
+        "repo": "111111",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110201",
@@ -774,11 +1107,28 @@
           "guid": "https://blog.csdn.net/zx121384/article/details/164958463"
         }
       ],
-      "total_views": 731,
+      "total_views": 747,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 6,
-      "articles_scanned": 4
+      "total_collections": 8,
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/zhengxiang1/zheng-xiang-zz.git",
+        "owner": "zhengxiang1",
+        "repo": "zheng-xiang-zz",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110207",
@@ -812,11 +1162,28 @@
           "guid": "https://blog.csdn.net/WMY2006/article/details/164957639"
         }
       ],
-      "total_views": 374,
+      "total_views": 378,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 12,
-      "articles_scanned": 3
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/kmlll/project123.git",
+        "owner": "kmlll",
+        "repo": "project123",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110209",
@@ -856,11 +1223,28 @@
           "guid": "https://blog.csdn.net/2601_96938731/article/details/164951665"
         }
       ],
-      "total_views": 482,
+      "total_views": 488,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 9,
-      "articles_scanned": 4
+      "total_collections": 8,
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/shenyi24/xm.git",
+        "owner": "shenyi24",
+        "repo": "xm",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110212",
@@ -900,11 +1284,28 @@
           "guid": "https://blog.csdn.net/bashiyegou/article/details/164962196"
         }
       ],
-      "total_views": 593,
+      "total_views": 597,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 15,
-      "articles_scanned": 4
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/suiyegou/zhdiancan.git",
+        "owner": "suiyegou",
+        "repo": "zhdiancan",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "language": null,
+        "default_branch": null,
+        "source": "api",
+        "err": "empty repo (no commits)",
+        "status": "empty"
+      }
     },
     {
       "sid": "240110213",
@@ -944,11 +1345,26 @@
           "guid": "https://blog.csdn.net/jiuyu16/article/details/164954631"
         }
       ],
-      "total_views": 375,
+      "total_views": 382,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 12,
-      "articles_scanned": 4
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/MayarDu/game-platform",
+        "owner": "MayarDu",
+        "repo": "game-platform",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "HTTP 403",
+        "status": "rate_limit"
+      }
     },
     {
       "sid": "240110215",
@@ -988,11 +1404,26 @@
           "guid": "https://blog.csdn.net/2401_83893276/article/details/165280108"
         }
       ],
-      "total_views": 685,
+      "total_views": 698,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 11,
-      "articles_scanned": 4
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/Mcqwder/zzq",
+        "owner": "Mcqwder",
+        "repo": "zzq",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "HTTP 403",
+        "status": "rate_limit"
+      }
     },
     {
       "sid": "240110220",
@@ -1020,11 +1451,26 @@
           "guid": "https://blog.csdn.net/2601_96956624/article/details/164955503"
         }
       ],
-      "total_views": 327,
+      "total_views": 330,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 5,
-      "articles_scanned": 2
+      "articles_scanned": 3,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/ren-xiaolibnkkjjkjk/projects",
+        "owner": "ren-xiaolibnkkjjkjk",
+        "repo": "projects",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "HTTP 403",
+        "status": "rate_limit"
+      }
     },
     {
       "sid": "240110221",
@@ -1064,11 +1510,26 @@
           "guid": "https://blog.csdn.net/dao1234_/article/details/164952223"
         }
       ],
-      "total_views": 611,
+      "total_views": 616,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 11,
-      "articles_scanned": 4
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/moudaomeihaizi/warrior-dawn-fusion-war",
+        "owner": "moudaomeihaizi",
+        "repo": "warrior-dawn-fusion-war",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "HTTP 403",
+        "status": "rate_limit"
+      }
     },
     {
       "sid": "240110225",
@@ -1096,11 +1557,26 @@
           "guid": "https://blog.csdn.net/wty262446/article/details/165280609"
         }
       ],
-      "total_views": 476,
+      "total_views": 479,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 7,
-      "articles_scanned": 3
+      "total_collections": 8,
+      "articles_scanned": 3,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/zhaodingyan/an-absolutely-epic-project",
+        "owner": "zhaodingyan",
+        "repo": "an-absolutely-epic-project",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "HTTP 403",
+        "status": "rate_limit"
+      }
     },
     {
       "sid": "240110226",
@@ -1146,11 +1622,26 @@
           "guid": "https://blog.csdn.net/2603_96938789/article/details/164714305"
         }
       ],
-      "total_views": 0,
+      "total_views": 591,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 17,
-      "articles_scanned": 5
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/xsgg01/hhh",
+        "owner": "xsgg01",
+        "repo": "hhh",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "HTTP 403",
+        "status": "rate_limit"
+      }
     },
     {
       "sid": "240110227",
@@ -1184,11 +1675,26 @@
           "guid": "https://blog.csdn.net/Zyyymmm_/article/details/164961288"
         }
       ],
-      "total_views": 336,
+      "total_views": 339,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 4,
-      "articles_scanned": 3
+      "total_collections": 2,
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/zhhshgdhwgfhifhrefiureyhfu/project",
+        "owner": "zhhshgdhwgfhifhrefiureyhfu",
+        "repo": "project",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "HTTP 403",
+        "status": "rate_limit"
+      }
     },
     {
       "sid": "240110232",
@@ -1222,11 +1728,26 @@
           "guid": "https://blog.csdn.net/WH2022911/article/details/164956226"
         }
       ],
-      "total_views": 230,
+      "total_views": 247,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 2,
-      "articles_scanned": 3
+      "articles_scanned": 4,
+      "gitee": {
+        "ok": false,
+        "url": "https://gitee.com/wangyizhou1/wh1314",
+        "owner": "wangyizhou1",
+        "repo": "wh1314",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "",
+        "msg": "",
+        "source": "",
+        "err": "HTTP 403",
+        "status": "rate_limit"
+      }
     }
   ]
 }
