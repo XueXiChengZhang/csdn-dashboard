@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN + Gitee 学生项目监控 · 24-10 / 24-20 · v10</title>
+  <title>CSDN + Gitee 学生项目监控 · 24-10 / 24-20 · v11</title>
   <style>
     /* Ma: 仪表板样式 - Kami 风格(米黄 + 衬线 + 深蓝) v10 */
     :root {
@@ -253,6 +253,14 @@
     .gitee-mini .gitee-fail {
       background: var(--accent-soft);
       color: var(--accent);
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-size: 10px;
+    }
+    /* Ma v11: Gitee empty 仓库徽章 (学生刚建, 没 commit) */
+    .gitee-mini .gitee-empty {
+      background: #fef3c7;
+      color: #92400e;
       padding: 1px 6px;
       border-radius: 2px;
       font-size: 10px;
@@ -1193,9 +1201,16 @@
     <span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(g.date))}</span>
     </div>`;
     }
+    // Ma v11: 区分 empty (仓库存在但没 commit) 和 fail (404/限流)
+    const isEmpty = g.status === 'empty';
+    const badge = isEmpty ? '<span class="gitee-empty">空仓库</span>'
+                          : `<span class="gitee-fail">抓取失败</span>`;
+    const ownerRepo = (g.owner && g.repo) ? `${g.owner}/${g.repo}` : '未配置';
     return `<div class="gitee-mini" title="${escapeHtml(g.err || '抓取失败')}">
-    <a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(g.owner + '/' + g.repo)}</a>
-    <span class="gitee-fail">抓取失败</span>
+    ${g.url ? `<a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(ownerRepo)}</a>`
+            : `<span class="gitee-stat">${escapeHtml(ownerRepo)}</span>`}
+    ${badge}
+    ${g.date ? `<span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(g.date))}</span>` : ''}
     </div>`;
     }
 

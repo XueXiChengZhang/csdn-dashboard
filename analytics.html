@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN + Gitee 班级分析 · 24-10 / 24-20 · v10</title>
+  <title>CSDN + Gitee 班级分析 · 24-10 / 24-20 · v11</title>
   <style>
     /* Ma: 仪表板 v8 - 班级分析页 (Kami 风格延续 index.html) */
     :root {
@@ -562,16 +562,19 @@ function render() {
     : '暂无阅读量数据';
   document.getElementById('stat-engage').textContent = fmt(engage);
 
-  // v10: Gitee 班级统计
+  // v11: Gitee 班级统计 (区分 ok / empty / fail)
+  const gAll = stu.filter(s => s.gitee);
   const gOk = stu.filter(s => s.gitee && s.gitee.ok);
+  const gEmpty = stu.filter(s => s.gitee && s.gitee.status === 'empty');
+  const gFail = stu.filter(s => s.gitee && ['notfound','failed','rate_limit'].includes(s.gitee.status));
   const gTotalCommits = stu.reduce((s, x) => s + ((x.gitee && x.gitee.commit_count) || 0), 0);
   const gTotalStars = stu.reduce((s, x) => s + ((x.gitee && x.gitee.stars) || 0), 0);
   const gTotalForks = stu.reduce((s, x) => s + ((x.gitee && x.gitee.forks) || 0), 0);
   document.getElementById('stat-gitee-commits').textContent = fmt(gTotalCommits);
   document.getElementById('stat-gitee-commits-meta').textContent =
-    `${gOk.length} 仓库抓取成功`;
+    `${gOk.length} 仓库抓取成功 · ${gEmpty.length} 空仓库 · ${gFail.length} 失败`;
   document.getElementById('stat-gitee-stars').textContent = `${fmt(gTotalStars)} / ${fmt(gTotalForks)}`;
-  document.getElementById('stat-gitee-stars-meta').textContent = `star · fork`;
+  document.getElementById('stat-gitee-stars-meta').textContent = `star · fork · 共 ${gAll.length} 仓库`;
 
   // TOP 10 by views
   const sorted = [...stu]
