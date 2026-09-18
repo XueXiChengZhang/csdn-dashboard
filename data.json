@@ -1,62 +1,19 @@
 {
-  "last_update": "2026-09-17T21:17:35",
+  "last_update": "2026-09-18T09:50:54",
   "total_students": 31,
   "total_posts": 100,
   "last_fetch_meta": {
-    "fetched_at": "2026-09-17T21:17:35",
-    "duration_ms": 308375,
+    "fetched_at": "2026-09-18T08:00:01",
+    "duration_ms": 1182220,
     "method_breakdown": {
-      "csdn_html": 30,
-      "csdn_rss": 0,
-      "gitee_api": 16,
-      "gitee_html": 0
+      "requests": 163,
+      "playwright": 2
     },
-    "total_requests": 62,
-    "success_count": 46,
-    "fail_count": 15,
-    "stages": {
-      "csdn": {
-        "duration_ms": 255395,
-        "ok": 30,
-        "fail": 0
-      },
-      "gitee": {
-        "duration_ms": 52979,
-        "ok": 16,
-        "fail": 15
-      }
-    }
+    "total_requests": 165,
+    "success_count": 165,
+    "fail_count": 0
   },
   "students": [
-    {
-      "sid": "240110104",
-      "name": "彭轩昊",
-      "csdn_username": "",
-      "csdn_url": "",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/pengxuanhao/pxhs-magical-warehouse",
-        "owner": "pengxuanhao",
-        "repo": "pxhs-magical-warehouse",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
-    },
     {
       "sid": "240110102",
       "name": "庞嘉良",
@@ -83,85 +40,11 @@
           "guid": "https://blog.csdn.net/pjl20051011/article/details/164712670"
         }
       ],
-      "total_views": 269,
+      "total_views": 271,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 4,
-      "articles_scanned": 2,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/pangjialiang/pjl",
-        "owner": "pangjialiang",
-        "repo": "pjl",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
-    },
-    {
-      "sid": "240110106",
-      "name": "武明光",
-      "csdn_username": "2401_89247021",
-      "csdn_url": "https://blog.csdn.net/2401_89247021?type=blog",
-      "post_count": 4,
-      "latest_post": {
-        "title": "【无标题】",
-        "link": "https://blog.csdn.net/2401_89247021/article/details/165757536",
-        "pubDate": "",
-        "guid": "https://blog.csdn.net/2401_89247021/article/details/165757536"
-      },
-      "posts": [
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/165757536",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/165757536"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/165757373",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/165757373"
-        },
-        {
-          "title": "本周学习周报",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/164950566",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/164950566"
-        },
-        {
-          "title": "1111111",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/164710927",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/164710927"
-        }
-      ],
-      "total_views": 361,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 7,
-      "articles_scanned": 4,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/ovo5u110/uuuuu",
-        "owner": "ovo5u110",
-        "repo": "uuuuu",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "articles_scanned": 2
     },
     {
       "sid": "240110103",
@@ -207,26 +90,69 @@
           "guid": "https://blog.csdn.net/liruisklfj/article/details/142862879"
         }
       ],
-      "total_views": 5751,
+      "total_views": 5807,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 32,
+      "articles_scanned": 5
+    },
+    {
+      "sid": "240110104",
+      "name": "彭轩昊",
+      "csdn_username": "",
+      "csdn_url": "",
+      "post_count": 0,
+      "latest_post": null,
+      "posts": [],
+      "total_views": null,
+      "total_likes": null,
+      "total_comments": null,
+      "total_collections": null,
+      "articles_scanned": 0
+    },
+    {
+      "sid": "240110106",
+      "name": "武明光",
+      "csdn_username": "2401_89247021",
+      "csdn_url": "https://blog.csdn.net/2401_89247021?type=blog",
+      "post_count": 4,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/2401_89247021/article/details/165757536",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/2401_89247021/article/details/165757536"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/165757536",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/165757536"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/165757373",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/165757373"
+        },
+        {
+          "title": "本周学习周报",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/164950566",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/164950566"
+        },
+        {
+          "title": "1111111",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/164710927",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/164710927"
+        }
+      ],
+      "total_views": 401,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 8,
-      "articles_scanned": 4,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/lirui-code/001",
-        "owner": "lirui-code",
-        "repo": "001",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "articles_scanned": 4
     },
     {
       "sid": "240110108",
@@ -266,26 +192,11 @@
           "guid": "https://blog.csdn.net/CY11101229/article/details/164958182"
         }
       ],
-      "total_views": 451,
+      "total_views": 458,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 2,
-      "articles_scanned": 1,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/cy666666888888/seven-seconds-memory",
-        "owner": "cy666666888888",
-        "repo": "seven-seconds-memory",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 13,
+      "articles_scanned": 4
     },
     {
       "sid": "240110110",
@@ -307,26 +218,11 @@
           "guid": "https://blog.csdn.net/yingsini7/article/details/165283925"
         }
       ],
-      "total_views": 119,
+      "total_views": 121,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": false,
-        "url": "",
-        "owner": "",
-        "repo": "",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "bad gitee url",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 3,
+      "articles_scanned": 1
     },
     {
       "sid": "240110112",
@@ -366,67 +262,11 @@
           "guid": "https://blog.csdn.net/2401_88094581/article/details/164952838"
         }
       ],
-      "total_views": 0,
+      "total_views": 226,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 1,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/hbcc11/240110112",
-        "owner": "hbcc11",
-        "repo": "240110112",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
-    },
-    {
-      "sid": "240110115",
-      "name": "董泽玉",
-      "csdn_username": "2501_92570764",
-      "csdn_url": "https://blog.csdn.net/2501_92570764",
-      "post_count": 1,
-      "latest_post": {
-        "title": "【无标题】",
-        "link": "https://blog.csdn.net/2501_92570764/article/details/164962158",
-        "pubDate": "",
-        "guid": "https://blog.csdn.net/2501_92570764/article/details/164962158"
-      },
-      "posts": [
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/2501_92570764/article/details/164962158",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/2501_92570764/article/details/164962158"
-        }
-      ],
-      "total_views": 24,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 3,
-      "articles_scanned": 1,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/MengRuFanHua/game-mod",
-        "owner": "MengRuFanHua",
-        "repo": "game-mod",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 7,
+      "articles_scanned": 4
     },
     {
       "sid": "240110113",
@@ -460,26 +300,11 @@
           "guid": "https://blog.csdn.net/Apawn_77/article/details/164951759"
         }
       ],
-      "total_views": 0,
+      "total_views": 79,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 5,
-      "articles_scanned": 1,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/apawn77/Apawnn",
-        "owner": "apawn77",
-        "repo": "Apawnn",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 6,
+      "articles_scanned": 4
     },
     {
       "sid": "240110114",
@@ -519,26 +344,37 @@
           "guid": "https://blog.csdn.net/gb_00005555/article/details/164957292"
         }
       ],
-      "total_views": 427,
+      "total_views": 470,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/gb00005555/such-a-trivial-matter",
-        "owner": "gb00005555",
-        "repo": "such-a-trivial-matter",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 7,
+      "articles_scanned": 4
+    },
+    {
+      "sid": "240110115",
+      "name": "董泽玉",
+      "csdn_username": "2501_92570764",
+      "csdn_url": "https://blog.csdn.net/2501_92570764",
+      "post_count": 1,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/2501_92570764/article/details/164962158",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/2501_92570764/article/details/164962158"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/2501_92570764/article/details/164962158",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2501_92570764/article/details/164962158"
+        }
+      ],
+      "total_views": 25,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 3,
+      "articles_scanned": 1
     },
     {
       "sid": "240110117",
@@ -578,26 +414,11 @@
           "guid": "https://blog.csdn.net/HanhanWei_/article/details/164951160"
         }
       ],
-      "total_views": 344,
+      "total_views": 354,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/yichuangwai/hanzewei",
-        "owner": "yichuangwai",
-        "repo": "hanzewei",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 9,
+      "articles_scanned": 4
     },
     {
       "sid": "240110118",
@@ -631,26 +452,11 @@
           "guid": "https://blog.csdn.net/moyangyi/article/details/164951072"
         }
       ],
-      "total_views": 188,
+      "total_views": 237,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/moyangyi/xuexiaozuoyeyuxiangmu",
-        "owner": "moyangyi",
-        "repo": "xuexiaozuoyeyuxiangmu",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 12,
+      "articles_scanned": 3
     },
     {
       "sid": "240110119",
@@ -684,26 +490,11 @@
           "guid": "https://blog.csdn.net/jsk4sj/article/details/164960134"
         }
       ],
-      "total_views": 0,
+      "total_views": 518,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/kang-zijian123/project",
-        "owner": "kang-zijian123",
-        "repo": "project",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 1,
-        "sha": "d7d7803",
-        "date": "2026-09-09T00:59:45+00:00",
-        "msg": "Initial commit",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 10,
+      "articles_scanned": 3
     },
     {
       "sid": "240110121",
@@ -743,26 +534,11 @@
           "guid": "https://blog.csdn.net/2501_94785105/article/details/164957770"
         }
       ],
-      "total_views": 599,
+      "total_views": 604,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/kkaada/fsd",
-        "owner": "kkaada",
-        "repo": "fsd",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 14,
+      "articles_scanned": 4
     },
     {
       "sid": "240110122",
@@ -796,26 +572,11 @@
           "guid": "https://blog.csdn.net/King888AA/article/details/164956014"
         }
       ],
-      "total_views": 250,
+      "total_views": 257,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 2,
-      "articles_scanned": 1,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/jzk888888/jzk",
-        "owner": "jzk888888",
-        "repo": "jzk",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 6,
+      "articles_scanned": 3
     },
     {
       "sid": "240110126",
@@ -843,26 +604,11 @@
           "guid": "https://blog.csdn.net/wanan962462/article/details/164960958"
         }
       ],
-      "total_views": 319,
+      "total_views": 321,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 6,
-      "articles_scanned": 2,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/qiyuewanan/rpg-games",
-        "owner": "qiyuewanan",
-        "repo": "rpg-games",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "articles_scanned": 2
     },
     {
       "sid": "240110128",
@@ -902,79 +648,11 @@
           "guid": "https://blog.csdn.net/likexin0128/article/details/164956965"
         }
       ],
-      "total_views": 294,
+      "total_views": 476,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 10,
-      "articles_scanned": 4,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/likexib/li-kexin",
-        "owner": "likexib",
-        "repo": "li-kexin",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "api",
-        "err": "",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
-    },
-    {
-      "sid": "240110130",
-      "name": "吕涵",
-      "csdn_username": "Lh286364",
-      "csdn_url": "https://blog.csdn.net/Lh286364",
-      "post_count": 3,
-      "latest_post": {
-        "title": "【无标题】",
-        "link": "https://blog.csdn.net/Lh286364/article/details/165741205",
-        "pubDate": "",
-        "guid": "https://blog.csdn.net/Lh286364/article/details/165741205"
-      },
-      "posts": [
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Lh286364/article/details/165741205",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/Lh286364/article/details/165741205"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Lh286364/article/details/164961487",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/Lh286364/article/details/164961487"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Lh286364/article/details/164961256",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/Lh286364/article/details/164961256"
-        }
-      ],
-      "total_views": 240,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 4,
-      "articles_scanned": 2,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/lh286364/111111",
-        "owner": "lh286364",
-        "repo": "111111",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 12,
+      "articles_scanned": 5
     },
     {
       "sid": "240110129",
@@ -1014,26 +692,49 @@
           "guid": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/164952426"
         }
       ],
-      "total_views": 616,
+      "total_views": 636,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 14,
+      "articles_scanned": 4
+    },
+    {
+      "sid": "240110130",
+      "name": "吕涵",
+      "csdn_username": "Lh286364",
+      "csdn_url": "https://blog.csdn.net/Lh286364",
+      "post_count": 3,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/Lh286364/article/details/165741205",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/Lh286364/article/details/165741205"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/165741205",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/165741205"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/164961487",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/164961487"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/164961256",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/164961256"
+        }
+      ],
+      "total_views": 254,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 4,
-      "articles_scanned": 2,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/fxjjjjjjjjjjj/little-lucky-star-e-commerce",
-        "owner": "fxjjjjjjjjjjj",
-        "repo": "little-lucky-star-e-commerce",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "articles_scanned": 3
     },
     {
       "sid": "240110201",
@@ -1073,85 +774,11 @@
           "guid": "https://blog.csdn.net/zx121384/article/details/164958463"
         }
       ],
-      "total_views": 652,
+      "total_views": 731,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 1,
-      "articles_scanned": 1,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/zhengxiang1/zheng-xiang-zz",
-        "owner": "zhengxiang1",
-        "repo": "zheng-xiang-zz",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
-    },
-    {
-      "sid": "240110212",
-      "name": "张昊",
-      "csdn_username": "bashiyegou",
-      "csdn_url": "https://blog.csdn.net/bashiyegou",
-      "post_count": 4,
-      "latest_post": {
-        "title": "【无标题】",
-        "link": "https://blog.csdn.net/bashiyegou/article/details/165751157",
-        "pubDate": "",
-        "guid": "https://blog.csdn.net/bashiyegou/article/details/165751157"
-      },
-      "posts": [
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/bashiyegou/article/details/165751157",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/bashiyegou/article/details/165751157"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/bashiyegou/article/details/165618079",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/bashiyegou/article/details/165618079"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/bashiyegou/article/details/165287084",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/bashiyegou/article/details/165287084"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/bashiyegou/article/details/164962196",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/bashiyegou/article/details/164962196"
-        }
-      ],
-      "total_views": 441,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 1,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/suiyegou/zhdiancan",
-        "owner": "suiyegou",
-        "repo": "zhdiancan",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 6,
+      "articles_scanned": 4
     },
     {
       "sid": "240110207",
@@ -1185,26 +812,11 @@
           "guid": "https://blog.csdn.net/WMY2006/article/details/164957639"
         }
       ],
-      "total_views": 0,
+      "total_views": 374,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/kmlll/project123",
-        "owner": "kmlll",
-        "repo": "project123",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 12,
+      "articles_scanned": 3
     },
     {
       "sid": "240110209",
@@ -1244,26 +856,99 @@
           "guid": "https://blog.csdn.net/2601_96938731/article/details/164951665"
         }
       ],
-      "total_views": 387,
+      "total_views": 482,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 1,
-      "articles_scanned": 1,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/shenyi24/xm",
-        "owner": "shenyi24",
-        "repo": "xm",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 9,
+      "articles_scanned": 4
+    },
+    {
+      "sid": "240110212",
+      "name": "张昊",
+      "csdn_username": "bashiyegou",
+      "csdn_url": "https://blog.csdn.net/bashiyegou",
+      "post_count": 4,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/bashiyegou/article/details/165751157",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/bashiyegou/article/details/165751157"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/165751157",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/165751157"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/165618079",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/165618079"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/165287084",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/165287084"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/164962196",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/164962196"
+        }
+      ],
+      "total_views": 593,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 15,
+      "articles_scanned": 4
+    },
+    {
+      "sid": "240110213",
+      "name": "杜广庆",
+      "csdn_username": "jiuyu16",
+      "csdn_url": "https://blog.csdn.net/jiuyu16",
+      "post_count": 4,
+      "latest_post": {
+        "title": "2026-9-17日报",
+        "link": "https://blog.csdn.net/jiuyu16/article/details/165751196",
+        "pubDate": "Thu, 17 Sep 2026 16:43:49 +0800",
+        "guid": "https://blog.csdn.net/jiuyu16/article/details/165751196"
+      },
+      "posts": [
+        {
+          "title": "2026-9-17日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/165751196",
+          "pubDate": "Thu, 17 Sep 2026 16:43:49 +0800",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/165751196"
+        },
+        {
+          "title": "2026/9/16日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/165613529",
+          "pubDate": "Wed, 16 Sep 2026 14:54:47 +0800",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/165613529"
+        },
+        {
+          "title": "2026-9-14日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/165284917",
+          "pubDate": "Mon, 14 Sep 2026 09:26:44 +0800",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/165284917"
+        },
+        {
+          "title": "2026-9-11 项目周报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/164954631",
+          "pubDate": "Fri, 11 Sep 2026 09:13:19 +0800",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/164954631"
+        }
+      ],
+      "total_views": 375,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 12,
+      "articles_scanned": 4
     },
     {
       "sid": "240110215",
@@ -1303,26 +988,11 @@
           "guid": "https://blog.csdn.net/2401_83893276/article/details/165280108"
         }
       ],
-      "total_views": 602,
+      "total_views": 685,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 6,
-      "articles_scanned": 2,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/Mcqwder/zzq",
-        "owner": "Mcqwder",
-        "repo": "zzq",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 11,
+      "articles_scanned": 4
     },
     {
       "sid": "240110220",
@@ -1350,26 +1020,11 @@
           "guid": "https://blog.csdn.net/2601_96956624/article/details/164955503"
         }
       ],
-      "total_views": 324,
+      "total_views": 327,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 5,
-      "articles_scanned": 2,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/ren-xiaolibnkkjjkjk/projects",
-        "owner": "ren-xiaolibnkkjjkjk",
-        "repo": "projects",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "articles_scanned": 2
     },
     {
       "sid": "240110221",
@@ -1409,26 +1064,11 @@
           "guid": "https://blog.csdn.net/dao1234_/article/details/164952223"
         }
       ],
-      "total_views": 466,
+      "total_views": 611,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 9,
-      "articles_scanned": 4,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/moudaomeihaizi/warrior-dawn-fusion-war",
-        "owner": "moudaomeihaizi",
-        "repo": "warrior-dawn-fusion-war",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 11,
+      "articles_scanned": 4
     },
     {
       "sid": "240110225",
@@ -1456,79 +1096,11 @@
           "guid": "https://blog.csdn.net/wty262446/article/details/165280609"
         }
       ],
-      "total_views": 350,
+      "total_views": 476,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 6,
-      "articles_scanned": 2,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/zhaodingyan/an-absolutely-epic-project",
-        "owner": "zhaodingyan",
-        "repo": "an-absolutely-epic-project",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
-    },
-    {
-      "sid": "240110227",
-      "name": "张宇梦",
-      "csdn_username": "Zyyymmm_",
-      "csdn_url": "https://blog.csdn.net/Zyyymmm_",
-      "post_count": 3,
-      "latest_post": {
-        "title": "日报2026916",
-        "link": "https://blog.csdn.net/Zyyymmm_/article/details/165616376",
-        "pubDate": "",
-        "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165616376"
-      },
-      "posts": [
-        {
-          "title": "日报2026916",
-          "link": "https://blog.csdn.net/Zyyymmm_/article/details/165616376",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165616376"
-        },
-        {
-          "title": "日报2026-9-14",
-          "link": "https://blog.csdn.net/Zyyymmm_/article/details/165285943",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165285943"
-        },
-        {
-          "title": "2026-9-11周报",
-          "link": "https://blog.csdn.net/Zyyymmm_/article/details/164961288",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/164961288"
-        }
-      ],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 4,
-      "articles_scanned": 3,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/zhhshgdhwgfhifhrefiureyhfu/project",
-        "owner": "zhhshgdhwgfhifhrefiureyhfu",
-        "repo": "project",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 7,
+      "articles_scanned": 3
     },
     {
       "sid": "240110226",
@@ -1574,26 +1146,49 @@
           "guid": "https://blog.csdn.net/2603_96938789/article/details/164714305"
         }
       ],
-      "total_views": 547,
+      "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/xsgg01/hhh",
-        "owner": "xsgg01",
-        "repo": "hhh",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 17,
+      "articles_scanned": 5
+    },
+    {
+      "sid": "240110227",
+      "name": "张宇梦",
+      "csdn_username": "Zyyymmm_",
+      "csdn_url": "https://blog.csdn.net/Zyyymmm_",
+      "post_count": 3,
+      "latest_post": {
+        "title": "日报2026916",
+        "link": "https://blog.csdn.net/Zyyymmm_/article/details/165616376",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165616376"
+      },
+      "posts": [
+        {
+          "title": "日报2026916",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/165616376",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165616376"
+        },
+        {
+          "title": "日报2026-9-14",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/165285943",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165285943"
+        },
+        {
+          "title": "2026-9-11周报",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/164961288",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/164961288"
+        }
+      ],
+      "total_views": 336,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 4,
+      "articles_scanned": 3
     },
     {
       "sid": "240110232",
@@ -1627,108 +1222,11 @@
           "guid": "https://blog.csdn.net/WH2022911/article/details/164956226"
         }
       ],
-      "total_views": 227,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/wangyizhou1/wh1314",
-        "owner": "wangyizhou1",
-        "repo": "wh1314",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
-    },
-    {
-      "sid": "240110213",
-      "name": "杜广庆",
-      "csdn_username": "jiuyu16",
-      "csdn_url": "https://blog.csdn.net/jiuyu16",
-      "post_count": 4,
-      "latest_post": {
-        "title": "2026-9-17日报",
-        "link": "https://blog.csdn.net/jiuyu16/article/details/165751196",
-        "pubDate": "Thu, 17 Sep 2026 16:43:49 +0800",
-        "guid": "https://blog.csdn.net/jiuyu16/article/details/165751196"
-      },
-      "posts": [
-        {
-          "title": "2026-9-17日报",
-          "link": "https://blog.csdn.net/jiuyu16/article/details/165751196",
-          "pubDate": "Thu, 17 Sep 2026 16:43:49 +0800",
-          "guid": "https://blog.csdn.net/jiuyu16/article/details/165751196"
-        },
-        {
-          "title": "2026/9/16日报",
-          "link": "https://blog.csdn.net/jiuyu16/article/details/165613529",
-          "pubDate": "Wed, 16 Sep 2026 14:54:47 +0800",
-          "guid": "https://blog.csdn.net/jiuyu16/article/details/165613529"
-        },
-        {
-          "title": "2026-9-14日报",
-          "link": "https://blog.csdn.net/jiuyu16/article/details/165284917",
-          "pubDate": "Mon, 14 Sep 2026 09:26:44 +0800",
-          "guid": "https://blog.csdn.net/jiuyu16/article/details/165284917"
-        },
-        {
-          "title": "2026-9-11 项目周报",
-          "link": "https://blog.csdn.net/jiuyu16/article/details/164954631",
-          "pubDate": "Fri, 11 Sep 2026 09:13:19 +0800",
-          "guid": "https://blog.csdn.net/jiuyu16/article/details/164954631"
-        }
-      ],
       "total_views": 230,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": false,
-        "url": "https://gitee.com/MayarDu/game-platform",
-        "owner": "MayarDu",
-        "repo": "game-platform",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "",
-        "msg": "",
-        "source": "",
-        "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-09-17T21:17:35"
-      }
+      "total_collections": 2,
+      "articles_scanned": 3
     }
-  ],
-  "class_stats": {
-    "computed_at": "2026-09-17T21:17:35",
-    "students_total": 31,
-    "students_with_csdn": 30,
-    "students_active": 30,
-    "students_inactive": 1,
-    "csdn": {
-      "total_posts": 100,
-      "total_views": 14478,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 87,
-      "avg_posts_per_active": 3.33,
-      "avg_views_per_student": 467.0
-    },
-    "gitee": {
-      "students_with_repo": 16,
-      "total_commits": 1,
-      "total_stars": 0,
-      "total_forks": 0,
-      "avg_commits_per_student": 0.1
-    }
-  }
+  ]
 }
