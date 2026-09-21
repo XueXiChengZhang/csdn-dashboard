@@ -972,6 +972,41 @@ def run(args):
     }
 
     # --- 班级统计 ---
+
+    # Ma: 数据保护 — 如果这次抓取明显失败（如 CSDN 全失败）,
+    # 保留之前 data.json 里的 posts/stats/csdn_username 而不是覆盖为空。
+    # 否则限流/网络故障一次,所有 129 篇博客就全没了。
+    prev_data = load_existing_data()
+    prev_by_sid = {s["sid"]: s for s in prev_data.get("students", [])}
+    csdn_fail_count = sum(1 for s in students_state if s.get("csdn_status") == "failed")
+    csdn_ok_count = sum(1 for s in students_state if s.get("csdn_status") == "ok")
+    # 触发条件: CSDN 失败率 > 30% 且成功数 < 之前的 70%
+    prev_total_posts = prev_data.get("total_posts", 0)
+    new_total_posts_est = sum(len(s.get("posts", [])) for s in students_state)
+    should_preserve = False
+    if prev_total_posts > 0:
+        if csdn_fail_count > 0.3 * len(students_state) and new_total_posts_est < 0.7 * prev_total_posts:
+            should_preserve = True
+            print(f"[protect] CSDN fail rate {csdn_fail_count}/{len(students_state)} > 30% AND "
+                  f"new posts {new_total_posts_est} < 70% of prev {prev_total_posts}: "
+                  f"preserving previous posts/stats per student")
+    if should_preserve:
+        for rec in students_state:
+            p = prev_by_sid.get(rec["sid"])
+            if p and (not rec.get("posts") or rec.get("csdn_status") == "failed"):
+                rec["posts"] = p.get("posts", [])
+                rec["csdn_username"] = p.get("csdn_username", rec.get("csdn_username", ""))
+                rec["latest_post"] = p.get("latest_post", {})
+                if not rec.get("stats") or rec["stats"].get("total_views", 0) == 0:
+                    rec["stats"] = {
+                        "total_views": p.get("total_views", 0),
+                        "total_likes": p.get("total_likes", 0),
+                        "total_comments": p.get("total_comments", 0),
+                        "total_collections": p.get("total_collections", 0),
+                        "profile_views": p.get("total_views", 0),
+                        "articles_scanned": p.get("articles_scanned", 0),
+                    }
+
     class_stats = compute_class_stats(students_state)
 
     # --- 写 data.json ---
