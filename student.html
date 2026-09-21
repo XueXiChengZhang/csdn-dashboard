@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN + Gitee 个人详情 · v11</title>
+  <title>CSDN + Gitee 个人详情 · v13</title>
   <style>
     /* Ma: v10 - 个人详情页 (Kami 风格) */
     :root {
@@ -108,7 +108,6 @@
       font-weight: 600;
       margin-bottom: 4px;
     }
-    .head-info .sid { font-size: 14px; color: var(--stone); font-variant-numeric: tabular-nums; margin-bottom: 10px; }
     .head-info .meta-line {
       font-size: 13px;
       color: var(--olive);
@@ -407,7 +406,7 @@
 <script>
 // Ma: v8 - 个人详情页
 const VERSION = 'v8.0-student';
-const SID = new URLSearchParams(location.search).get('sid') || '';
+const NAME = new URLSearchParams(location.search).get('name') || '';
 
 function fmt(n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-US'); }
 function escapeHtml(s) {
@@ -420,7 +419,7 @@ async function loadAll() {
     // 1) load main data.json
     const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
     const DATA = await r.json();
-    const stu = (DATA.students || []).find(s => s.sid === SID);
+    const stu = (DATA.students || []).find(s => s.name === NAME);
 
     // 2) load history snapshots (尝试 history-test/ 优先, history/ 其次)
     let history = await loadHistory();
@@ -453,7 +452,7 @@ function render(stu, history, lastUpdate) {
 
   if (!stu) {
     root.innerHTML = `<div class="err-state">
-      ❌ 未找到学号 <code>${escapeHtml(SID)}</code> 的学生 · <a href="index.html" style="color:var(--brand);">返回列表</a>
+      ❌ 未找到学生 <code>${escapeHtml(NAME)}</code> · <a href="index.html" style="color:var(--brand);">返回列表</a>
     </div>`;
     return;
   }
@@ -764,9 +763,9 @@ function renderPosts(stu) {
   `;
 }
 
-if (!SID) {
+if (!NAME) {
   document.getElementById('root').innerHTML =
-    `<div class="err-state">⚠️ 缺少参数 <code>?sid=XXX</code><br>
+    `<div class="err-state">⚠️ 缺少参数 <code>?name=姓名</code><br>
      请从 <a href="index.html" style="color:var(--brand);">学生列表</a> 或
      <a href="analytics.html" style="color:var(--brand);">班级分析</a> 进入</div>`;
 } else {

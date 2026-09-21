@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN + Gitee 学生项目监控 · 24-10 / 24-20 · v12</title>
+  <title>CSDN + Gitee 学生项目监控 · 24-10 / 24-20 · v13</title>
   <style>
     /* Ma: 仪表板样式 - Kami 风格(米黄 + 衬线 + 深蓝) v10 */
     :root {
@@ -532,6 +532,18 @@
       opacity: 0.6;
     }
     .student:hover .external-icon { opacity: 1; color: var(--brand); }
+    .student-detail-link {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 11px;
+      color: var(--brand);
+      text-decoration: none;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--brand-soft, #f4f1ec);
+      transition: background 0.15s;
+    }
+    .student-detail-link:hover { background: var(--brand); color: white; }
     .no-csdn {
       background: repeating-linear-gradient(
         45deg,
@@ -666,8 +678,7 @@
       <a class="tab active" href="index.html">学生列表</a>
       <a class="tab" href="analytics.html">班级分析</a>
       <a class="tab" href="ranking.html">学生排名</a>
-      <a class="tab" href="student.html?sid=240110103">个人详情</a>
-      <span class="ver">v10.0 · DASHBOARD</span>
+      <span class="ver">v13 · DASHBOARD</span>
     </nav>
   <div class="header">
     <div class="header-main">
@@ -676,7 +687,7 @@
       <div class="subtitle">31 名学生 · 每日自动抓取 CSDN 文章 · 8:00 推送飞书</div>
       <div class="meta">最近更新 · <strong id="last-update">加载中...</strong></div>
     </div>
-    <div class="version-badge">DASHBOARD v10</div>
+    <div class="version-badge">DASHBOARD v13</div>
   </div>
 
   <div id="alert-box"></div>
@@ -729,9 +740,8 @@
 
   <div class="toolbar">
       <input type="text" id="search" placeholder="搜索姓名..." />
-      <select id="sort">
-        <option value="sid-asc" selected>学号顺序</option>
-        <option value="activity-desc">综合活跃度 ↓</option>
+            <select id="sort">
+        <option value="activity-desc" selected>综合活跃度 ↓</option>
         <option value="latest-desc">最新文章 ↓</option>
         <option value="latest-update-desc">文章最近更新 ↓</option>
         <option value="posts-desc">文章数 ↓</option>
@@ -1042,10 +1052,8 @@
     // v10: 时间筛选
     if (TIME_RANGE !== 'all') list = list.filter(inTimeRange);
     if (search) {
-    list = list.filter(s =>
-    s.name.toLowerCase().includes(search) ||
-    s.sid.includes(search)
-    );
+      // v13 Ma: 隐私保护 — 仅按姓名搜索,不再支持学号
+      list = list.filter(s => s.name.toLowerCase().includes(search));
     }
     // v6: 阅读量排序 - 无数据(null/0)排到最后
     const viewsOf = (s) => (s.total_views != null && s.total_views > 0) ? s.total_views : 0;
@@ -1114,7 +1122,6 @@
     return db.localeCompare(da);
     });
     else if (sort === 'name-asc') list.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-    else if (sort === 'sid-asc') list.sort((a, b) => a.sid.localeCompare(b.sid));
 
     const html = list.map((s, idx) => {
     const postClass = s.post_count === 0 ? 'post-count zero' : 'post-count';
@@ -1198,6 +1205,7 @@
     ${newBadgeHtml}
     <span class="student-handle">${escapeHtml(handle)}</span>
     ${hasCsdn ? '<span class="external-icon">↗ 主页</span>' : ''}
+    <a class="student-detail-link" href="student.html?name=${encodeURIComponent(s.name)}" onclick="event.stopPropagation()">→ 详情</a>
     </div>
     ${latestHtml}
     ${statsRowHtml}
