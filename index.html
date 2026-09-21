@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>CSDN + Gitee 学生项目监控 · 24-10 / 24-20 · v11</title>
+  <title>CSDN + Gitee 学生项目监控 · 24-10 / 24-20 · v12</title>
   <style>
     /* Ma: 仪表板样式 - Kami 风格(米黄 + 衬线 + 深蓝) v10 */
     :root {
@@ -469,6 +469,19 @@
       color: var(--near-black);
       font-weight: 500;
     }
+    /* v12 Ma: 文章发布日期 (YYYY-MM-DD) */
+    .latest-post-date {
+      flex: 0 0 auto;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 10px;
+      color: var(--stone);
+      background: var(--border-soft);
+      padding: 1px 5px;
+      border-radius: 2px;
+      white-space: nowrap;
+      align-self: flex-start;
+      margin-top: 1px;
+    }
     .empty-latest {
       font-size: 12px;
       color: var(--stone);
@@ -717,15 +730,16 @@
   <div class="toolbar">
       <input type="text" id="search" placeholder="搜索姓名..." />
       <select id="sort">
-        <option value="views-desc">阅读量 ↓</option>
-        <option value="views-asc">阅读量 ↑</option>
+        <option value="sid-asc" selected>学号顺序</option>
+        <option value="activity-desc">综合活跃度 ↓</option>
+        <option value="latest-desc">最新文章 ↓</option>
+        <option value="latest-update-desc">文章最近更新 ↓</option>
         <option value="posts-desc">文章数 ↓</option>
         <option value="posts-asc">文章数 ↑</option>
         <option value="gitee-commits-desc">Gitee commit ↓</option>
         <option value="gitee-stars-desc">Gitee star ↓</option>
         <option value="gitee-fresh">Gitee 最新活动</option>
         <option value="name-asc">姓名 A-Z</option>
-        <option value="sid-asc">学号顺序</option>
       </select>
       <select id="filter">
         <option value="all">全部</option>
@@ -766,8 +780,8 @@
   </div>
 
   <script>
-    // Ma: 仪表板 v10 - 抓取健康度 + fetch_meta + Gitee + 时间筛选
-    const DASHBOARD_VERSION = 'v10.0';
+    // Ma: 仪表板 v12 - 综合活跃度排序 + 文章发布日期
+    const DASHBOARD_VERSION = 'v12';
     let ALL_STUDENTS = [];
     let LAST_UPDATE_ISO = null;
     let CLASS_STATS = null;
@@ -1036,16 +1050,52 @@
     // v6: 阅读量排序 - 无数据(null/0)排到最后
     const viewsOf = (s) => (s.total_views != null && s.total_views > 0) ? s.total_views : 0;
     const viewsKey = (s) => (s.total_views != null && s.total_views > 0) ? 0 : 1;
-    if (sort === 'views-desc') list.sort((a, b) => {
-    const ka = viewsKey(a), kb = viewsKey(b);
-    if (ka !== kb) return ka - kb; // 有数据的(0) 排前
-    return viewsOf(b) - viewsOf(a);
-    });
-    else if (sort === 'views-asc') list.sort((a, b) => {
-    const ka = viewsKey(a), kb = viewsKey(b);
-    if (ka !== kb) return ka - kb; // 有数据的(0) 排前
-    return viewsOf(a) - viewsOf(b);
-    });
+    // v12 Ma: 综合活跃度 (不用阅读量)
+    // 公式: 有文章+30, Gitee 成功+20, 最新文章越近+分 (≤30 天), 文章数+1 (≤10), Gitee commits+1 (≤10)
+    // 惩罚: 缺 CSDN -50
+    function activityScore(s) {
+        let score = 0;
+        if (s.csdn) score += 30;
+        if (s.gitee && s.gitee.ok) score += 20;
+        if (s.post_count > 0) score += Math.min(s.post_count, 10);
+        if (s.gitee && s.gitee.commit_count) {
+            score += Math.min(s.gitee.commit_count, 10);
+        }
+        // latest_post.pubDate recency (0-30 points, 越近越高)
+        if (s.latest_post && s.latest_post.pubDate) {
+            const t = Date.parse(s.latest_post.pubDate);
+            if (!isNaN(t)) {
+                const days = Math.max(0, (Date.now() - t) / 86400000);
+                score += Math.max(0, 30 - Math.floor(days));
+            }
+        }
+        if (!s.csdn) score -= 50;
+        return score;
+    }
+    // Ma: 最新文章 (按 latest_post.pubDate 倒序)
+    function latestPub(s) {
+        if (s.latest_post && s.latest_post.pubDate) {
+            const t = Date.parse(s.latest_post.pubDate);
+            if (!isNaN(t)) return t;
+        }
+        return 0;
+    }
+    // Ma: 文章最近更新 (按 max(posts[].pubDate) 倒序)
+    function latestUpdate(s) {
+        let best = 0;
+        if (s.posts && s.posts.length) {
+            for (const p of s.posts) {
+                if (p.pubDate) {
+                    const t = Date.parse(p.pubDate);
+                    if (!isNaN(t) && t > best) best = t;
+                }
+            }
+        }
+        return best;
+    }
+    if (sort === 'activity-desc') list.sort((a, b) => activityScore(b) - activityScore(a));
+    else if (sort === 'latest-desc') list.sort((a, b) => latestPub(b) - latestPub(a));
+    else if (sort === 'latest-update-desc') list.sort((a, b) => latestUpdate(b) - latestUpdate(a));
     else if (sort === 'posts-desc') list.sort((a, b) => b.post_count - a.post_count);
     else if (sort === 'posts-asc') list.sort((a, b) => a.post_count - b.post_count);
     else if (sort === 'gitee-commits-desc') list.sort((a, b) => {
@@ -1090,15 +1140,28 @@
     // 取最新 3 篇
     const top3 = s.posts.slice(0, 3);
     const total = s.posts.length;
+    // v12 Ma: 格式化 pubDate (RFC 2822 / CSDN) -> 2025-09-20
+    function fmtPubDate(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
     const items = top3.map((p, i) => {
     const title = (p.title || '(无标题)').trim();
     const showTitle = title || extractGuidTitle(p.guid);
     const newCls = (isNew && i === 0) ? 'latest-post-item is-new' : 'latest-post-item';
+    const pubStr = fmtPubDate(p.pubDate);
+    const pubHtml = pubStr ? `<span class="latest-post-date" title="${escapeHtml(p.pubDate)}">${pubStr}</span>` : '';
     return `<li class="${newCls}">
     <span class="idx">${i + 1}.</span>
     <a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener"
     title="${escapeHtml(showTitle)}"
     onclick="event.stopPropagation();">${escapeHtml(showTitle)}</a>
+    ${pubHtml}
     </li>`;
     }).join('');
     const moreCount = Math.max(0, total - 3);
