@@ -763,6 +763,7 @@
         <button data-range="30">30 天</button>
       </div>
       <button class="refresh-btn" id="refresh-btn" title="强制重新加载数据">↻ 刷新</button>
+      <button class="refresh-btn" id="export-btn" title="导出当前学生列表为 CSV">⬇ 导出 CSV</button>
       <span class="count" id="count"></span>
     </div>
 
@@ -1314,6 +1315,59 @@
     }[c]));
     }
 
+    // v18: 导出 CSV — Ma 给班主任备份用
+    // 列: 姓名, CSDN用户名, 文章数, 总阅读, Gitee仓库, Gitee commits, Gitee stars, 最新文章日期, 最新文章标题
+    function csvEscape(v) {
+    if (v == null) return '';
+    const s = String(v);
+    // CSV: 引号包裹, 内部 " 转 ""
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }
+    function exportCsv() {
+    if (!ALL_STUDENTS || ALL_STUDENTS.length === 0) return;
+    // 用当前渲染时用的"过滤+排序"逻辑 — 重新跑一遍得到 list
+    const search = document.getElementById('search').value.toLowerCase();
+    const sort = document.getElementById('sort').value;
+    const filter = document.getElementById('filter').value;
+    let list = ALL_STUDENTS.slice();
+    if (filter === 'active') list = list.filter(s => s.post_count > 0);
+    else if (filter === 'zero') list = list.filter(s => s.post_count === 0);
+    else if (filter === 'missing') list = list.filter(s => !s.csdn);
+    else if (filter === 'gitee-ok') list = list.filter(s => s.gitee && s.gitee.ok);
+    else if (filter === 'gitee-fail') list = list.filter(s => !(s.gitee && s.gitee.ok));
+    if (TIME_RANGE !== 'all') list = list.filter(inTimeRange);
+    if (search) list = list.filter(s => s.name.toLowerCase().includes(search));
+    // 排序 (复用 render() 的逻辑 - 这里复制简化版)
+    if (sort === 'posts-desc') list.sort((a, b) => b.post_count - a.post_count);
+    else if (sort === 'posts-asc') list.sort((a, b) => a.post_count - b.post_count);
+    else if (sort === 'name-asc') list.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    // 其他排序模式导出时用默认顺序即可
+    const headers = ['姓名', 'CSDN用户名', '文章数', '总阅读', 'Gitee仓库', 'Gitee commits', 'Gitee stars', '最新文章日期', '最新文章标题'];
+    const rows = list.map(s => [
+      s.name,
+      s.csdn_username || '',
+      s.post_count || 0,
+      s.total_views || 0,
+      s.gitee ? `${s.gitee.owner}/${s.gitee.repo}` : '',
+      s.gitee ? (s.gitee.commit_count || 0) : '',
+      s.gitee ? (s.gitee.stars || 0) : '',
+      s.latest_post && s.latest_post.pubDate ? s.latest_post.pubDate : '',
+      s.latest_post && s.latest_post.title ? s.latest_post.title : '',
+    ]);
+    // 加 BOM 让 Excel 识别 UTF-8 中文
+    const csv = '\uFEFF' + [headers, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const ts = (LAST_UPDATE_ISO || new Date().toISOString()).replace(/[:T]/g, '-').slice(0, 16);
+    a.download = `csdn-dashboard-${ts}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
     // v16: search 加 200ms debounce, 避免每个按键都触发完整 render
     let _searchDebounce = null;
     document.getElementById('search').addEventListener('input', () => {
@@ -1323,6 +1377,8 @@
     document.getElementById('sort').addEventListener('change', render);
     document.getElementById('filter').addEventListener('change', render);
     document.getElementById('refresh-btn').addEventListener('click', () => loadData());
+    // v18: 导出 CSV — 当前显示的学生列表 (应用了 filter/sort/time 后)
+    document.getElementById('export-btn').addEventListener('click', () => exportCsv());
     document.addEventListener('dblclick', () => loadData());
 
     // v10: 时间筛选按钮事件
