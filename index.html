@@ -1025,17 +1025,29 @@
     if (TIME_RANGE === 'all') return true;
     const days = Number(TIME_RANGE);
     const cutoff = Date.now() - days * 86400 * 1000;
-    // 1) CSDN: posts 中 pubDate 在范围内, 或 last_update 在范围内
-    try {
-    const lu = LAST_UPDATE_ISO ? new Date(LAST_UPDATE_ISO).getTime() : 0;
-    if (lu >= cutoff) return true;
-    } catch {}
-    // 2) Gitee: gitee.date 在范围内
+    // Ma v17: 优先用 latest_post.pubDate 判定 (最直接的文章新鲜度)
+    if (s.latest_post && s.latest_post.pubDate) {
+      try {
+        const t = Date.parse(s.latest_post.pubDate);
+        if (!isNaN(t) && t >= cutoff) return true;
+      } catch {}
+    }
+    // 兜底: posts 中任意一篇 pubDate 在范围内
+    if (s.posts && s.posts.length) {
+      for (const p of s.posts) {
+        if (!p.pubDate) continue;
+        try {
+          const t = Date.parse(p.pubDate);
+          if (!isNaN(t) && t >= cutoff) return true;
+        } catch {}
+      }
+    }
+    // 兜底 2: Gitee commit date
     if (s.gitee && s.gitee.date) {
-    try {
-    const d = new Date(s.gitee.date).getTime();
-    if (d >= cutoff) return true;
-    } catch {}
+      try {
+        const d = new Date(s.gitee.date).getTime();
+        if (d >= cutoff) return true;
+      } catch {}
     }
     return false;
     }
