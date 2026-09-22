@@ -524,7 +524,7 @@ async function loadData() {
     DATA = await r.json();
     render();
   } catch (e) {
-    console.error('loadData failed', e);
+    // Ma: 静默失败 + UI 提示 (无 console 噪音)
     document.getElementById('last-update').textContent = '加载失败 ' + e.message;
   }
 }
