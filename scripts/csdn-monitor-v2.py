@@ -443,6 +443,46 @@ def fetch_gitee_commits_count_api(owner, repo):
         return total or None
 
 
+
+def fetch_gitee_markdown(owner, repo):
+    """Gitee 现在对未登录请求返回 markdown 而非 HTML。
+    解析 markdown 拿 stars/forks/created/last_updated。
+    """
+    url = f"https://gitee.com/{owner}/{repo}"
+    try:
+        r = http_get(url, timeout=10, headers={
+            "User-Agent": UA,
+            "Accept": "text/markdown,text/html,*/*",
+            "Accept-Language": "zh-CN,zh;q=0.9",
+        }, retries=1)
+        if r.status_code != 200 or not r.text:
+            return None
+        text = r.text
+        # 必须是 markdown 格式 (gitee 锁定页面)
+        if "# " not in text or "**Stars**" not in text:
+            return None
+        info = {"source": "markdown"}
+        # Stars
+        m = re.search(r"\*\*Stars\*\*\s*:?\s*(\d+)", text)
+        if m:
+            info["stars"] = int(m.group(1))
+        # Forks
+        m = re.search(r"\*\*Forks\*\*\s*:?\s*(\d+)", text)
+        if m:
+            info["forks"] = int(m.group(1))
+        # Last Updated (用来替代 commit date)
+        m = re.search(r"\*\*Last Updated\*\*\s*:?\s*([\d-]+)", text)
+        if m:
+            info["date"] = m.group(1) + "T00:00:00+08:00"  # ISO-ish
+        # Created
+        m = re.search(r"\*\*Created\*\*\s*:?\s*([\d-]+)", text)
+        if m:
+            info["created"] = m.group(1)
+        return info if len(info) > 1 else None
+    except Exception:
+        return None
+
+
 def fetch_gitee_html_fallback(owner, repo):
     """HTML fallback: 抓 gitee.com/<owner>/<repo> 主页, 解析 commit 数 / stars
     公开页面 HTML 含: <svg class="...star">...<span class="...">N</span>
@@ -519,7 +559,16 @@ def fetch_gitee_all(owner, repo):
         cnt = fetch_gitee_commits_count_api(owner, repo)
         if cnt is not None:
             out["commit_count"] = cnt
-    # 4) HTML fallback if API 全失败
+    # 4) Markdown fallback (gitee 当前未登录访问返回 markdown)
+    if not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
+        md = fetch_gitee_markdown(owner, repo)
+        if md:
+            out["stars"] = md.get("stars", out["stars"])
+            out["forks"] = md.get("forks", out["forks"])
+            if md.get("date") and not out.get("date"):
+                out["date"] = md["date"]
+            out["source"] = out["source"] or "markdown"
+    # 5) HTML fallback (legacy)
     if not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
         html = fetch_gitee_html_fallback(owner, repo)
         if html:
@@ -529,8 +578,8 @@ def fetch_gitee_all(owner, repo):
             if html.get("date") and not out.get("date"):
                 out["date"] = html["date"]
             out["source"] = out["source"] or "html"
-    # 判定 ok
-    out["ok"] = bool(out.get("sha") or out.get("date") or out.get("commit_count") > 0 or out["source"])
+    # 判定 ok — markdown fallback 也可以成功
+    out["ok"] = bool(out.get("sha") or out.get("date") or out.get("commit_count") > 0 or out.get("stars") > 0 or out.get("forks") > 0 or out["source"])
     if not out["ok"]:
         out["err"] = out["err"] or "all sources failed (likely 403/rate-limited)"
     return out
