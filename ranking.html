@@ -230,6 +230,7 @@
 const VERSION = 'v10.0-ranking';
 let DATA = null;
 
+let LAST_UPDATE_ISO = null;
 async function loadData() {
   try {
     const r = await fetch('data.json?t=' + Date.now() + '&r=' + Math.random().toString(36).slice(2, 8), {
@@ -237,10 +238,15 @@ async function loadData() {
       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
     });
     DATA = await r.json();
+    // Ma: 性能优化 — 数据未变跳过重绘 (避免每 60s 重排 6 个 ranking 列表)
+    if (LAST_UPDATE_ISO === DATA.last_update && DATA.students && DATA.students.length > 0) {
+      return;
+    }
+    LAST_UPDATE_ISO = DATA.last_update;
     render();
     document.getElementById('last-update').textContent = formatTime(DATA.last_update);
   } catch (e) {
-    console.error('loadData failed', e);
+    // Ma: 静默失败 + UI 提示 (无 console 噪音)
     document.getElementById('last-update').textContent = '加载失败 ' + e.message;
   }
 }

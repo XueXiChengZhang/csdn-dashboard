@@ -10,22 +10,71 @@
   <style>
     /* Ma: 仪表板样式 - Kami 风格(米黄 + 衬线 + 深蓝) v10 */
     :root {
-      --parchment: #f5f4ed;
-      --ivory: #faf9f5;
-      --near-black: #141413;
-      --dark-warm: #3d3d3a;
-      --olive: #504e49;
-      --stone: #6b6a64;
-      --brand: #1B365D;
-      --brand-soft: #E4ECF5;
-      --accent: #c44d36;
-      --accent-soft: #faf3ee;
-      --border: #e8e6dc;
-      --border-soft: #e5e3d8;
-      --tag-bg: #E4ECF5;
-      --new-bg: #fff4e6;
-      --new-fg: #b8521c;
+    --parchment: #f5f4ed;
+    --ivory: #faf9f5;
+    --near-black: #141413;
+    --dark-warm: #3d3d3a;
+    --olive: #504e49;
+    --stone: #6b6a64;
+    --brand: #1B365D;
+    --brand-soft: #E4ECF5;
+    --accent: #c44d36;
+    --accent-soft: #faf3ee;
+    --border: #e8e6dc;
+    --border-soft: #e5e3d8;
+    --tag-bg: #E4ECF5;
+    --new-bg: #fff4e6;
+    --new-fg: #b8521c;
     }
+    /* v21: 暗色模式 — Ma 晚上看 dashboard */
+    html.dark {
+    --parchment: #1a1a1f;
+    --ivory: #25252b;
+    --near-black: #e8e6dc;
+    --dark-warm: #c4c2ba;
+    --olive: #a8a59e;
+    --stone: #807d75;
+    --brand: #6B8FBD;
+    --brand-soft: #2a3a52;
+    --accent: #e87658;
+    --accent-soft: #3a2620;
+    --border: #3d3d44;
+    --border-soft: #30303a;
+    --tag-bg: #2a3a52;
+    --new-bg: #3a2a18;
+    --new-fg: #e89968;
+    }
+    html.dark body { background: var(--parchment); color: var(--near-black); }
+    html.dark .stat,
+    html.dark .fetch-meta-panel,
+    html.dark .gitee-card,
+    html.dark .gitee-card-detail { background: var(--ivory); border-color: var(--border); }
+    html.dark .student { background: var(--ivory); border-color: var(--border); }
+    html.dark .student:hover { border-color: var(--brand); box-shadow: 0 6px 20px rgba(107, 143, 189, 0.18); }
+    html.dark .topnav { background: var(--ivory); border-bottom-color: var(--border); }
+    html.dark .topnav a.tab.active { background: var(--brand); color: var(--ivory); }
+    html.dark .toolbar input, html.dark .toolbar select,
+    html.dark .toolbar .refresh-btn {
+    background: var(--ivory); color: var(--near-black); border-color: var(--border);
+    }
+    html.dark .latest-section { border-top-color: var(--border-soft); }
+    html.dark .gitee-mini { border-top-color: var(--border-soft); }
+    html.dark .latest-post-date { background: var(--border-soft); color: var(--olive); }
+    html.dark .post-count.zero { background: var(--border-soft); color: var(--stone); }
+    html.dark .fetch-meta-toggle { background: var(--ivory); }
+    /* 暗色 toggle 按钮 */
+    .dark-toggle {
+    background: transparent;
+    border: 0.6pt solid var(--border);
+    color: var(--olive);
+    padding: 6px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    transition: all 0.15s;
+    }
+    .dark-toggle:hover { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: var(--parchment);
@@ -116,12 +165,16 @@
       background: var(--ivory);
       border-bottom: 0.6pt solid var(--border);
       padding: 14px 24px;
-      margin: -32px -24px 20px -24px;
+      margin: 0 0 20px 0;
       display: flex;
       gap: 6px;
       align-items: center;
       flex-wrap: wrap;
       font-size: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
     }
     .topnav .brand {
       font-weight: 600;
@@ -333,8 +386,18 @@
     }
     a.student:hover, .student:hover {
       border-color: var(--brand);
-      box-shadow: 0 4px 14px rgba(27, 54, 93, 0.08);
-      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(27, 54, 93, 0.12);
+      transform: translateY(-2px);
+    }
+    /* v19: deep-link 高亮 — ?name=xxx 滚动到的卡片 */
+    .student.deep-link-target {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(196, 77, 54, 0.25), 0 6px 18px rgba(196, 77, 54, 0.15);
+      animation: deep-link-pulse 1s ease-in-out 2;
+    }
+    @keyframes deep-link-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(196, 77, 54, 0.25), 0 6px 18px rgba(196, 77, 54, 0.15); }
+      50% { box-shadow: 0 0 0 6px rgba(196, 77, 54, 0.4), 0 8px 22px rgba(196, 77, 54, 0.25); }
     }
     a.student:focus, .student:focus {
       outline: 2px solid var(--brand);
@@ -540,17 +603,26 @@
     }
     .student-detail-link:hover { background: var(--brand); color: white; }
     .no-csdn {
-      background: repeating-linear-gradient(
-        45deg,
-        var(--ivory),
-        var(--ivory) 8px,
-        var(--border-soft) 8px,
-        var(--border-soft) 9px
-      );
-      cursor: not-allowed;
-      opacity: 0.7;
+      background: var(--ivory);
+      border: 1.5pt dashed var(--stone);
+      cursor: default;
+      opacity: 1;
     }
-    .no-csdn:hover { transform: none; box-shadow: none; border-color: var(--border); }
+    .no-csdn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(107, 106, 100, 0.18); border-color: var(--olive); border-style: solid; }
+    /* v20: 仅 Gitee 标签 — 一眼看出跟有 CSDN 的卡片区别 */
+    .gitee-only-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 7px;
+      background: #E4ECF5;
+      color: #1B365D;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      border-radius: 2px;
+      border: 0.6pt solid #1B365D;
+    }
     .alert {
       background: var(--accent-soft);
       border-left: 3px solid var(--accent);
@@ -591,6 +663,9 @@
       h1 { font-size: 24px; }
       .stats { grid-template-columns: repeat(2, 1fr); }
       .student-grid { grid-template-columns: 1fr; }
+      .topnav { margin: -20px -16px 16px -16px; padding: 12px 16px; }
+      .toolbar input, .toolbar select { min-width: 0; flex: 1 1 100%; }
+      .toolbar .count { margin-left: 0; flex-basis: 100%; }
     }
     /* === v7: 抓取健康度卡片 === */
     .stat.health-good .stat-value { color: #2c7a4b; }
@@ -673,6 +748,7 @@
       <a class="tab active" href="index.html">学生列表</a>
       <a class="tab" href="analytics.html">班级分析</a>
       <a class="tab" href="ranking.html">学生排名</a>
+      <button class="dark-toggle" id="dark-toggle" title="切换暗色模式">🌙</button>
       <span class="ver">v13 · DASHBOARD</span>
     </nav>
   <div class="header">
@@ -760,6 +836,7 @@
         <button data-range="30">30 天</button>
       </div>
       <button class="refresh-btn" id="refresh-btn" title="强制重新加载数据">↻ 刷新</button>
+      <button class="refresh-btn" id="export-btn" title="导出当前学生列表为 CSV">⬇ 导出 CSV</button>
       <span class="count" id="count"></span>
     </div>
 
@@ -768,7 +845,7 @@
         <div class="gitee-card-head">
           <h3>💾 Gitee 最近活动</h3>
           <span class="meta" id="gitee-card-meta">—</span>
-        </div>
+    </div>
         <div class="gitee-grid" id="gitee-grid"></div>
       </section>
 
@@ -808,10 +885,14 @@
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
+    // Ma: 性能优化 — 数据未变则跳过 re-render, 避免每 60s 重绘整个 DOM
+    if (LAST_UPDATE_ISO === data.last_update && ALL_STUDENTS.length > 0) {
+      return;
+    }
     LAST_UPDATE_ISO = data.last_update;
     ALL_STUDENTS = data.students.map(s => ({
-    ...s,
-    csdn: !!s.csdn_url,
+      ...s,
+      csdn: !!s.csdn_url,
     }));
     CLASS_STATS = data.class_stats || null;
     renderStats(data);
@@ -1018,17 +1099,29 @@
     if (TIME_RANGE === 'all') return true;
     const days = Number(TIME_RANGE);
     const cutoff = Date.now() - days * 86400 * 1000;
-    // 1) CSDN: posts 中 pubDate 在范围内, 或 last_update 在范围内
+    // Ma v17: 优先用 latest_post.pubDate 判定 (最直接的文章新鲜度)
+    if (s.latest_post && s.latest_post.pubDate) {
+      try {
+    const t = Date.parse(s.latest_post.pubDate);
+    if (!isNaN(t) && t >= cutoff) return true;
+      } catch {}
+    }
+    // 兜底: posts 中任意一篇 pubDate 在范围内
+    if (s.posts && s.posts.length) {
+      for (const p of s.posts) {
+    if (!p.pubDate) continue;
     try {
-    const lu = LAST_UPDATE_ISO ? new Date(LAST_UPDATE_ISO).getTime() : 0;
-    if (lu >= cutoff) return true;
+      const t = Date.parse(p.pubDate);
+      if (!isNaN(t) && t >= cutoff) return true;
     } catch {}
-    // 2) Gitee: gitee.date 在范围内
+      }
+    }
+    // 兜底 2: Gitee commit date
     if (s.gitee && s.gitee.date) {
-    try {
+      try {
     const d = new Date(s.gitee.date).getTime();
     if (d >= cutoff) return true;
-    } catch {}
+      } catch {}
     }
     return false;
     }
@@ -1057,44 +1150,44 @@
     // 公式: 有文章+30, Gitee 成功+20, 最新文章越近+分 (≤30 天), 文章数+1 (≤10), Gitee commits+1 (≤10)
     // 惩罚: 缺 CSDN -50
     function activityScore(s) {
-        let score = 0;
-        if (s.csdn) score += 30;
-        if (s.gitee && s.gitee.ok) score += 20;
-        if (s.post_count > 0) score += Math.min(s.post_count, 10);
-        if (s.gitee && s.gitee.commit_count) {
-            score += Math.min(s.gitee.commit_count, 10);
+    let score = 0;
+    if (s.csdn) score += 30;
+    if (s.gitee && s.gitee.ok) score += 20;
+    if (s.post_count > 0) score += Math.min(s.post_count, 10);
+    if (s.gitee && s.gitee.commit_count) {
+        score += Math.min(s.gitee.commit_count, 10);
+    }
+    // latest_post.pubDate recency (0-30 points, 越近越高)
+    if (s.latest_post && s.latest_post.pubDate) {
+        const t = Date.parse(s.latest_post.pubDate);
+        if (!isNaN(t)) {
+            const days = Math.max(0, (Date.now() - t) / 86400000);
+            score += Math.max(0, 30 - Math.floor(days));
         }
-        // latest_post.pubDate recency (0-30 points, 越近越高)
-        if (s.latest_post && s.latest_post.pubDate) {
-            const t = Date.parse(s.latest_post.pubDate);
-            if (!isNaN(t)) {
-                const days = Math.max(0, (Date.now() - t) / 86400000);
-                score += Math.max(0, 30 - Math.floor(days));
-            }
-        }
-        if (!s.csdn) score -= 50;
-        return score;
+    }
+    if (!s.csdn) score -= 50;
+    return score;
     }
     // Ma: 最新文章 (按 latest_post.pubDate 倒序)
     function latestPub(s) {
-        if (s.latest_post && s.latest_post.pubDate) {
-            const t = Date.parse(s.latest_post.pubDate);
-            if (!isNaN(t)) return t;
-        }
-        return 0;
+    if (s.latest_post && s.latest_post.pubDate) {
+        const t = Date.parse(s.latest_post.pubDate);
+        if (!isNaN(t)) return t;
+    }
+    return 0;
     }
     // Ma: 文章最近更新 (按 max(posts[].pubDate) 倒序)
     function latestUpdate(s) {
-        let best = 0;
-        if (s.posts && s.posts.length) {
-            for (const p of s.posts) {
-                if (p.pubDate) {
-                    const t = Date.parse(p.pubDate);
-                    if (!isNaN(t) && t > best) best = t;
-                }
+    let best = 0;
+    if (s.posts && s.posts.length) {
+        for (const p of s.posts) {
+            if (p.pubDate) {
+                const t = Date.parse(p.pubDate);
+                if (!isNaN(t) && t > best) best = t;
             }
         }
-        return best;
+    }
+    return best;
     }
     if (sort === 'activity-desc') list.sort((a, b) => activityScore(b) - activityScore(a));
     else if (sort === 'latest-desc') list.sort((a, b) => latestPub(b) - latestPub(a));
@@ -1199,7 +1292,7 @@
     <span class="${postClass}"><span class="num">${s.post_count}</span> 篇</span>
     ${newBadgeHtml}
     <span class="student-handle">${escapeHtml(handle)}</span>
-    ${hasCsdn ? '<span class="external-icon">↗ 主页</span>' : ''}
+    ${hasCsdn ? '<span class="external-icon">↗ 主页</span>' : '<span class="gitee-only-badge">💾 仅 Gitee</span>'}
     <a class="student-detail-link" href="student.html?name=${encodeURIComponent(s.name)}" onclick="event.stopPropagation()">→ 详情</a>
     </div>
     ${latestHtml}
@@ -1270,11 +1363,11 @@
     // Ma v11: 区分 empty (仓库存在但没 commit) 和 fail (404/限流)
     const isEmpty = g.status === 'empty';
     const badge = isEmpty ? '<span class="gitee-empty">空仓库</span>'
-                          : `<span class="gitee-fail">抓取失败</span>`;
+                      : `<span class="gitee-fail">抓取失败</span>`;
     const ownerRepo = (g.owner && g.repo) ? `${g.owner}/${g.repo}` : '未配置';
     return `<div class="gitee-mini" title="${escapeHtml(g.err || '抓取失败')}">
     ${g.url ? `<a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(ownerRepo)}</a>`
-            : `<span class="gitee-stat">${escapeHtml(ownerRepo)}</span>`}
+        : `<span class="gitee-stat">${escapeHtml(ownerRepo)}</span>`}
     ${badge}
     ${g.date ? `<span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(g.date))}</span>` : ''}
     </div>`;
@@ -1295,6 +1388,59 @@
     }[c]));
     }
 
+    // v18: 导出 CSV — Ma 给班主任备份用
+    // 列: 姓名, CSDN用户名, 文章数, 总阅读, Gitee仓库, Gitee commits, Gitee stars, 最新文章日期, 最新文章标题
+    function csvEscape(v) {
+    if (v == null) return '';
+    const s = String(v);
+    // CSV: 引号包裹, 内部 " 转 ""
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }
+    function exportCsv() {
+    if (!ALL_STUDENTS || ALL_STUDENTS.length === 0) return;
+    // 用当前渲染时用的"过滤+排序"逻辑 — 重新跑一遍得到 list
+    const search = document.getElementById('search').value.toLowerCase();
+    const sort = document.getElementById('sort').value;
+    const filter = document.getElementById('filter').value;
+    let list = ALL_STUDENTS.slice();
+    if (filter === 'active') list = list.filter(s => s.post_count > 0);
+    else if (filter === 'zero') list = list.filter(s => s.post_count === 0);
+    else if (filter === 'missing') list = list.filter(s => !s.csdn);
+    else if (filter === 'gitee-ok') list = list.filter(s => s.gitee && s.gitee.ok);
+    else if (filter === 'gitee-fail') list = list.filter(s => !(s.gitee && s.gitee.ok));
+    if (TIME_RANGE !== 'all') list = list.filter(inTimeRange);
+    if (search) list = list.filter(s => s.name.toLowerCase().includes(search));
+    // 排序 (复用 render() 的逻辑 - 这里复制简化版)
+    if (sort === 'posts-desc') list.sort((a, b) => b.post_count - a.post_count);
+    else if (sort === 'posts-asc') list.sort((a, b) => a.post_count - b.post_count);
+    else if (sort === 'name-asc') list.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+    // 其他排序模式导出时用默认顺序即可
+    const headers = ['姓名', 'CSDN用户名', '文章数', '总阅读', 'Gitee仓库', 'Gitee commits', 'Gitee stars', '最新文章日期', '最新文章标题'];
+    const rows = list.map(s => [
+      s.name,
+      s.csdn_username || '',
+      s.post_count || 0,
+      s.total_views || 0,
+      s.gitee ? `${s.gitee.owner}/${s.gitee.repo}` : '',
+      s.gitee ? (s.gitee.commit_count || 0) : '',
+      s.gitee ? (s.gitee.stars || 0) : '',
+      s.latest_post && s.latest_post.pubDate ? s.latest_post.pubDate : '',
+      s.latest_post && s.latest_post.title ? s.latest_post.title : '',
+    ]);
+    // 加 BOM 让 Excel 识别 UTF-8 中文
+    const csv = '\uFEFF' + [headers, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const ts = (LAST_UPDATE_ISO || new Date().toISOString()).replace(/[:T]/g, '-').slice(0, 16);
+    a.download = `csdn-dashboard-${ts}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
     // v16: search 加 200ms debounce, 避免每个按键都触发完整 render
     let _searchDebounce = null;
     document.getElementById('search').addEventListener('input', () => {
@@ -1304,7 +1450,29 @@
     document.getElementById('sort').addEventListener('change', render);
     document.getElementById('filter').addEventListener('change', render);
     document.getElementById('refresh-btn').addEventListener('click', () => loadData());
+    // v18: 导出 CSV — 当前显示的学生列表 (应用了 filter/sort/time 后)
+    document.getElementById('export-btn').addEventListener('click', () => exportCsv());
     document.addEventListener('dblclick', () => loadData());
+
+    // v21: 暗色模式 toggle — 持久化到 localStorage
+    const DARK_KEY = 'csdn-dashboard-dark';
+    function applyDark(on) {
+      if (on) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('dark-toggle').textContent = '☀';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('dark-toggle').textContent = '🌙';
+      }
+    }
+    // 首次加载恢复
+    const _savedDark = localStorage.getItem(DARK_KEY);
+    if (_savedDark === '1') applyDark(true);
+    document.getElementById('dark-toggle').addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      applyDark(isDark);
+      try { localStorage.setItem(DARK_KEY, isDark ? '1' : '0'); } catch (e) {}
+    });
 
     // v10: 时间筛选按钮事件
     document.querySelectorAll('#time-filter button').forEach(btn => {
@@ -1338,6 +1506,36 @@
 
     loadData();
     setInterval(loadData, 60000);
+
+    // v19: URL deep-link — ?name=xxx 滚动到指定学生卡片并高亮
+    // Ma: 分享 dashboard 时可用 (但 search/sort/filter 会影响定位, 所以先清空过滤)
+    function applyDeepLink() {
+    const name = new URLSearchParams(location.search).get('name');
+    if (!name) return;
+    // 清空 search 框 + 重置 sort 为 activity (默认排序), filter 为 all — 保证目标学生可见
+    const searchEl = document.getElementById('search');
+    if (searchEl && searchEl.value) { searchEl.value = ''; }
+    const filterEl = document.getElementById('filter');
+    if (filterEl && filterEl.value !== 'all') { filterEl.value = 'all'; filterEl.dispatchEvent(new Event('change')); }
+    const sortEl = document.getElementById('sort');
+    if (sortEl && sortEl.value !== 'activity-desc') { sortEl.value = 'activity-desc'; sortEl.dispatchEvent(new Event('change')); }
+    // 等 render() 完成
+    setTimeout(() => {
+    const cards = [...document.querySelectorAll('.student')];
+    const card = cards.find(c => c.querySelector('.student-name')?.textContent === name);
+    if (!card) {
+    // 没找到 — 提示并保留 URL
+    return;
+    }
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('deep-link-target');
+    // 1.5s 后移除高亮
+    setTimeout(() => card.classList.remove('deep-link-target'), 3500);
+    }, 200);
+    }
+    window.addEventListener('hashchange', applyDeepLink);
+    // 首次进入页面时也跑一次
+    setTimeout(applyDeepLink, 1500);
 </script>
 </body>
 </html>

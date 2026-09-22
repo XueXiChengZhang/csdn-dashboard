@@ -150,6 +150,13 @@
     /* section */
     .section {
       margin-bottom: 36px;
+      min-width: 0;
+    }
+    .section-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      max-width: 100%;
+      min-width: 0;
     }
     .section-title {
       font-size: 18px;
@@ -413,6 +420,7 @@
       <span>🏆 阅读量 TOP 10 学生</span>
       <span class="hint">按 total_views 降序 · 点击行跳个人页</span>
     </div>
+    <div class="section-table-wrap">
     <table class="top-table">
       <thead>
         <tr>
@@ -427,6 +435,7 @@
         <tr><td colspan="5" class="empty" style="border:none;background:transparent;">加载中…</td></tr>
       </tbody>
     </table>
+    </div>
   </section>
 
   <section class="section">
@@ -485,6 +494,7 @@
       <span>💾 Gitee commit TOP 10</span>
       <span class="hint">按 commit 数降序 · 点击跳 Gitee 仓库</span>
     </div>
+    <div class="section-table-wrap">
     <table class="top-table">
       <thead>
         <tr>
@@ -500,6 +510,7 @@
         <tr><td colspan="6" class="empty" style="border:none;background:transparent;">加载中…</td></tr>
       </tbody>
     </table>
+    </div>
   </section>
 
   <section class="section">
@@ -517,14 +528,20 @@
 // Ma: 仪表板 v8 - 班级分析页
 const VERSION = 'v8.0-analytics';
 let DATA = null;
+let LAST_UPDATE_ISO = null;
 
 async function loadData() {
   try {
     const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
     DATA = await r.json();
+    // Ma: 性能优化 — 数据未变跳过重绘 (避免每 60s 重画 SVG 散点 + 表格)
+    if (LAST_UPDATE_ISO === DATA.last_update && DATA.students && DATA.students.length > 0) {
+      return;
+    }
+    LAST_UPDATE_ISO = DATA.last_update;
     render();
   } catch (e) {
-    console.error('loadData failed', e);
+    // Ma: 静默失败 + UI 提示 (无 console 噪音)
     document.getElementById('last-update').textContent = '加载失败 ' + e.message;
   }
 }
