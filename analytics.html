@@ -361,6 +361,56 @@
       .top-table { font-size: 12px; }
       .top-table th, .top-table td { padding: 8px 8px; }
     }
+  /* v21: 暗色模式 — Ma 晚上看 dashboard */
+    html.dark {
+    --parchment: #1a1a1f;
+    --ivory: #25252b;
+    --near-black: #e8e6dc;
+    --dark-warm: #c4c2ba;
+    --olive: #a8a59e;
+    --stone: #807d75;
+    --brand: #6B8FBD;
+    --brand-soft: #2a3a52;
+    --accent: #e87658;
+    --accent-soft: #3a2620;
+    --border: #3d3d44;
+    --border-soft: #30303a;
+    --tag-bg: #2a3a52;
+    --new-bg: #3a2a18;
+    --new-fg: #e89968;
+    }
+    html.dark body { background: var(--parchment); color: var(--near-black); }
+    html.dark .stat,
+    html.dark .fetch-meta-panel,
+    html.dark .gitee-card,
+    html.dark .gitee-card-detail { background: var(--ivory); border-color: var(--border); }
+    html.dark .student { background: var(--ivory); border-color: var(--border); }
+    html.dark .student:hover { border-color: var(--brand); box-shadow: 0 6px 20px rgba(107, 143, 189, 0.18); }
+    html.dark .topnav { background: var(--ivory); border-bottom-color: var(--border); }
+    html.dark .topnav a.tab.active { background: var(--brand); color: var(--ivory); }
+    html.dark .toolbar input, html.dark .toolbar select,
+    html.dark .toolbar .refresh-btn {
+    background: var(--ivory); color: var(--near-black); border-color: var(--border);
+    }
+    html.dark .latest-section { border-top-color: var(--border-soft); }
+    html.dark .gitee-mini { border-top-color: var(--border-soft); }
+    html.dark .latest-post-date { background: var(--border-soft); color: var(--olive); }
+    html.dark .post-count.zero { background: var(--border-soft); color: var(--stone); }
+    html.dark .fetch-meta-toggle { background: var(--ivory); }
+    /* 暗色 toggle 按钮 */
+    .dark-toggle {
+    background: transparent;
+    border: 0.6pt solid var(--border);
+    color: var(--olive);
+    padding: 6px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    transition: all 0.15s;
+    }
+    .dark-toggle:hover { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+    
   </style>
 </head>
 <body>
@@ -370,8 +420,7 @@
   <a class="tab" href="index.html">学生列表</a>
   <a class="tab active" href="analytics.html">班级分析</a>
     <a class="tab" href="ranking.html">学生排名</a>
-    <a class="tab" href="student.html?name=">个人详情</a>
-  <span class="ver">v10.0 · DASHBOARD-ANALYTICS</span>
+      <button id="dark-toggle" class="dark-toggle" type="button" aria-label="切换暗色模式">🌙</button><span class="ver">v10.0 · DASHBOARD-ANALYTICS</span>
 </nav>
 
 <main>
@@ -886,5 +935,30 @@ function renderGiteeScatter(stu) {
 loadData();
 setInterval(loadData, 60000);
 </script>
-</body>
+  <script>
+// apply_dark.js — content that should be appended before </body> of each HTML page
+// Renders the dark toggle button and applies theme from localStorage
+(function() {
+    const DARK_KEY = 'csdn-dashboard-dark';
+    function applyDark(on) {
+      document.documentElement.classList.toggle('dark', on);
+      var btn = document.getElementById('dark-toggle');
+      if (btn) btn.textContent = on ? '☀' : '🌙';
+    }
+    // Restore saved preference
+    try {
+      if (localStorage.getItem(DARK_KEY) === '1') applyDark(true);
+    } catch (e) {}
+    // Wait for DOM to be ready so toggle button exists
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-toggle');
+      if (!btn) return;
+      btn.addEventListener('click', function() {
+        var isDark = !document.documentElement.classList.contains('dark');
+        applyDark(isDark);
+        try { localStorage.setItem(DARK_KEY, isDark ? '1' : '0'); } catch (e) {}
+      });
+    });
+})();  </script>
+  </body>
 </html>
