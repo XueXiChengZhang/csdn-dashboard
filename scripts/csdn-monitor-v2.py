@@ -445,14 +445,15 @@ def fetch_gitee_commits_count_api(owner, repo):
 
 
 def fetch_gitee_markdown(owner, repo):
-    """Gitee 现在对未登录请求返回 markdown 而非 HTML。
+    """Gitee 在 /owner/repo.md 这个 URL 下对未登录请求返回 markdown。
+    /owner/repo 主页面是 HTML (不能直接当 markdown 解析)。
     解析 markdown 拿 stars/forks/created/last_updated。
     """
-    url = f"https://gitee.com/{owner}/{repo}"
+    url = f"https://gitee.com/{owner}/{repo}.md"
     try:
         r = http_get(url, timeout=10, headers={
             "User-Agent": UA,
-            "Accept": "text/markdown,text/html,*/*",
+            "Accept": "text/markdown,text/plain,*/*",
             "Accept-Language": "zh-CN,zh;q=0.9",
         }, retries=1)
         if r.status_code != 200 or not r.text:
