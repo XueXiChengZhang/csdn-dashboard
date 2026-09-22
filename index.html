@@ -116,12 +116,16 @@
       background: var(--ivory);
       border-bottom: 0.6pt solid var(--border);
       padding: 14px 24px;
-      margin: -32px -24px 20px -24px;
+      margin: 0 0 20px 0;
       display: flex;
       gap: 6px;
       align-items: center;
       flex-wrap: wrap;
       font-size: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
     }
     .topnav .brand {
       font-weight: 600;
