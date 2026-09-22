@@ -528,11 +528,17 @@
 // Ma: 仪表板 v8 - 班级分析页
 const VERSION = 'v8.0-analytics';
 let DATA = null;
+let LAST_UPDATE_ISO = null;
 
 async function loadData() {
   try {
     const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' });
     DATA = await r.json();
+    // Ma: 性能优化 — 数据未变跳过重绘 (避免每 60s 重画 SVG 散点 + 表格)
+    if (LAST_UPDATE_ISO === DATA.last_update && DATA.students && DATA.students.length > 0) {
+      return;
+    }
+    LAST_UPDATE_ISO = DATA.last_update;
     render();
   } catch (e) {
     // Ma: 静默失败 + UI 提示 (无 console 噪音)

@@ -811,10 +811,14 @@
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
+    // Ma: 性能优化 — 数据未变则跳过 re-render, 避免每 60s 重绘整个 DOM
+    if (LAST_UPDATE_ISO === data.last_update && ALL_STUDENTS.length > 0) {
+      return;
+    }
     LAST_UPDATE_ISO = data.last_update;
     ALL_STUDENTS = data.students.map(s => ({
-    ...s,
-    csdn: !!s.csdn_url,
+      ...s,
+      csdn: !!s.csdn_url,
     }));
     CLASS_STATS = data.class_stats || null;
     renderStats(data);
