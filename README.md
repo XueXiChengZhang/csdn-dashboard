@@ -69,3 +69,25 @@ csdn-dashboard/
 - `history-real/` — 真实历史快照(隐私)
 - `.openclaw/` `credentials/` `*.env` — 本地凭证
 - `*.bak-*` — 备份文件
+
+## 📝 中文 Commit Message
+
+仓库已经配置 `i18n.commitencoding=utf-8` + `.gitattributes` 强制 UTF-8,
+但 Windows Git Bash 下直接用 `git commit -m "中文"` 仍可能乱码 (bash 重排 argv 字节)。
+
+**推荐用法**:
+
+```bash
+bash scripts/git-commit-zh.sh "data: 2026-09-22 监控 (30/31 CSDN, 20/31 Gitee, 32 新帖)"
+```
+
+或者手动:
+
+```bash
+GIT_COMMIT_ENCODING=utf-8 git commit -m "$(cat <<'EOF'
+data: 2026-09-22 监控 (30/31 CSDN, 20/31 Gitee)
+EOF
+)"
+```
+
+**绝不**直接 `git commit -m "中文"` (会变 `?????`)。
