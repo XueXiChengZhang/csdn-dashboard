@@ -336,6 +336,16 @@
       box-shadow: 0 4px 14px rgba(27, 54, 93, 0.08);
       transform: translateY(-1px);
     }
+    /* v19: deep-link 高亮 — ?name=xxx 滚动到的卡片 */
+    .student.deep-link-target {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(196, 77, 54, 0.25), 0 6px 18px rgba(196, 77, 54, 0.15);
+      animation: deep-link-pulse 1s ease-in-out 2;
+    }
+    @keyframes deep-link-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(196, 77, 54, 0.25), 0 6px 18px rgba(196, 77, 54, 0.15); }
+      50% { box-shadow: 0 0 0 6px rgba(196, 77, 54, 0.4), 0 8px 22px rgba(196, 77, 54, 0.25); }
+    }
     a.student:focus, .student:focus {
       outline: 2px solid var(--brand);
       outline-offset: 2px;
@@ -1413,6 +1423,36 @@
 
     loadData();
     setInterval(loadData, 60000);
+
+    // v19: URL deep-link — ?name=xxx 滚动到指定学生卡片并高亮
+    // Ma: 分享 dashboard 时可用 (但 search/sort/filter 会影响定位, 所以先清空过滤)
+    function applyDeepLink() {
+    const name = new URLSearchParams(location.search).get('name');
+    if (!name) return;
+    // 清空 search 框 + 重置 sort 为 activity (默认排序), filter 为 all — 保证目标学生可见
+    const searchEl = document.getElementById('search');
+    if (searchEl && searchEl.value) { searchEl.value = ''; }
+    const filterEl = document.getElementById('filter');
+    if (filterEl && filterEl.value !== 'all') { filterEl.value = 'all'; filterEl.dispatchEvent(new Event('change')); }
+    const sortEl = document.getElementById('sort');
+    if (sortEl && sortEl.value !== 'activity-desc') { sortEl.value = 'activity-desc'; sortEl.dispatchEvent(new Event('change')); }
+    // 等 render() 完成
+    setTimeout(() => {
+    const cards = [...document.querySelectorAll('.student')];
+    const card = cards.find(c => c.querySelector('.student-name')?.textContent === name);
+    if (!card) {
+    // 没找到 — 提示并保留 URL
+    return;
+    }
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('deep-link-target');
+    // 1.5s 后移除高亮
+    setTimeout(() => card.classList.remove('deep-link-target'), 3500);
+    }, 200);
+    }
+    window.addEventListener('hashchange', applyDeepLink);
+    // 首次进入页面时也跑一次
+    setTimeout(applyDeepLink, 1500);
 </script>
 </body>
 </html>
