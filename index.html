@@ -554,17 +554,26 @@
     }
     .student-detail-link:hover { background: var(--brand); color: white; }
     .no-csdn {
-      background: repeating-linear-gradient(
-        45deg,
-        var(--ivory),
-        var(--ivory) 8px,
-        var(--border-soft) 8px,
-        var(--border-soft) 9px
-      );
-      cursor: not-allowed;
-      opacity: 0.7;
+      background: var(--ivory);
+      border: 1.5pt dashed var(--stone);
+      cursor: default;
+      opacity: 1;
     }
-    .no-csdn:hover { transform: none; box-shadow: none; border-color: var(--border); }
+    .no-csdn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(107, 106, 100, 0.18); border-color: var(--olive); border-style: solid; }
+    /* v20: 仅 Gitee 标签 — 一眼看出跟有 CSDN 的卡片区别 */
+    .gitee-only-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 7px;
+      background: #E4ECF5;
+      color: #1B365D;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      border-radius: 2px;
+      border: 0.6pt solid #1B365D;
+    }
     .alert {
       background: var(--accent-soft);
       border-left: 3px solid var(--accent);
@@ -786,7 +795,7 @@
         <div class="gitee-card-head">
           <h3>💾 Gitee 最近活动</h3>
           <span class="meta" id="gitee-card-meta">—</span>
-        </div>
+    </div>
         <div class="gitee-grid" id="gitee-grid"></div>
       </section>
 
@@ -1233,7 +1242,7 @@
     <span class="${postClass}"><span class="num">${s.post_count}</span> 篇</span>
     ${newBadgeHtml}
     <span class="student-handle">${escapeHtml(handle)}</span>
-    ${hasCsdn ? '<span class="external-icon">↗ 主页</span>' : ''}
+    ${hasCsdn ? '<span class="external-icon">↗ 主页</span>' : '<span class="gitee-only-badge">💾 仅 Gitee</span>'}
     <a class="student-detail-link" href="student.html?name=${encodeURIComponent(s.name)}" onclick="event.stopPropagation()">→ 详情</a>
     </div>
     ${latestHtml}
