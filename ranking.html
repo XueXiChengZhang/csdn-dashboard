@@ -181,7 +181,7 @@
   <a class="tab" href="index.html">学生列表</a>
   <a class="tab" href="analytics.html">班级分析</a>
   <a class="tab active" href="ranking.html">学生排名</a>
-  <a class="tab" href="student.html?sid=240110103">个人详情</a>
+  <a class="tab" href="student.html?name=">个人详情</a>
   <span class="ver">v10.0 · RANKING</span>
 </nav>
 
@@ -263,7 +263,7 @@ function formatTime(iso) {
 }
 
 function linkStudent(s) {
-  return `<a class="name" href="student.html?sid=${encodeURIComponent(s.sid)}">${escapeHtml(s.name)}</a>`;
+  return `<a class="name" href="student.html?name=${encodeURIComponent(s.name)}">${escapeHtml(s.name)}</a>`;
 }
 
 function renderList(containerId, items, metricFn, opts = {}) {

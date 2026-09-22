@@ -363,7 +363,7 @@
   <a class="tab" href="index.html">学生列表</a>
   <a class="tab active" href="analytics.html">班级分析</a>
     <a class="tab" href="ranking.html">学生排名</a>
-    <a class="tab" href="student.html?sid=240110103">个人详情</a>
+    <a class="tab" href="student.html?name=">个人详情</a>
   <span class="ver">v10.0 · DASHBOARD-ANALYTICS</span>
 </nav>
 
@@ -536,7 +536,13 @@ function fmt(n) {
 
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c =>
-    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// attribute 转义: 用于 data-name="..." 属性 (保留 < > " ' 等, 但只防 attribute 注入)
+function attrEsc(s) {
+  return String(s || '').replace(/[&"<>]/g, c =>
+    ({ '&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;' }[c]));
 }
 
 function render() {
@@ -590,7 +596,7 @@ function render() {
       const avg = s.post_count ? Math.round((s.total_views || 0) / s.post_count) : 0;
       const cls = i < 3 ? 'top3' : '';
       const rcls = i < 3 ? 'rank top' : 'rank';
-      return `<tr class="${cls}" onclick="location.href='student.html?sid=${encodeURIComponent(s.sid)}'">
+      return `<tr class="${cls}" onclick="location.href='student.html?name=${encodeURIComponent(s.name)}'">
         <td class="${rcls}">#${i + 1}</td>
         <td>${escapeHtml(s.name)}</td>
         <td>${s.post_count || 0}</td>
@@ -646,7 +652,7 @@ function render() {
     fc.innerHTML = '<div class="empty" style="grid-column: 1 / -1;">暂无发文数据</div>';
   } else {
     fc.innerHTML = byPost.map((s, i) => `
-      <a class="fast-card" href="student.html?sid=${encodeURIComponent(s.sid)}">
+      <a class="fast-card" href="student.html?name=${encodeURIComponent(s.name)}">
         <div class="rank">RANK · #${i + 1}</div>
         <div class="nm">${escapeHtml(s.name)}</div>
         <div class="sid">@${escapeHtml(s.csdn_username || '—')}</div>
@@ -678,7 +684,7 @@ function render() {
       const shaShort = g.sha ? `<code style="font-size:10px;color:var(--brand);">${escapeHtml(g.sha)}</code>` : '—';
       return `<tr class="${cls}" onclick="window.open('${escapeHtml(g.url)}','_blank','noopener')">
         <td class="${rcls}">#${i + 1}</td>
-        <td><a href="student.html?sid=${encodeURIComponent(s.sid)}" style="color:var(--brand);text-decoration:none;" onclick="event.stopPropagation();">${escapeHtml(s.name)}</a></td>
+        <td><a href="student.html?name=${encodeURIComponent(s.name)}" style="color:var(--brand);text-decoration:none;" onclick="event.stopPropagation();">${escapeHtml(s.name)}</a></td>
         <td><a href="${escapeHtml(g.url)}" target="_blank" rel="noopener" style="color:var(--olive);text-decoration:none;font-family:ui-monospace,monospace;font-size:11px;" onclick="event.stopPropagation();">${escapeHtml(g.owner + '/' + g.repo)}</a></td>
         <td class="views">${fmt(g.commit_count || 0)}</td>
         <td>⭐ ${fmt(g.stars || 0)} / 🍴 ${fmt(g.forks || 0)}</td>
@@ -744,9 +750,10 @@ function renderScatter(stu) {
     const x = xScale(s.post_count || 0);
     const y = yScale(s.total_views || 0);
     const c = colorFor(s.total_views || 0);
-    const nm = (s.name || '').replace(/'/g, '&#39;');
+    // v16: 用 attrEsc 转 name 用于 data-name (attribute 安全)
+    const nm = attrEsc(s.name || '');
     g += `<circle class="pt" cx="${x}" cy="${y}" r="6" fill="${c}"
-            data-nm="${nm}" data-v="${s.total_views || 0}" data-p="${s.post_count || 0}" data-sid="${s.sid}"/>`;
+            data-nm="${nm}" data-v="${s.total_views || 0}" data-p="${s.post_count || 0}"/>`;
   }
   svg.innerHTML = g;
 
@@ -763,7 +770,7 @@ function renderScatter(stu) {
       tip.classList.add('show');
     });
     c.addEventListener('mouseleave', () => tip.classList.remove('show'));
-    c.addEventListener('click', () => location.href = `student.html?sid=${encodeURIComponent(c.dataset.sid)}`);
+    c.addEventListener('click', () => location.href = `student.html?name=${encodeURIComponent(c.dataset.nm)}`);
   });
 }
 
@@ -821,9 +828,9 @@ function renderGiteeScatter(stu) {
     const x = xScale(cc);
     const y = yScale(tv);
     const c = colorFor(tv);
-    const nm = (s.name || '').replace(/'/g, '&#39;');
+    const nm = attrEsc(s.name || '');
     g += `<circle class="pt" cx="${x}" cy="${y}" r="6" fill="${c}"
-      data-nm="${nm}" data-c="${cc}" data-v="${tv}" data-sid="${s.sid}"/>`;
+      data-nm="${nm}" data-c="${cc}" data-v="${tv}"/>`;
   }
   svg.innerHTML = g;
 
@@ -841,14 +848,21 @@ function renderGiteeScatter(stu) {
     c.addEventListener('mouseenter', () => {
       const r = c.getBoundingClientRect();
       const wr = wrap.getBoundingClientRect();
-      tip.innerHTML = `<strong>${c.dataset.nm}</strong><br>📦 ${c.dataset.c} commit · 👁 ${fmt(Number(c.dataset.v))}`;
+      // v16: 用 DOM API 构造 tooltip (防 XSS)
+      tip.textContent = '';
+      const strong = document.createElement('strong');
+      strong.textContent = c.dataset.nm;
+      tip.appendChild(strong);
+      tip.appendChild(document.createTextNode(
+        ` · 📦 ${c.dataset.c} commit · 👁 ${fmt(Number(c.dataset.v))}`
+      ));
       tip.style.left = (r.left - wr.left + r.width / 2) + 'px';
       tip.style.top = (r.top - wr.top - 8) + 'px';
       tip.style.transform = 'translate(-50%, -100%)';
       tip.style.opacity = '1';
     });
     c.addEventListener('mouseleave', () => tip.style.opacity = '0');
-    c.addEventListener('click', () => location.href = `student.html?sid=${encodeURIComponent(c.dataset.sid)}`);
+    c.addEventListener('click', () => location.href = `student.html?name=${encodeURIComponent(c.dataset.nm)}`);
   });
 }
 

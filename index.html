@@ -362,11 +362,6 @@
       font-weight: 600;
       color: var(--near-black);
     }
-    .student-sid {
-      font-size: 12px;
-      color: var(--stone);
-      font-variant-numeric: tabular-nums;
-    }
     .student-meta {
       font-size: 12px;
       color: var(--stone);
@@ -1300,7 +1295,12 @@
     }[c]));
     }
 
-    document.getElementById('search').addEventListener('input', render);
+    // v16: search 加 200ms debounce, 避免每个按键都触发完整 render
+    let _searchDebounce = null;
+    document.getElementById('search').addEventListener('input', () => {
+      clearTimeout(_searchDebounce);
+      _searchDebounce = setTimeout(render, 200);
+    });
     document.getElementById('sort').addEventListener('change', render);
     document.getElementById('filter').addEventListener('change', render);
     document.getElementById('refresh-btn').addEventListener('click', () => loadData());
