@@ -179,6 +179,43 @@ CSDN_HEADERS = {
 }
 
 
+
+def _parse_relative_time_to_iso(s):
+    """Ma: CSDN HTML view-time-box 返回 '博文更新于 22 小时前' 或 '2026.09.17'.
+    解析成 ISO 日期字符串,失败返回 ''"""
+    if not s:
+        return ""
+    s = s.strip()
+    # 1. 绝对日期 YYYY.MM.DD
+    m = re.search(r"(\d{4})[.-](\d{1,2})[.-](\d{1,2})", s)
+    if m:
+        y, mo, d = m.group(1), m.group(2).zfill(2), m.group(3).zfill(2)
+        try:
+            import datetime as _dt
+            return _dt.date(int(y), int(mo), int(d)).isoformat()
+        except Exception:
+            return ""
+    # 2. 相对时间
+    import datetime as _dt
+    now = _dt.datetime.now()
+    m = re.search(r"(\d+)\s*小时前", s)
+    if m:
+        return (now - _dt.timedelta(hours=int(m.group(1)))).isoformat(timespec="seconds")
+    m = re.search(r"(\d+)\s*分钟前", s)
+    if m:
+        return (now - _dt.timedelta(minutes=int(m.group(1)))).isoformat(timespec="seconds")
+    m = re.search(r"(\d+)\s*天前", s)
+    if m:
+        return (now - _dt.timedelta(days=int(m.group(1)))).date().isoformat()
+    m = re.search(r"(\d+)\s*周前", s)
+    if m:
+        return (now - _dt.timedelta(weeks=int(m.group(1)))).date().isoformat()
+    m = re.search(r"(\d+)\s*月前", s)
+    if m:
+        return (now - _dt.timedelta(days=30 * int(m.group(1)))).date().isoformat()
+    return ""
+
+
 def fetch_csdn_html(username, limit=5):
     items = []
     urls = [
@@ -214,7 +251,14 @@ def fetch_csdn_html(username, limit=5):
                 if not title or len(title) < 2:
                     continue
                 seen.add(link)
-                items.append({"title": title, "link": link, "pubDate": "", "guid": link})
+                # Ma: 提取发布时间 — 优先 view-time-box (相对或绝对时间)
+                time_match = re.search(
+                    r'<div class="view-time-box"[^>]*>\s*博文更新于\s*([^<·]+?)\s*(?:·|</div>)',
+                    block,
+                )
+                raw_time = time_match.group(1).strip() if time_match else ""
+                pub_iso = _parse_relative_time_to_iso(raw_time)
+                items.append({"title": title, "link": link, "pubDate": pub_iso, "guid": link})
                 if len(items) >= limit:
                     break
             if items:
