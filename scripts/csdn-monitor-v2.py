@@ -225,59 +225,75 @@ def _parse_relative_time_to_iso(s):
     return ""
 
 
-def fetch_csdn_html(username, limit=5):
+def fetch_csdn_html(username, limit=50):
+    """Ma: 抓取 CSDN 用户的文章列表,支持翻页以获取更多文章.
+
+    修复: 之前 limit=5 且只抓第 1 页,很多人显示 5 篇.
+    现在通过 page 参数翻页,直到抓满 limit 或所有页都爬过.
+    """
     items = []
-    urls = [
-        f"https://blog.csdn.net/{username}?type=blog",
-        f"https://blog.csdn.net/{username}",
-    ]
-    for url in urls:
-        try:
-            r = http_get(url, timeout=12, headers=CSDN_HEADERS, retries=2)
-            if r.status_code != 200 or not r.text:
-                continue
-            html = r.text
-            blocks = re.findall(
-                r'<article[^>]*class="blog-list-box"[^>]*>(.*?)</article>',
-                html, re.DOTALL,
-            ) or re.findall(r'<article[^>]*>(.*?)</article>', html, re.DOTALL)
-            seen = set()
-            for block in blocks:
-                lm = re.search(
-                    r'href="(https?://blog\.csdn\.net/[^/]+/article/details/\d+)"',
-                    block,
-                )
-                if not lm:
+    page_size = 20  # CSDN 每页大约 20 篇
+    max_pages = (limit + page_size - 1) // page_size + 2
+    seen = set()
+
+    for page in range(1, max_pages + 1):
+        if len(items) >= limit:
+            break
+        urls = [
+            f"https://blog.csdn.net/{username}?type=blog&page={page}",
+            f"https://blog.csdn.net/{username}?page={page}",
+        ]
+        page_has_data = False
+        for url in urls:
+            try:
+                r = http_get(url, timeout=12, headers=CSDN_HEADERS, retries=2)
+                if r.status_code != 200 or not r.text:
                     continue
-                link = lm.group(1)
-                if link in seen:
+                html = r.text
+                blocks = re.findall(
+                    r'<article[^>]*class="blog-list-box"[^>]*>(.*?)</article>',
+                    html, re.DOTALL,
+                ) or re.findall(r'<article[^>]*>(.*?)</article>', html, re.DOTALL)
+                if not blocks:
                     continue
-                tm = re.search(r'<h[34][^>]*>(.*?)</h[34]>', block, re.DOTALL)
-                title = re.sub(r"<[^>]+>", "", tm.group(1)).strip() if tm else ""
-                if not title:
-                    aid = re.search(r"/article/details/(\d+)", link)
-                    title = f"文章 #{aid.group(1) if aid else '?'}"
-                if not title or len(title) < 2:
-                    continue
-                seen.add(link)
-                # Ma: 提取发布时间 — 优先 view-time-box (相对或绝对时间)
-                time_match = re.search(
-                    r'<div class="view-time-box"[^>]*>\s*博文更新于\s*([^<·]+?)\s*(?:·|</div>)',
-                    block,
-                )
-                raw_time = time_match.group(1).strip() if time_match else ""
-                pub_iso = _parse_relative_time_to_iso(raw_time)
-                items.append({"title": title, "link": link, "pubDate": pub_iso, "guid": link})
-                if len(items) >= limit:
+                page_has_data = True
+                for block in blocks:
+                    if len(items) >= limit:
+                        break
+                    lm = re.search(
+                        r'href="(https?://blog\.csdn\.net/[^/]+/article/details/\d+)"',
+                        block,
+                    )
+                    if not lm:
+                        continue
+                    link = lm.group(1)
+                    if link in seen:
+                        continue
+                    tm = re.search(r'<h[34][^>]*>(.*?)</h[34]>', block, re.DOTALL)
+                    title = re.sub(r"<[^>]+>", "", tm.group(1)).strip() if tm else ""
+                    if not title:
+                        aid = re.search(r"/article/details/(\d+)", link)
+                        title = f"文章 #{aid.group(1) if aid else '?'}"
+                    if not title or len(title) < 2:
+                        continue
+                    seen.add(link)
+                    time_match = re.search(
+                        r'<div class="view-time-box"[^>]*>\s*博文更新于\s*([^<·]+?)\s*(?:·|</div>)',
+                        block,
+                    )
+                    raw_time = time_match.group(1).strip() if time_match else ""
+                    pub_iso = _parse_relative_time_to_iso(raw_time)
+                    items.append({"title": title, "link": link, "pubDate": pub_iso, "guid": link})
+                if items:
                     break
-            if items:
-                return items[:limit]
-        except Exception:
-            continue
-    return items
+            except Exception:
+                continue
+        if not page_has_data and page > 1:
+            break
+    return items[:limit]
 
 
-def fetch_csdn_rss(username, limit=5):
+def fetch_csdn_rss(username, limit=50):
     items = []
     feeds = [
         f"https://rsshub.app/csdn/blog/{username}",
@@ -942,9 +958,10 @@ def fetch_csdn_for_student(st):
         user = extract_csdn_username(st["csdn"])
         rec["csdn_username"] = user
         if user:
-            posts = fetch_csdn_html(user, limit=5)
+            # Ma: 修复 - 之前 limit=5 导致很多人只显示 5 篇,改为 50
+            posts = fetch_csdn_html(user, limit=50)
             if not posts:
-                posts = fetch_csdn_rss(user, limit=5)
+                posts = fetch_csdn_rss(user, limit=50)
             if posts:
                 rec["posts"] = posts
                 rec["csdn_status"] = "ok"
