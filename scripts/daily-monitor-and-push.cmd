@@ -11,12 +11,13 @@ if exist data.json (
     git diff --cached --quiet
     if errorlevel 1 (
         git commit -m "data: %date:~0,10% 自动更新"
-        REM 3. push 带重试 (网络不稳定时)
+        REM 3. push 优先 HTTPS,失败回退 SSH (Ma: 家里 HTTPS 443 经常被屏蔽,SSH 更稳)
         git push origin main
         if errorlevel 1 (
-            echo [%date% %time%] PUSH FAILED, retrying in 30s...
-            timeout /t 30 /nobreak >nul
+            echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
+            git remote set-url origin git@github.com:XueXiChengZhang/csdn-dashboard.git
             git push origin main
+            git remote set-url origin https://github.com/XueXiChengZhang/csdn-dashboard.git
         )
     )
 )
