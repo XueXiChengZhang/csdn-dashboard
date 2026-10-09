@@ -1241,8 +1241,8 @@
     } else if (!s.posts || s.posts.length === 0) {
     latestHtml = `<div class="latest-section"><div class="empty-latest">— 暂无文章 —</div></div>`;
     } else {
-    // Ma: 显示 5 篇最新文章 (从 3 改为 5)
-    const topN = 5;
+    // Ma: 卡片显示 4 篇 (最佳美观度)
+    const topN = 4;
     const topPosts = s.posts.slice(0, topN);
     const total = s.posts.length;
     // v12 Ma: 格式化 pubDate (RFC 2822 / CSDN) -> 2025-09-20
@@ -1269,24 +1269,20 @@
     ${pubHtml}
     </li>`;
     }).join('');
-    // Ma: 显示更早文章数 (如果有截断)
+    // Ma: 显示更早文章数 (如果有)
     const moreCount = Math.max(0, total - topN);
-    // Ma: 提示数据可能截断 (>= 5 时怀疑被 limit 截断)
-    const likelyTruncated = total >= 5;
-    const truncatedHint = likelyTruncated
-      ? `<span class="latest-section-hint" title="数据可能被旧 limit 截断, 等待 cron 重抓">⚠️ 可能不全</span>`
-      : '';
     const moreHtml = moreCount > 0
     ? `<li class="latest-post-item" style="justify-content:flex-end;"><span class="idx" style="flex:1;text-align:right;color:var(--stone);">+ ${moreCount} 篇更早</span></li>`
     : '';
-    // Ma: 显示 5/共 N 篇 (实际抓到的 / 总抓到的)
-    // 如果 data.json 是 limit=5 截断的, 实际可能更多
-    const displayTotal = total;
+    // Ma: 显示 N/共 M 篇 (简洁)
+    const countHtml = moreCount > 0
+      ? `<span class="latest-section-count">${total} 篇</span>`
+      : `<span class="latest-section-count">${total} 篇</span>`;
     latestHtml = `
     <div class="latest-section">
     <div class="latest-section-header">
     <span class="latest-section-label">最新文章</span>
-    <span class="latest-section-count">显示 ${topN} / 共 ${displayTotal} 篇 ${truncatedHint}</span>
+    ${countHtml}
     </div>
     <ul class="latest-posts">${items}${moreHtml}</ul>
     </div>

@@ -785,13 +785,6 @@ function renderPosts(stu) {
     return '<div class="empty-state">暂无文章</div>';
   }
 
-  // Ma: 提示数据可能截断 (>= 5 时怀疑被 limit 截断)
-  const truncatedHint = posts.length >= 5
-    ? `<div class="truncation-warning" style="background:var(--new-bg);color:var(--new-fg);padding:8px 12px;border-radius:4px;margin-bottom:12px;font-size:12px;">
-        ⚠️ 当前显示 <strong>${posts.length}</strong> 篇, 可能被旧的 <code>limit=5</code> 截断,等待 cron 重抓后看完整数据
-      </div>`
-    : '';
-
   const rows = posts.map((p, i) => {
     const ts = p.pubDate || (p.guid ? p.guid.slice(-10) : '—');
     return `<tr>
@@ -806,7 +799,6 @@ function renderPosts(stu) {
   }).join('');
 
   return `
-    ${truncatedHint}
     <table class="posts">
       <thead><tr>
         <th>#</th><th>标题</th>
