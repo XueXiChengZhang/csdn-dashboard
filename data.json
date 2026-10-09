@@ -1,28 +1,28 @@
 {
-  "last_update": "2026-10-09T14:27:55",
-  "total_students": 32,
-  "total_posts": 126,
+  "last_update": "2026-10-10T00:00:04",
+  "total_students": 33,
+  "total_posts": 219,
   "last_fetch_meta": {
-    "fetched_at": "2026-10-09T13:53:45",
-    "duration_ms": 774183,
+    "fetched_at": "2026-10-10T00:00:04",
+    "duration_ms": 683776,
     "method_breakdown": {
-      "csdn_html": 17,
+      "csdn_html": 31,
       "csdn_rss": 0,
       "gitee_api": 0,
       "gitee_html": 0
     },
-    "total_requests": 64,
-    "success_count": 47,
-    "fail_count": 17,
+    "total_requests": 66,
+    "success_count": 62,
+    "fail_count": 4,
     "stages": {
       "csdn": {
-        "duration_ms": 669786,
-        "ok": 17,
-        "fail": 15
+        "duration_ms": 577506,
+        "ok": 31,
+        "fail": 2
       },
       "gitee": {
-        "duration_ms": 104396,
-        "ok": 30,
+        "duration_ms": 106269,
+        "ok": 31,
         "fail": 2
       }
     }
@@ -45,12 +45,7 @@
           "title": "2026.9.11-开学第一周学习周报",
           "link": "https://blog.csdn.net/pjl20051011/article/details/164951695",
           "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/pjl20051011/article/details/164951695",
-          "views": 248,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:18:36.004269"
+          "guid": "https://blog.csdn.net/pjl20051011/article/details/164951695"
         },
         {
           "title": "123456",
@@ -59,11 +54,11 @@
           "guid": "https://blog.csdn.net/pjl20051011/article/details/164712670"
         }
       ],
-      "total_views": 0,
+      "total_views": 379,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 1,
+      "articles_scanned": 1,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/pangjialiang/pjl",
@@ -77,7 +72,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -103,12 +98,7 @@
           "title": "第二周周报",
           "link": "https://blog.csdn.net/liruisklfj/article/details/166142444",
           "pubDate": "2026-09-20T00:00:00",
-          "guid": "https://blog.csdn.net/liruisklfj/article/details/166142444",
-          "views": 95,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:18:52.806816"
+          "guid": "https://blog.csdn.net/liruisklfj/article/details/166142444"
         },
         {
           "title": "【无标题】",
@@ -132,12 +122,7 @@
           "title": "Python新手入门 python流程控制基础1——条件语句if~~else；if~elif~else；",
           "link": "https://blog.csdn.net/liruisklfj/article/details/143084963",
           "pubDate": "2024-10-20T00:00:00",
-          "guid": "https://blog.csdn.net/liruisklfj/article/details/143084963",
-          "views": 660,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:19:11.638327"
+          "guid": "https://blog.csdn.net/liruisklfj/article/details/143084963"
         },
         {
           "title": "Python新手入门指南 解决Python的pip在命令行无法使用的问题",
@@ -149,8 +134,8 @@
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 14,
+      "articles_scanned": 5,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/lirui-code/001",
@@ -164,7 +149,78 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110106",
+      "name": "武明光",
+      "csdn_username": "2401_89247021",
+      "csdn_url": "https://blog.csdn.net/2401_89247021?type=blog",
+      "post_count": 6,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/2401_89247021/article/details/166371592",
+        "pubDate": "2026-09-22T00:00:00",
+        "guid": "https://blog.csdn.net/2401_89247021/article/details/166371592"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/166371592",
+          "pubDate": "2026-09-22T00:00:00",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/166371592"
+        },
+        {
+          "title": "本周工作周报（健身会员管理系统项目）",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/166141193",
+          "pubDate": "2026-09-20T00:00:00",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/166141193"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/165757536",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/165757536"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/165757373",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/165757373"
+        },
+        {
+          "title": "本周学习周报",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/164950566",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/164950566"
+        },
+        {
+          "title": "1111111",
+          "link": "https://blog.csdn.net/2401_89247021/article/details/164710927",
+          "pubDate": "2026-09-09T00:00:00",
+          "guid": "https://blog.csdn.net/2401_89247021/article/details/164710927"
+        }
+      ],
+      "total_views": 1048,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 13,
+      "articles_scanned": 5,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/ovo5u110/uuuuu",
+        "owner": "ovo5u110",
+        "repo": "uuuuu",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -172,18 +228,24 @@
       "name": "陈艳",
       "csdn_username": "CY11101229",
       "csdn_url": "https://blog.csdn.net/CY11101229?spm=1010.2135.3001.5343",
-      "post_count": 8,
+      "post_count": 9,
       "latest_post": {
-        "title": "2026-10-8日报",
-        "link": "https://blog.csdn.net/CY11101229/article/details/167277169",
-        "pubDate": "2026-10-08T16:53:56",
-        "guid": "https://blog.csdn.net/CY11101229/article/details/167277169"
+        "title": "2026-10-9日报",
+        "link": "https://blog.csdn.net/CY11101229/article/details/167396954",
+        "pubDate": "2026-10-09T21:00:12",
+        "guid": "https://blog.csdn.net/CY11101229/article/details/167396954"
       },
       "posts": [
         {
+          "title": "2026-10-9日报",
+          "link": "https://blog.csdn.net/CY11101229/article/details/167396954",
+          "pubDate": "2026-10-09T21:00:12",
+          "guid": "https://blog.csdn.net/CY11101229/article/details/167396954"
+        },
+        {
           "title": "2026-10-8日报",
           "link": "https://blog.csdn.net/CY11101229/article/details/167277169",
-          "pubDate": "2026-10-08T16:53:56",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/CY11101229/article/details/167277169"
         },
         {
@@ -229,11 +291,11 @@
           "guid": "https://blog.csdn.net/CY11101229/article/details/164958182"
         }
       ],
-      "total_views": 0,
+      "total_views": 1326,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 9,
+      "articles_scanned": 3,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/cy666666888888/seven-seconds-memory",
@@ -247,88 +309,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110106",
-      "name": "武明光",
-      "csdn_username": "2401_89247021",
-      "csdn_url": "https://blog.csdn.net/2401_89247021?type=blog",
-      "post_count": 6,
-      "latest_post": {
-        "title": "【无标题】",
-        "link": "https://blog.csdn.net/2401_89247021/article/details/166371592",
-        "pubDate": "2026-09-22T00:00:00",
-        "guid": "https://blog.csdn.net/2401_89247021/article/details/166371592"
-      },
-      "posts": [
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/166371592",
-          "pubDate": "2026-09-22T00:00:00",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/166371592"
-        },
-        {
-          "title": "本周工作周报（健身会员管理系统项目）",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/166141193",
-          "pubDate": "2026-09-20T00:00:00",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/166141193"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/165757536",
-          "pubDate": "2026-09-17T00:00:00",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/165757536"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/165757373",
-          "pubDate": "2026-09-17T00:00:00",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/165757373",
-          "views": 42,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:19:43.940194"
-        },
-        {
-          "title": "本周学习周报",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/164950566",
-          "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/164950566"
-        },
-        {
-          "title": "1111111",
-          "link": "https://blog.csdn.net/2401_89247021/article/details/164710927",
-          "pubDate": "2026-09-09T00:00:00",
-          "guid": "https://blog.csdn.net/2401_89247021/article/details/164710927",
-          "views": 296,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:19:56.303072"
-        }
-      ],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/ovo5u110/uuuuu",
-        "owner": "ovo5u110",
-        "repo": "uuuuu",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -354,15 +335,10 @@
           "title": "第一周项目研发综合实训周报",
           "link": "https://blog.csdn.net/yingsini7/article/details/165283925",
           "pubDate": "2026-09-14T00:00:00",
-          "guid": "https://blog.csdn.net/yingsini7/article/details/165283925",
-          "views": 147,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:20:14.974925"
+          "guid": "https://blog.csdn.net/yingsini7/article/details/165283925"
         }
       ],
-      "total_views": 0,
+      "total_views": 376,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 0,
@@ -380,7 +356,7 @@
         "msg": "",
         "source": "",
         "err": "bad gitee url",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -388,18 +364,24 @@
       "name": "韩博",
       "csdn_username": "2401_88094581",
       "csdn_url": "https://blog.csdn.net/2401_88094581",
-      "post_count": 8,
+      "post_count": 9,
       "latest_post": {
-        "title": "10.8日报",
-        "link": "https://blog.csdn.net/2401_88094581/article/details/167275800",
-        "pubDate": "2026-10-08T16:54:19",
-        "guid": "https://blog.csdn.net/2401_88094581/article/details/167275800"
+        "title": "10.9 日报",
+        "link": "https://blog.csdn.net/2401_88094581/article/details/167386455",
+        "pubDate": "2026-10-09T15:00:36",
+        "guid": "https://blog.csdn.net/2401_88094581/article/details/167386455"
       },
       "posts": [
         {
+          "title": "10.9 日报",
+          "link": "https://blog.csdn.net/2401_88094581/article/details/167386455",
+          "pubDate": "2026-10-09T15:00:36",
+          "guid": "https://blog.csdn.net/2401_88094581/article/details/167386455"
+        },
+        {
           "title": "10.8日报",
           "link": "https://blog.csdn.net/2401_88094581/article/details/167275800",
-          "pubDate": "2026-10-08T16:54:19",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/2401_88094581/article/details/167275800"
         },
         {
@@ -445,11 +427,11 @@
           "guid": "https://blog.csdn.net/2401_88094581/article/details/164952838"
         }
       ],
-      "total_views": 0,
+      "total_views": 1032,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 3,
+      "articles_scanned": 2,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/hbcc11/240110112",
@@ -463,7 +445,90 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110113",
+      "name": "牛佳祺",
+      "csdn_username": "Apawn_77",
+      "csdn_url": "https://blog.csdn.net/Apawn_77",
+      "post_count": 8,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/Apawn_77/article/details/167354584",
+        "pubDate": "2026-10-09T09:00:42",
+        "guid": "https://blog.csdn.net/Apawn_77/article/details/167354584"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Apawn_77/article/details/167354584",
+          "pubDate": "2026-10-09T09:00:42",
+          "guid": "https://blog.csdn.net/Apawn_77/article/details/167354584"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Apawn_77/article/details/167353876",
+          "pubDate": "2026-10-09T09:00:42",
+          "guid": "https://blog.csdn.net/Apawn_77/article/details/167353876"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Apawn_77/article/details/166374501",
+          "pubDate": "2026-09-22T00:00:00",
+          "guid": "https://blog.csdn.net/Apawn_77/article/details/166374501"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Apawn_77/article/details/166140038",
+          "pubDate": "2026-09-20T00:00:00",
+          "guid": "https://blog.csdn.net/Apawn_77/article/details/166140038"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Apawn_77/article/details/165758026",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/Apawn_77/article/details/165758026"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Apawn_77/article/details/165629311",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/Apawn_77/article/details/165629311"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Apawn_77/article/details/165349933",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/Apawn_77/article/details/165349933"
+        },
+        {
+          "title": "第一周周报",
+          "link": "https://blog.csdn.net/Apawn_77/article/details/164951759",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/Apawn_77/article/details/164951759"
+        }
+      ],
+      "total_views": 837,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 0,
+      "articles_scanned": 2,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/apawn77/Apawnn",
+        "owner": "apawn77",
+        "repo": "Apawnn",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -492,100 +557,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110113",
-      "name": "牛佳祺",
-      "csdn_username": "Apawn_77",
-      "csdn_url": "https://blog.csdn.net/Apawn_77",
-      "post_count": 8,
-      "latest_post": {
-        "title": "【无标题】",
-        "link": "https://blog.csdn.net/Apawn_77/article/details/167354584",
-        "pubDate": "2026-10-09T08:54:24",
-        "guid": "https://blog.csdn.net/Apawn_77/article/details/167354584"
-      },
-      "posts": [
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Apawn_77/article/details/167354584",
-          "pubDate": "2026-10-09T08:54:24",
-          "guid": "https://blog.csdn.net/Apawn_77/article/details/167354584"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Apawn_77/article/details/167353876",
-          "pubDate": "2026-10-09T08:54:24",
-          "guid": "https://blog.csdn.net/Apawn_77/article/details/167353876"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Apawn_77/article/details/166374501",
-          "pubDate": "2026-09-22T00:00:00",
-          "guid": "https://blog.csdn.net/Apawn_77/article/details/166374501"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Apawn_77/article/details/166140038",
-          "pubDate": "2026-09-20T00:00:00",
-          "guid": "https://blog.csdn.net/Apawn_77/article/details/166140038"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Apawn_77/article/details/165758026",
-          "pubDate": "2026-09-17T00:00:00",
-          "guid": "https://blog.csdn.net/Apawn_77/article/details/165758026",
-          "views": 196,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:20:53.582587"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Apawn_77/article/details/165629311",
-          "pubDate": "2026-09-16T00:00:00",
-          "guid": "https://blog.csdn.net/Apawn_77/article/details/165629311"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/Apawn_77/article/details/165349933",
-          "pubDate": "2026-09-14T00:00:00",
-          "guid": "https://blog.csdn.net/Apawn_77/article/details/165349933",
-          "views": 27,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:21:01.596830"
-        },
-        {
-          "title": "第一周周报",
-          "link": "https://blog.csdn.net/Apawn_77/article/details/164951759",
-          "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/Apawn_77/article/details/164951759"
-        }
-      ],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/apawn77/Apawnn",
-        "owner": "apawn77",
-        "repo": "Apawnn",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -593,18 +565,24 @@
       "name": "高宾",
       "csdn_username": "gb_00005555",
       "csdn_url": "https://blog.csdn.net/gb_00005555",
-      "post_count": 8,
+      "post_count": 9,
       "latest_post": {
-        "title": "2026-10-8日总结",
-        "link": "https://blog.csdn.net/gb_00005555/article/details/167276197",
-        "pubDate": "2026-10-08T16:54:26",
-        "guid": "https://blog.csdn.net/gb_00005555/article/details/167276197"
+        "title": "2026-10-9日总结",
+        "link": "https://blog.csdn.net/gb_00005555/article/details/167385504",
+        "pubDate": "2026-10-09T15:00:43",
+        "guid": "https://blog.csdn.net/gb_00005555/article/details/167385504"
       },
       "posts": [
         {
+          "title": "2026-10-9日总结",
+          "link": "https://blog.csdn.net/gb_00005555/article/details/167385504",
+          "pubDate": "2026-10-09T15:00:43",
+          "guid": "https://blog.csdn.net/gb_00005555/article/details/167385504"
+        },
+        {
           "title": "2026-10-8日总结",
           "link": "https://blog.csdn.net/gb_00005555/article/details/167276197",
-          "pubDate": "2026-10-08T16:54:26",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/gb_00005555/article/details/167276197"
         },
         {
@@ -650,11 +628,11 @@
           "guid": "https://blog.csdn.net/gb_00005555/article/details/164957292"
         }
       ],
-      "total_views": 0,
+      "total_views": 932,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 10,
+      "articles_scanned": 4,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/gb00005555/such-a-trivial-matter",
@@ -668,7 +646,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -697,11 +675,11 @@
           "guid": "https://blog.csdn.net/2501_92570764/article/details/164962158"
         }
       ],
-      "total_views": 0,
+      "total_views": 209,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 3,
+      "articles_scanned": 1,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/MengRuFanHua/game-mod",
@@ -715,7 +693,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -727,26 +705,21 @@
       "latest_post": {
         "title": "10月8号学习日志",
         "link": "https://blog.csdn.net/moyangyi/article/details/167277163",
-        "pubDate": "2026-10-08T16:54:49",
+        "pubDate": "",
         "guid": "https://blog.csdn.net/moyangyi/article/details/167277163"
       },
       "posts": [
         {
           "title": "10月8号学习日志",
           "link": "https://blog.csdn.net/moyangyi/article/details/167277163",
-          "pubDate": "2026-10-08T16:54:49",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/moyangyi/article/details/167277163"
         },
         {
           "title": "9月23日周报",
           "link": "https://blog.csdn.net/moyangyi/article/details/166479135",
           "pubDate": "2026-09-23T00:00:00",
-          "guid": "https://blog.csdn.net/moyangyi/article/details/166479135",
-          "views": 124,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:21:32.272889"
+          "guid": "https://blog.csdn.net/moyangyi/article/details/166479135"
         },
         {
           "title": "9月23号学习日志",
@@ -758,12 +731,7 @@
           "title": "9月21日学习日志：需求文档制作",
           "link": "https://blog.csdn.net/moyangyi/article/details/166218938",
           "pubDate": "2026-09-21T00:00:00",
-          "guid": "https://blog.csdn.net/moyangyi/article/details/166218938",
-          "views": 197,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:21:42.865968"
+          "guid": "https://blog.csdn.net/moyangyi/article/details/166218938"
         },
         {
           "title": "9月20日学习周报",
@@ -781,30 +749,20 @@
           "title": "项目计划书编制工作日志（2026-09-16）",
           "link": "https://blog.csdn.net/moyangyi/article/details/165601457",
           "pubDate": "2026-09-16T00:00:00",
-          "guid": "https://blog.csdn.net/moyangyi/article/details/165601457",
-          "views": 111,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:21:56.110056"
+          "guid": "https://blog.csdn.net/moyangyi/article/details/165601457"
         },
         {
           "title": "9.11学习周报",
           "link": "https://blog.csdn.net/moyangyi/article/details/164951072",
           "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/moyangyi/article/details/164951072",
-          "views": 94,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:22:02.516580"
+          "guid": "https://blog.csdn.net/moyangyi/article/details/164951072"
         }
       ],
-      "total_views": 0,
+      "total_views": 1198,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 12,
+      "articles_scanned": 4,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/moyangyi/xuexiaozuoyeyuxiangmu",
@@ -818,7 +776,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -826,30 +784,36 @@
       "name": "韩泽威",
       "csdn_username": "HanhanWei_",
       "csdn_url": "https://blog.csdn.net/HanhanWei_",
-      "post_count": 8,
+      "post_count": 9,
       "latest_post": {
-        "title": "9月14日日报",
-        "link": "https://blog.csdn.net/HanhanWei_/article/details/165283163",
-        "pubDate": "2026-10-08T16:54:52",
-        "guid": "https://blog.csdn.net/HanhanWei_/article/details/165283163"
+        "title": "10月9日日报",
+        "link": "https://blog.csdn.net/HanhanWei_/article/details/167387243",
+        "pubDate": "2026-10-09T15:01:07",
+        "guid": "https://blog.csdn.net/HanhanWei_/article/details/167387243"
       },
       "posts": [
         {
+          "title": "10月9日日报",
+          "link": "https://blog.csdn.net/HanhanWei_/article/details/167387243",
+          "pubDate": "2026-10-09T15:01:07",
+          "guid": "https://blog.csdn.net/HanhanWei_/article/details/167387243"
+        },
+        {
           "title": "9月14日日报",
           "link": "https://blog.csdn.net/HanhanWei_/article/details/165283163",
-          "pubDate": "2026-10-08T16:54:52",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/HanhanWei_/article/details/165283163"
         },
         {
           "title": "优选外卖平台的初步阶段",
           "link": "https://blog.csdn.net/HanhanWei_/article/details/164951160",
-          "pubDate": "2026-10-08T16:54:52",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/HanhanWei_/article/details/164951160"
         },
         {
           "title": "10月8日日报",
           "link": "https://blog.csdn.net/HanhanWei_/article/details/167276598",
-          "pubDate": "2026-10-08T15:54:52",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/HanhanWei_/article/details/167276598"
         },
         {
@@ -901,7 +865,90 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110121",
+      "name": "吕致迅",
+      "csdn_username": "2501_94785105",
+      "csdn_url": "https://blog.csdn.net/2501_94785105",
+      "post_count": 8,
+      "latest_post": {
+        "title": "课程日报：糟糕网站测试实践记录",
+        "link": "https://blog.csdn.net/2501_94785105/article/details/167283731",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/2501_94785105/article/details/167283731"
+      },
+      "posts": [
+        {
+          "title": "课程日报：糟糕网站测试实践记录",
+          "link": "https://blog.csdn.net/2501_94785105/article/details/167283731",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2501_94785105/article/details/167283731"
+        },
+        {
+          "title": "本周的周报",
+          "link": "https://blog.csdn.net/2501_94785105/article/details/166646268",
+          "pubDate": "2026-09-25T00:00:00",
+          "guid": "https://blog.csdn.net/2501_94785105/article/details/166646268"
+        },
+        {
+          "title": "9月21日",
+          "link": "https://blog.csdn.net/2501_94785105/article/details/166256159",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/2501_94785105/article/details/166256159"
+        },
+        {
+          "title": "本周项目周报",
+          "link": "https://blog.csdn.net/2501_94785105/article/details/165843635",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/2501_94785105/article/details/165843635"
+        },
+        {
+          "title": "2026年9月17日",
+          "link": "https://blog.csdn.net/2501_94785105/article/details/165749140",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/2501_94785105/article/details/165749140"
+        },
+        {
+          "title": "2026年9月16日报告",
+          "link": "https://blog.csdn.net/2501_94785105/article/details/165617038",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/2501_94785105/article/details/165617038"
+        },
+        {
+          "title": "2026 年 09 月 14 日工作日报",
+          "link": "https://blog.csdn.net/2501_94785105/article/details/165286019",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/2501_94785105/article/details/165286019"
+        },
+        {
+          "title": "2026-9-11周报",
+          "link": "https://blog.csdn.net/2501_94785105/article/details/164957770",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/2501_94785105/article/details/164957770"
+        }
+      ],
+      "total_views": 1493,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 0,
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/kkaada/fsd",
+        "owner": "kkaada",
+        "repo": "fsd",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -933,12 +980,7 @@
           "title": "9.14日报",
           "link": "https://blog.csdn.net/jsk4sj/article/details/165337271",
           "pubDate": "2026-09-14T00:00:00",
-          "guid": "https://blog.csdn.net/jsk4sj/article/details/165337271",
-          "views": 209,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:22:28.743397"
+          "guid": "https://blog.csdn.net/jsk4sj/article/details/165337271"
         },
         {
           "title": "9.11 项目周报",
@@ -947,7 +989,7 @@
           "guid": "https://blog.csdn.net/jsk4sj/article/details/164960134"
         }
       ],
-      "total_views": 0,
+      "total_views": 654,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 0,
@@ -965,7 +1007,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -977,14 +1019,14 @@
       "latest_post": {
         "title": "2026年10月8日 工作日报",
         "link": "https://blog.csdn.net/King888AA/article/details/167275634",
-        "pubDate": "2026-10-08T15:55:24",
+        "pubDate": "",
         "guid": "https://blog.csdn.net/King888AA/article/details/167275634"
       },
       "posts": [
         {
           "title": "2026年10月8日 工作日报",
           "link": "https://blog.csdn.net/King888AA/article/details/167275634",
-          "pubDate": "2026-10-08T15:55:24",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/King888AA/article/details/167275634"
         },
         {
@@ -1009,30 +1051,20 @@
           "title": "每日日报。",
           "link": "https://blog.csdn.net/King888AA/article/details/165285207",
           "pubDate": "2026-09-14T00:00:00",
-          "guid": "https://blog.csdn.net/King888AA/article/details/165285207",
-          "views": 38,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:23:06.669409"
+          "guid": "https://blog.csdn.net/King888AA/article/details/165285207"
         },
         {
           "title": "2026-9-11第一周周报",
           "link": "https://blog.csdn.net/King888AA/article/details/164956014",
           "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/King888AA/article/details/164956014",
-          "views": 205,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:23:11.130751"
+          "guid": "https://blog.csdn.net/King888AA/article/details/164956014"
         }
       ],
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 8,
+      "articles_scanned": 2,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/jzk888888/jzk",
@@ -1046,129 +1078,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110121",
-      "name": "吕致迅",
-      "csdn_username": "2501_94785105",
-      "csdn_url": "https://blog.csdn.net/2501_94785105",
-      "post_count": 8,
-      "latest_post": {
-        "title": "课程日报：糟糕网站测试实践记录",
-        "link": "https://blog.csdn.net/2501_94785105/article/details/167283731",
-        "pubDate": "2026-10-08T22:55:23",
-        "guid": "https://blog.csdn.net/2501_94785105/article/details/167283731"
-      },
-      "posts": [
-        {
-          "title": "课程日报：糟糕网站测试实践记录",
-          "link": "https://blog.csdn.net/2501_94785105/article/details/167283731",
-          "pubDate": "2026-10-08T22:55:23",
-          "guid": "https://blog.csdn.net/2501_94785105/article/details/167283731"
-        },
-        {
-          "title": "本周的周报",
-          "link": "https://blog.csdn.net/2501_94785105/article/details/166646268",
-          "pubDate": "2026-09-25T00:00:00",
-          "guid": "https://blog.csdn.net/2501_94785105/article/details/166646268"
-        },
-        {
-          "title": "9月21日",
-          "link": "https://blog.csdn.net/2501_94785105/article/details/166256159",
-          "pubDate": "2026-09-21T00:00:00",
-          "guid": "https://blog.csdn.net/2501_94785105/article/details/166256159"
-        },
-        {
-          "title": "本周项目周报",
-          "link": "https://blog.csdn.net/2501_94785105/article/details/165843635",
-          "pubDate": "2026-09-18T00:00:00",
-          "guid": "https://blog.csdn.net/2501_94785105/article/details/165843635"
-        },
-        {
-          "title": "2026年9月17日",
-          "link": "https://blog.csdn.net/2501_94785105/article/details/165749140",
-          "pubDate": "2026-09-17T00:00:00",
-          "guid": "https://blog.csdn.net/2501_94785105/article/details/165749140",
-          "views": 172,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:23:41.215289"
-        },
-        {
-          "title": "2026年9月16日报告",
-          "link": "https://blog.csdn.net/2501_94785105/article/details/165617038",
-          "pubDate": "2026-09-16T00:00:00",
-          "guid": "https://blog.csdn.net/2501_94785105/article/details/165617038",
-          "views": 194,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:23:43.230994"
-        },
-        {
-          "title": "2026 年 09 月 14 日工作日报",
-          "link": "https://blog.csdn.net/2501_94785105/article/details/165286019",
-          "pubDate": "2026-09-14T00:00:00",
-          "guid": "https://blog.csdn.net/2501_94785105/article/details/165286019"
-        },
-        {
-          "title": "2026-9-11周报",
-          "link": "https://blog.csdn.net/2501_94785105/article/details/164957770",
-          "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/2501_94785105/article/details/164957770"
-        }
-      ],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/kkaada/fsd",
-        "owner": "kkaada",
-        "repo": "fsd",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110120",
-      "name": "杨智",
-      "csdn_username": "sinat_28174435",
-      "csdn_url": "https://blog.csdn.net/sinat_28174435",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/yang-zhi321/yangzhi",
-        "owner": "yang-zhi321",
-        "repo": "yangzhi",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-10-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -1206,8 +1116,8 @@
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
+      "total_collections": 6,
+      "articles_scanned": 2,
       "gitee": {
         "ok": true,
         "url": "https://gitee.com/qiyuewanan/rpg-games",
@@ -1221,7 +1131,303 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110128",
+      "name": "李可欣",
+      "csdn_username": "likexin0128",
+      "csdn_url": "https://blog.csdn.net/likexin0128",
+      "post_count": 11,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/likexin0128/article/details/167386809",
+        "pubDate": "2026-10-09T15:01:48",
+        "guid": "https://blog.csdn.net/likexin0128/article/details/167386809"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/likexin0128/article/details/167386809",
+          "pubDate": "2026-10-09T15:01:48",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/167386809"
+        },
+        {
+          "title": "补2026-10-8 日报",
+          "link": "https://blog.csdn.net/likexin0128/article/details/167346321",
+          "pubDate": "2026-10-09T08:01:48",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/167346321"
+        },
+        {
+          "title": "2026-9-23周报",
+          "link": "https://blog.csdn.net/likexin0128/article/details/166479350",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/166479350"
+        },
+        {
+          "title": "2026-9-22日报",
+          "link": "https://blog.csdn.net/likexin0128/article/details/166366291",
+          "pubDate": "2026-09-22T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/166366291"
+        },
+        {
+          "title": "补2026-9-21日报",
+          "link": "https://blog.csdn.net/likexin0128/article/details/166366239",
+          "pubDate": "2026-09-22T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/166366239"
+        },
+        {
+          "title": "2026-9-18周报",
+          "link": "https://blog.csdn.net/likexin0128/article/details/165839497",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/165839497"
+        },
+        {
+          "title": "2026年9月17日的日报",
+          "link": "https://blog.csdn.net/likexin0128/article/details/165758244",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/165758244"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/likexin0128/article/details/165615881",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/165615881"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/likexin0128/article/details/165491649",
+          "pubDate": "2026-09-15T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/165491649"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/likexin0128/article/details/165363313",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/165363313"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/likexin0128/article/details/164956965",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/likexin0128/article/details/164956965"
+        }
+      ],
+      "total_views": 0,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 3,
+      "articles_scanned": 3,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/likexib/li-kexin",
+        "owner": "likexib",
+        "repo": "li-kexin",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110120",
+      "name": "杨智",
+      "csdn_username": "sinat_28174435",
+      "csdn_url": "https://blog.csdn.net/sinat_28174435",
+      "post_count": 0,
+      "latest_post": {},
+      "posts": [],
+      "total_views": 0,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 0,
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/yang-zhi321/yangzhi",
+        "owner": "yang-zhi321",
+        "repo": "yangzhi",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-10-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110130",
+      "name": "吕涵",
+      "csdn_username": "Lh286364",
+      "csdn_url": "https://blog.csdn.net/Lh286364",
+      "post_count": 8,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/Lh286364/article/details/167360139",
+        "pubDate": "2026-10-09T10:02:10",
+        "guid": "https://blog.csdn.net/Lh286364/article/details/167360139"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/167360139",
+          "pubDate": "2026-10-09T10:02:10",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/167360139"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/166451392",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/166451392"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/166451094",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/166451094"
+        },
+        {
+          "title": "本周的周报",
+          "link": "https://blog.csdn.net/Lh286364/article/details/165836868",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/165836868"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/165834733",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/165834733"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/165741205",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/165741205"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/164961487",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/164961487"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/Lh286364/article/details/164961256",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/Lh286364/article/details/164961256"
+        }
+      ],
+      "total_views": 0,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 0,
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/lh286364/111111",
+        "owner": "lh286364",
+        "repo": "111111",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110201",
+      "name": "郑翔",
+      "csdn_username": "zx121384",
+      "csdn_url": "https://blog.csdn.net/zx121384",
+      "post_count": 8,
+      "latest_post": {
+        "title": "10.8日报",
+        "link": "https://blog.csdn.net/zx121384/article/details/167278544",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/zx121384/article/details/167278544"
+      },
+      "posts": [
+        {
+          "title": "10.8日报",
+          "link": "https://blog.csdn.net/zx121384/article/details/167278544",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/zx121384/article/details/167278544"
+        },
+        {
+          "title": "第三周周报",
+          "link": "https://blog.csdn.net/zx121384/article/details/166478837",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/zx121384/article/details/166478837"
+        },
+        {
+          "title": "9.21日报",
+          "link": "https://blog.csdn.net/zx121384/article/details/166226433",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/zx121384/article/details/166226433"
+        },
+        {
+          "title": "第二周周报",
+          "link": "https://blog.csdn.net/zx121384/article/details/165835119",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/zx121384/article/details/165835119"
+        },
+        {
+          "title": "9.17日报",
+          "link": "https://blog.csdn.net/zx121384/article/details/165745427",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/zx121384/article/details/165745427"
+        },
+        {
+          "title": "9.16日报",
+          "link": "https://blog.csdn.net/zx121384/article/details/165584880",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/zx121384/article/details/165584880"
+        },
+        {
+          "title": "9.14日报",
+          "link": "https://blog.csdn.net/zx121384/article/details/165284298",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/zx121384/article/details/165284298"
+        },
+        {
+          "title": "第一周周报",
+          "link": "https://blog.csdn.net/zx121384/article/details/164958463",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/zx121384/article/details/164958463"
+        }
+      ],
+      "total_views": 0,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 0,
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/zhengxiang1/zheng-xiang-zz",
+        "owner": "zhengxiang1",
+        "repo": "zheng-xiang-zz",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -1229,18 +1435,24 @@
       "name": "冯雪娇",
       "csdn_username": "fxjjjjjjjjjjjj1",
       "csdn_url": "https://blog.csdn.net/fxjjjjjjjjjjjj1",
-      "post_count": 8,
+      "post_count": 9,
       "latest_post": {
-        "title": "2026.10.8日总结",
-        "link": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/167276328",
-        "pubDate": "2026-10-08T15:55:59",
-        "guid": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/167276328"
+        "title": "2026.10.9日总结",
+        "link": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/167383410",
+        "pubDate": "2026-10-09T15:01:55",
+        "guid": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/167383410"
       },
       "posts": [
         {
+          "title": "2026.10.9日总结",
+          "link": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/167383410",
+          "pubDate": "2026-10-09T15:01:55",
+          "guid": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/167383410"
+        },
+        {
           "title": "2026.10.8日总结",
           "link": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/167276328",
-          "pubDate": "2026-10-08T15:55:59",
+          "pubDate": "",
           "guid": "https://blog.csdn.net/fxjjjjjjjjjjjj1/article/details/167276328"
         },
         {
@@ -1304,272 +1516,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110128",
-      "name": "李可欣",
-      "csdn_username": "likexin0128",
-      "csdn_url": "https://blog.csdn.net/likexin0128",
-      "post_count": 10,
-      "latest_post": {
-        "title": "补2026-10-8 日报",
-        "link": "https://blog.csdn.net/likexin0128/article/details/167346321",
-        "pubDate": "2026-10-09T08:55:59",
-        "guid": "https://blog.csdn.net/likexin0128/article/details/167346321"
-      },
-      "posts": [
-        {
-          "title": "补2026-10-8 日报",
-          "link": "https://blog.csdn.net/likexin0128/article/details/167346321",
-          "pubDate": "2026-10-09T08:55:59",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/167346321",
-          "views": 45,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:24:17.250673"
-        },
-        {
-          "title": "2026-9-23周报",
-          "link": "https://blog.csdn.net/likexin0128/article/details/166479350",
-          "pubDate": "2026-09-23T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/166479350"
-        },
-        {
-          "title": "2026-9-22日报",
-          "link": "https://blog.csdn.net/likexin0128/article/details/166366291",
-          "pubDate": "2026-09-22T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/166366291"
-        },
-        {
-          "title": "补2026-9-21日报",
-          "link": "https://blog.csdn.net/likexin0128/article/details/166366239",
-          "pubDate": "2026-09-22T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/166366239"
-        },
-        {
-          "title": "2026-9-18周报",
-          "link": "https://blog.csdn.net/likexin0128/article/details/165839497",
-          "pubDate": "2026-09-18T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/165839497"
-        },
-        {
-          "title": "2026年9月17日的日报",
-          "link": "https://blog.csdn.net/likexin0128/article/details/165758244",
-          "pubDate": "2026-09-17T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/165758244",
-          "views": 212,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:24:46.649173"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/likexin0128/article/details/165615881",
-          "pubDate": "2026-09-16T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/165615881",
-          "views": 32,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:24:53.351798"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/likexin0128/article/details/165491649",
-          "pubDate": "2026-09-15T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/165491649"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/likexin0128/article/details/165363313",
-          "pubDate": "2026-09-14T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/165363313"
-        },
-        {
-          "title": "【无标题】",
-          "link": "https://blog.csdn.net/likexin0128/article/details/164956965",
-          "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/likexin0128/article/details/164956965",
-          "views": 23,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "stats_updated_at": "2026-10-09T14:18:14.427779"
-        }
-      ],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/likexib/li-kexin",
-        "owner": "likexib",
-        "repo": "li-kexin",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110130",
-      "name": "吕涵",
-      "csdn_username": "Lh286364",
-      "csdn_url": "https://blog.csdn.net/Lh286364",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/lh286364/111111",
-        "owner": "lh286364",
-        "repo": "111111",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110201",
-      "name": "郑翔",
-      "csdn_username": "zx121384",
-      "csdn_url": "https://blog.csdn.net/zx121384",
-      "post_count": 8,
-      "latest_post": {},
-      "posts": [
-        {
-          "title": "10.8日报",
-          "link": "https://blog.csdn.net/zx121384/article/details/167278544",
-          "pubDate": "2026-10-08T17:25:21.825346",
-          "guid": "https://blog.csdn.net/zx121384/article/details/167278544",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
-        },
-        {
-          "title": "第三周周报",
-          "link": "https://blog.csdn.net/zx121384/article/details/166478837",
-          "pubDate": "2026-09-23T00:00:00",
-          "guid": "https://blog.csdn.net/zx121384/article/details/166478837",
-          "views": 63,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true,
-          "stats_updated_at": "2026-10-09T14:25:31.153337"
-        },
-        {
-          "title": "9.21日报",
-          "link": "https://blog.csdn.net/zx121384/article/details/166226433",
-          "pubDate": "2026-09-21T00:00:00",
-          "guid": "https://blog.csdn.net/zx121384/article/details/166226433",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
-        },
-        {
-          "title": "第二周周报",
-          "link": "https://blog.csdn.net/zx121384/article/details/165835119",
-          "pubDate": "2026-09-18T00:00:00",
-          "guid": "https://blog.csdn.net/zx121384/article/details/165835119",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
-        },
-        {
-          "title": "9.17日报",
-          "link": "https://blog.csdn.net/zx121384/article/details/165745427",
-          "pubDate": "2026-09-17T00:00:00",
-          "guid": "https://blog.csdn.net/zx121384/article/details/165745427",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
-        },
-        {
-          "title": "9.16日报",
-          "link": "https://blog.csdn.net/zx121384/article/details/165584880",
-          "pubDate": "2026-09-16T00:00:00",
-          "guid": "https://blog.csdn.net/zx121384/article/details/165584880",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
-        },
-        {
-          "title": "9.14日报",
-          "link": "https://blog.csdn.net/zx121384/article/details/165284298",
-          "pubDate": "2026-09-14T00:00:00",
-          "guid": "https://blog.csdn.net/zx121384/article/details/165284298",
-          "views": 254,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true,
-          "stats_updated_at": "2026-10-09T14:25:59.877709"
-        },
-        {
-          "title": "第一周周报",
-          "link": "https://blog.csdn.net/zx121384/article/details/164958463",
-          "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/zx121384/article/details/164958463",
-          "views": 263,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true,
-          "stats_updated_at": "2026-10-09T14:26:02.012795"
-        }
-      ],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/zhengxiang1/zheng-xiang-zz",
-        "owner": "zhengxiang1",
-        "repo": "zheng-xiang-zz",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -1577,9 +1524,57 @@
       "name": "吴梦瑶",
       "csdn_username": "WMY2006",
       "csdn_url": "https://blog.csdn.net/WMY2006",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
+      "post_count": 7,
+      "latest_post": {
+        "title": "日报-2026-10-9",
+        "link": "https://blog.csdn.net/WMY2006/article/details/167386970",
+        "pubDate": "2026-10-09T15:02:17",
+        "guid": "https://blog.csdn.net/WMY2006/article/details/167386970"
+      },
+      "posts": [
+        {
+          "title": "日报-2026-10-9",
+          "link": "https://blog.csdn.net/WMY2006/article/details/167386970",
+          "pubDate": "2026-10-09T15:02:17",
+          "guid": "https://blog.csdn.net/WMY2006/article/details/167386970"
+        },
+        {
+          "title": "周报-2026-9-23",
+          "link": "https://blog.csdn.net/WMY2006/article/details/166486730",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/WMY2006/article/details/166486730"
+        },
+        {
+          "title": "日报-2026-9-21",
+          "link": "https://blog.csdn.net/WMY2006/article/details/166230225",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/WMY2006/article/details/166230225"
+        },
+        {
+          "title": "周报-2026-9-18",
+          "link": "https://blog.csdn.net/WMY2006/article/details/165842557",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/WMY2006/article/details/165842557"
+        },
+        {
+          "title": "日报-2026-9-16",
+          "link": "https://blog.csdn.net/WMY2006/article/details/165616921",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/WMY2006/article/details/165616921"
+        },
+        {
+          "title": "日报-2026-9-14",
+          "link": "https://blog.csdn.net/WMY2006/article/details/165286033",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/WMY2006/article/details/165286033"
+        },
+        {
+          "title": "2026-9-11-周报",
+          "link": "https://blog.csdn.net/WMY2006/article/details/164957639",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/WMY2006/article/details/164957639"
+        }
+      ],
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
@@ -1598,7 +1593,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -1606,9 +1601,63 @@
       "name": "沈亿",
       "csdn_username": "2601_96938731",
       "csdn_url": "https://blog.csdn.net/2601_96938731",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
+      "post_count": 8,
+      "latest_post": {
+        "title": "2026-10-8日报",
+        "link": "https://blog.csdn.net/2601_96938731/article/details/167278578",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/2601_96938731/article/details/167278578"
+      },
+      "posts": [
+        {
+          "title": "2026-10-8日报",
+          "link": "https://blog.csdn.net/2601_96938731/article/details/167278578",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2601_96938731/article/details/167278578"
+        },
+        {
+          "title": "2026-9-23周报",
+          "link": "https://blog.csdn.net/2601_96938731/article/details/166467972",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/2601_96938731/article/details/166467972"
+        },
+        {
+          "title": "2026-9-21日报",
+          "link": "https://blog.csdn.net/2601_96938731/article/details/166225917",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/2601_96938731/article/details/166225917"
+        },
+        {
+          "title": "2026-9-18周报",
+          "link": "https://blog.csdn.net/2601_96938731/article/details/165833941",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/2601_96938731/article/details/165833941"
+        },
+        {
+          "title": "2026-9-17日报",
+          "link": "https://blog.csdn.net/2601_96938731/article/details/165741203",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/2601_96938731/article/details/165741203"
+        },
+        {
+          "title": "2026-9-16日报",
+          "link": "https://blog.csdn.net/2601_96938731/article/details/165574612",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/2601_96938731/article/details/165574612"
+        },
+        {
+          "title": "2026-9-14日报",
+          "link": "https://blog.csdn.net/2601_96938731/article/details/165282013",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/2601_96938731/article/details/165282013"
+        },
+        {
+          "title": "2026-9-11周报",
+          "link": "https://blog.csdn.net/2601_96938731/article/details/164951665",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/2601_96938731/article/details/164951665"
+        }
+      ],
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
@@ -1627,7 +1676,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -1635,9 +1684,69 @@
       "name": "张昊",
       "csdn_username": "bashiyegou",
       "csdn_url": "https://blog.csdn.net/bashiyegou",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
+      "post_count": 9,
+      "latest_post": {
+        "title": "【无标题】",
+        "link": "https://blog.csdn.net/bashiyegou/article/details/167387018",
+        "pubDate": "2026-10-09T15:02:19",
+        "guid": "https://blog.csdn.net/bashiyegou/article/details/167387018"
+      },
+      "posts": [
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/167387018",
+          "pubDate": "2026-10-09T15:02:19",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/167387018"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/167278076",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/167278076"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/166480340",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/166480340"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/166227783",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/166227783"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/165844246",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/165844246"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/165751157",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/165751157"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/165618079",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/165618079"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/165287084",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/165287084"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/bashiyegou/article/details/164962196",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/bashiyegou/article/details/164962196"
+        }
+      ],
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
@@ -1656,65 +1765,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110213",
-      "name": "杜广庆",
-      "csdn_username": "jiuyu16",
-      "csdn_url": "https://blog.csdn.net/jiuyu16",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/MayarDu/game-platform",
-        "owner": "MayarDu",
-        "repo": "game-platform",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110215",
-      "name": "郑泽镪",
-      "csdn_username": "2401_83893276",
-      "csdn_url": "https://blog.csdn.net/2401_83893276",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/Mcqwder/zzq",
-        "owner": "Mcqwder",
-        "repo": "zzq",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-09T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -1723,74 +1774,48 @@
       "csdn_username": "2601_96956624",
       "csdn_url": "https://blog.csdn.net/2601_96956624",
       "post_count": 6,
-      "latest_post": {},
+      "latest_post": {
+        "title": "10月9日----日报",
+        "link": "https://blog.csdn.net/2601_96956624/article/details/167385631",
+        "pubDate": "2026-10-09T15:02:44",
+        "guid": "https://blog.csdn.net/2601_96956624/article/details/167385631"
+      },
       "posts": [
+        {
+          "title": "10月9日----日报",
+          "link": "https://blog.csdn.net/2601_96956624/article/details/167385631",
+          "pubDate": "2026-10-09T15:02:44",
+          "guid": "https://blog.csdn.net/2601_96956624/article/details/167385631"
+        },
         {
           "title": "2026年9月23日---周报",
           "link": "https://blog.csdn.net/2601_96956624/article/details/166486417",
           "pubDate": "2026-09-23T00:00:00",
-          "guid": "https://blog.csdn.net/2601_96956624/article/details/166486417",
-          "views": 152,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true,
-          "stats_updated_at": "2026-10-09T14:26:37.573991"
+          "guid": "https://blog.csdn.net/2601_96956624/article/details/166486417"
         },
         {
           "title": "9月21日--日报",
           "link": "https://blog.csdn.net/2601_96956624/article/details/166228618",
           "pubDate": "2026-09-21T00:00:00",
-          "guid": "https://blog.csdn.net/2601_96956624/article/details/166228618",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/2601_96956624/article/details/166228618"
         },
         {
           "title": "2026年9月17日----周报",
           "link": "https://blog.csdn.net/2601_96956624/article/details/164958472",
           "pubDate": "2026-09-18T00:00:00",
-          "guid": "https://blog.csdn.net/2601_96956624/article/details/164958472",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/2601_96956624/article/details/164958472"
         },
         {
           "title": "2026年9月16日-日报",
           "link": "https://blog.csdn.net/2601_96956624/article/details/165616922",
           "pubDate": "2026-09-16T00:00:00",
-          "guid": "https://blog.csdn.net/2601_96956624/article/details/165616922",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/2601_96956624/article/details/165616922"
         },
         {
           "title": "2026-9-11第一周项目实训周报",
           "link": "https://blog.csdn.net/2601_96956624/article/details/164955503",
           "pubDate": "2026-09-11T00:00:00",
-          "guid": "https://blog.csdn.net/2601_96956624/article/details/164955503",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
-        },
-        {
-          "title": "10月9日----日报",
-          "link": "https://blog.csdn.net/2601_96956624/article/details/167385631",
-          "pubDate": "",
-          "guid": "https://blog.csdn.net/2601_96956624/article/details/167385631",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/2601_96956624/article/details/164955503"
         }
       ],
       "total_views": 0,
@@ -1811,17 +1836,77 @@
         "msg": "",
         "source": "",
         "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
-      "sid": "240110221",
-      "name": "王森",
-      "csdn_username": "dao1234_",
-      "csdn_url": "https://blog.csdn.net/dao1234_",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
+      "sid": "240110213",
+      "name": "杜广庆",
+      "csdn_username": "jiuyu16",
+      "csdn_url": "https://blog.csdn.net/jiuyu16",
+      "post_count": 9,
+      "latest_post": {
+        "title": "2026-10-9日报",
+        "link": "https://blog.csdn.net/jiuyu16/article/details/167386790",
+        "pubDate": "2026-10-09T15:02:46",
+        "guid": "https://blog.csdn.net/jiuyu16/article/details/167386790"
+      },
+      "posts": [
+        {
+          "title": "2026-10-9日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/167386790",
+          "pubDate": "2026-10-09T15:02:46",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/167386790"
+        },
+        {
+          "title": "10-8日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/167284161",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/167284161"
+        },
+        {
+          "title": "2026-9-25周报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/166645345",
+          "pubDate": "2026-09-25T00:00:00",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/166645345"
+        },
+        {
+          "title": "2026-9-21日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/166228392",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/166228392"
+        },
+        {
+          "title": "2026/9/18周报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/165845194",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/165845194"
+        },
+        {
+          "title": "2026-9-17日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/165751196",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/165751196"
+        },
+        {
+          "title": "2026/9/16日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/165613529",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/165613529"
+        },
+        {
+          "title": "2026-9-14日报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/165284917",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/165284917"
+        },
+        {
+          "title": "2026-9-11 项目周报",
+          "link": "https://blog.csdn.net/jiuyu16/article/details/164954631",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/jiuyu16/article/details/164954631"
+        }
+      ],
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
@@ -1829,9 +1914,9 @@
       "articles_scanned": 0,
       "gitee": {
         "ok": true,
-        "url": "https://gitee.com/moudaomeihaizi/warrior-dawn-fusion-war",
-        "owner": "moudaomeihaizi",
-        "repo": "warrior-dawn-fusion-war",
+        "url": "https://gitee.com/MayarDu/game-platform",
+        "owner": "MayarDu",
+        "repo": "game-platform",
         "stars": 0,
         "forks": 0,
         "commit_count": 0,
@@ -1840,7 +1925,96 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110215",
+      "name": "郑泽镪",
+      "csdn_username": "2401_83893276",
+      "csdn_url": "https://blog.csdn.net/2401_83893276",
+      "post_count": 9,
+      "latest_post": {
+        "title": "游戏库项目日报",
+        "link": "https://blog.csdn.net/2401_83893276/article/details/167384341",
+        "pubDate": "2026-10-09T14:02:47",
+        "guid": "https://blog.csdn.net/2401_83893276/article/details/167384341"
+      },
+      "posts": [
+        {
+          "title": "游戏库项目日报",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/167384341",
+          "pubDate": "2026-10-09T14:02:47",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/167384341"
+        },
+        {
+          "title": "用户系统开发进展：数据库与UI布局初成",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/167277457",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/167277457"
+        },
+        {
+          "title": "需求文档收官，数据库设计启动",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/166478828",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/166478828"
+        },
+        {
+          "title": "游戏库项目日报",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/166227382",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/166227382"
+        },
+        {
+          "title": "需求与设计阶段周报",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/165841952",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/165841952"
+        },
+        {
+          "title": "游戏库项目需求文档",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/165751126",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/165751126"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/165609297",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/165609297"
+        },
+        {
+          "title": "游戏库项目开发日报",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/165282707",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/165282707"
+        },
+        {
+          "title": "第一周周报",
+          "link": "https://blog.csdn.net/2401_83893276/article/details/165280108",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/2401_83893276/article/details/165280108"
+        }
+      ],
+      "total_views": 0,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 0,
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/Mcqwder/zzq",
+        "owner": "Mcqwder",
+        "repo": "zzq",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -1849,74 +2023,48 @@
       "csdn_username": "wty262446",
       "csdn_url": "https://blog.csdn.net/wty262446",
       "post_count": 6,
-      "latest_post": {},
+      "latest_post": {
+        "title": "周周周周报",
+        "link": "https://blog.csdn.net/wty262446/article/details/166485451",
+        "pubDate": "2026-09-23T00:00:00",
+        "guid": "https://blog.csdn.net/wty262446/article/details/166485451"
+      },
       "posts": [
         {
           "title": "周周周周报",
           "link": "https://blog.csdn.net/wty262446/article/details/166485451",
           "pubDate": "2026-09-23T00:00:00",
-          "guid": "https://blog.csdn.net/wty262446/article/details/166485451",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/wty262446/article/details/166485451"
         },
         {
           "title": "【无标题】",
           "link": "https://blog.csdn.net/wty262446/article/details/166372171",
           "pubDate": "2026-09-22T00:00:00",
-          "guid": "https://blog.csdn.net/wty262446/article/details/166372171",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/wty262446/article/details/166372171"
         },
         {
           "title": "【无标题】",
           "link": "https://blog.csdn.net/wty262446/article/details/165979656",
           "pubDate": "2026-09-19T00:00:00",
-          "guid": "https://blog.csdn.net/wty262446/article/details/165979656",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/wty262446/article/details/165979656"
         },
         {
           "title": "【无标题】",
           "link": "https://blog.csdn.net/wty262446/article/details/165758986",
           "pubDate": "2026-09-17T00:00:00",
-          "guid": "https://blog.csdn.net/wty262446/article/details/165758986",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/wty262446/article/details/165758986"
         },
         {
           "title": "日报总结再总结",
           "link": "https://blog.csdn.net/wty262446/article/details/165632130",
           "pubDate": "2026-09-16T00:00:00",
-          "guid": "https://blog.csdn.net/wty262446/article/details/165632130",
-          "views": 0,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true
+          "guid": "https://blog.csdn.net/wty262446/article/details/165632130"
         },
         {
           "title": "第一周周报",
           "link": "https://blog.csdn.net/wty262446/article/details/165280609",
           "pubDate": "2026-09-14T00:00:00",
-          "guid": "https://blog.csdn.net/wty262446/article/details/165280609",
-          "views": 194,
-          "likes": 0,
-          "comments": 0,
-          "collections": 0,
-          "is_new": true,
-          "stats_updated_at": "2026-10-09T14:27:39.939155"
+          "guid": "https://blog.csdn.net/wty262446/article/details/165280609"
         }
       ],
       "total_views": 0,
@@ -1937,7 +2085,96 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110221",
+      "name": "王森",
+      "csdn_username": "dao1234_",
+      "csdn_url": "https://blog.csdn.net/dao1234_",
+      "post_count": 9,
+      "latest_post": {
+        "title": "项目日报：2026-10-09",
+        "link": "https://blog.csdn.net/dao1234_/article/details/167386952",
+        "pubDate": "2026-10-09T15:02:51",
+        "guid": "https://blog.csdn.net/dao1234_/article/details/167386952"
+      },
+      "posts": [
+        {
+          "title": "项目日报：2026-10-09",
+          "link": "https://blog.csdn.net/dao1234_/article/details/167386952",
+          "pubDate": "2026-10-09T15:02:51",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/167386952"
+        },
+        {
+          "title": "项目日报：2026-10-08",
+          "link": "https://blog.csdn.net/dao1234_/article/details/167277571",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/167277571"
+        },
+        {
+          "title": "项目日报：2026-09-23",
+          "link": "https://blog.csdn.net/dao1234_/article/details/166487087",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/166487087"
+        },
+        {
+          "title": "项目日报：2026-09-21",
+          "link": "https://blog.csdn.net/dao1234_/article/details/166229899",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/166229899"
+        },
+        {
+          "title": "项目周报：2026-09-18",
+          "link": "https://blog.csdn.net/dao1234_/article/details/165863807",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/165863807"
+        },
+        {
+          "title": "项目日报：2026-09-17",
+          "link": "https://blog.csdn.net/dao1234_/article/details/165749830",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/165749830"
+        },
+        {
+          "title": "项目日报：2026-09-16",
+          "link": "https://blog.csdn.net/dao1234_/article/details/165615785",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/165615785"
+        },
+        {
+          "title": "项目日报：2026-09-14",
+          "link": "https://blog.csdn.net/dao1234_/article/details/165284572",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/165284572"
+        },
+        {
+          "title": "2026.9.11 周报",
+          "link": "https://blog.csdn.net/dao1234_/article/details/164952223",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/dao1234_/article/details/164952223"
+        }
+      ],
+      "total_views": 0,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 0,
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/moudaomeihaizi/warrior-dawn-fusion-war",
+        "owner": "moudaomeihaizi",
+        "repo": "warrior-dawn-fusion-war",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-09T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -1945,9 +2182,69 @@
       "name": "王明硕",
       "csdn_username": "2603_96938789",
       "csdn_url": "https://blog.csdn.net/2603_96938789",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
+      "post_count": 9,
+      "latest_post": {
+        "title": "2026.10.8日报",
+        "link": "https://blog.csdn.net/2603_96938789/article/details/167278582",
+        "pubDate": "",
+        "guid": "https://blog.csdn.net/2603_96938789/article/details/167278582"
+      },
+      "posts": [
+        {
+          "title": "2026.10.8日报",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/167278582",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/167278582"
+        },
+        {
+          "title": "2026.9.23周报",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/166486684",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/166486684"
+        },
+        {
+          "title": "2026年9月21日",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/166256185",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/166256185"
+        },
+        {
+          "title": "2026.9.18周报",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/165847032",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/165847032"
+        },
+        {
+          "title": "2026.9.17日报",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/165751156",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/165751156"
+        },
+        {
+          "title": "2026.9.16日报",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/165615815",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/165615815"
+        },
+        {
+          "title": "2026.9.14",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/165283854",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/165283854"
+        },
+        {
+          "title": "2026.9.11周报",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/164956555",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/164956555"
+        },
+        {
+          "title": "hhh111",
+          "link": "https://blog.csdn.net/2603_96938789/article/details/164714305",
+          "pubDate": "2026-09-09T00:00:00",
+          "guid": "https://blog.csdn.net/2603_96938789/article/details/164714305"
+        }
+      ],
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
@@ -1966,36 +2263,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
-      }
-    },
-    {
-      "sid": "240110227",
-      "name": "张宇梦",
-      "csdn_username": "Zyyymmm_",
-      "csdn_url": "https://blog.csdn.net/Zyyymmm_",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
-      "total_views": 0,
-      "total_likes": 0,
-      "total_comments": 0,
-      "total_collections": 0,
-      "articles_scanned": 0,
-      "gitee": {
-        "ok": true,
-        "url": "https://gitee.com/zhhshgdhwgfhifhrefiureyhfu/project",
-        "owner": "zhhshgdhwgfhifhrefiureyhfu",
-        "repo": "project",
-        "stars": 0,
-        "forks": 0,
-        "commit_count": 0,
-        "sha": "",
-        "date": "2026-09-11T00:00:00+08:00",
-        "msg": "",
-        "source": "markdown",
-        "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
     },
     {
@@ -2003,9 +2271,69 @@
       "name": "王翼洲",
       "csdn_username": "WH2022911",
       "csdn_url": "https://blog.csdn.net/WH2022911",
-      "post_count": 0,
-      "latest_post": {},
-      "posts": [],
+      "post_count": 9,
+      "latest_post": {
+        "title": "10.9日报",
+        "link": "https://blog.csdn.net/WH2022911/article/details/167387233",
+        "pubDate": "2026-10-09T15:03:15",
+        "guid": "https://blog.csdn.net/WH2022911/article/details/167387233"
+      },
+      "posts": [
+        {
+          "title": "10.9日报",
+          "link": "https://blog.csdn.net/WH2022911/article/details/167387233",
+          "pubDate": "2026-10-09T15:03:15",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/167387233"
+        },
+        {
+          "title": "10.8日报",
+          "link": "https://blog.csdn.net/WH2022911/article/details/167278663",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/167278663"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/WH2022911/article/details/167278615",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/167278615"
+        },
+        {
+          "title": "周报9.23",
+          "link": "https://blog.csdn.net/WH2022911/article/details/166487053",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/166487053"
+        },
+        {
+          "title": "9.21日报",
+          "link": "https://blog.csdn.net/WH2022911/article/details/166229096",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/166229096"
+        },
+        {
+          "title": "9.18周报",
+          "link": "https://blog.csdn.net/WH2022911/article/details/165838692",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/165838692"
+        },
+        {
+          "title": "【无标题】",
+          "link": "https://blog.csdn.net/WH2022911/article/details/165744438",
+          "pubDate": "2026-09-17T00:00:00",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/165744438"
+        },
+        {
+          "title": "9.14日报",
+          "link": "https://blog.csdn.net/WH2022911/article/details/165286489",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/165286489"
+        },
+        {
+          "title": "2026.9.11第一周周报",
+          "link": "https://blog.csdn.net/WH2022911/article/details/164956226",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/WH2022911/article/details/164956226"
+        }
+      ],
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
@@ -2024,27 +2352,157 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-09T13:53:45"
+        "fetched_at": "2026-10-10T00:00:04"
       }
-    }
-  ],
-  "class_stats": {
-    "computed_at": "2026-10-09T13:53:45",
-    "students_total": 32,
-    "students_with_csdn": 32,
-    "students_active": 17,
-    "students_inactive": 15,
-    "csdn": {
-      "total_posts": 106,
+    },
+    {
+      "sid": "240110227",
+      "name": "张宇梦",
+      "csdn_username": "Zyyymmm_",
+      "csdn_url": "https://blog.csdn.net/Zyyymmm_",
+      "post_count": 6,
+      "latest_post": {
+        "title": "周报2026-9-23",
+        "link": "https://blog.csdn.net/Zyyymmm_/article/details/166486517",
+        "pubDate": "2026-09-23T00:00:00",
+        "guid": "https://blog.csdn.net/Zyyymmm_/article/details/166486517"
+      },
+      "posts": [
+        {
+          "title": "周报2026-9-23",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/166486517",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/166486517"
+        },
+        {
+          "title": "日报2026921",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/166230227",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/166230227"
+        },
+        {
+          "title": "周报2026918",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/165842855",
+          "pubDate": "2026-09-18T00:00:00",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165842855"
+        },
+        {
+          "title": "日报2026916",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/165616376",
+          "pubDate": "2026-09-16T00:00:00",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165616376"
+        },
+        {
+          "title": "日报2026-9-14",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/165285943",
+          "pubDate": "2026-09-14T00:00:00",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/165285943"
+        },
+        {
+          "title": "2026-9-11周报",
+          "link": "https://blog.csdn.net/Zyyymmm_/article/details/164961288",
+          "pubDate": "2026-09-11T00:00:00",
+          "guid": "https://blog.csdn.net/Zyyymmm_/article/details/164961288"
+        }
+      ],
       "total_views": 0,
       "total_likes": 0,
       "total_comments": 0,
       "total_collections": 0,
-      "avg_posts_per_active": 6.24,
-      "avg_views_per_student": 0.0
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/zhhshgdhwgfhifhrefiureyhfu/project",
+        "owner": "zhhshgdhwgfhifhrefiureyhfu",
+        "repo": "project",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-11T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    },
+    {
+      "sid": "240110233",
+      "name": "王杰",
+      "csdn_username": "wj121384",
+      "csdn_url": "https://blog.csdn.net/wj121384",
+      "post_count": 4,
+      "latest_post": {
+        "title": "10.9日报",
+        "link": "https://blog.csdn.net/wj121384/article/details/167386174",
+        "pubDate": "2026-10-09T15:03:19",
+        "guid": "https://blog.csdn.net/wj121384/article/details/167386174"
+      },
+      "posts": [
+        {
+          "title": "10.9日报",
+          "link": "https://blog.csdn.net/wj121384/article/details/167386174",
+          "pubDate": "2026-10-09T15:03:19",
+          "guid": "https://blog.csdn.net/wj121384/article/details/167386174"
+        },
+        {
+          "title": "10.8日报",
+          "link": "https://blog.csdn.net/wj121384/article/details/167277570",
+          "pubDate": "",
+          "guid": "https://blog.csdn.net/wj121384/article/details/167277570"
+        },
+        {
+          "title": "9.23周报",
+          "link": "https://blog.csdn.net/wj121384/article/details/166479879",
+          "pubDate": "2026-09-23T00:00:00",
+          "guid": "https://blog.csdn.net/wj121384/article/details/166479879"
+        },
+        {
+          "title": "9.21日报",
+          "link": "https://blog.csdn.net/wj121384/article/details/166227794",
+          "pubDate": "2026-09-21T00:00:00",
+          "guid": "https://blog.csdn.net/wj121384/article/details/166227794"
+        }
+      ],
+      "total_views": 0,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 0,
+      "articles_scanned": 0,
+      "gitee": {
+        "ok": true,
+        "url": "https://gitee.com/wang-jie-121384/wjjj117",
+        "owner": "wang-jie-121384",
+        "repo": "wjjj117",
+        "stars": 0,
+        "forks": 0,
+        "commit_count": 0,
+        "sha": "",
+        "date": "2026-09-21T00:00:00+08:00",
+        "msg": "",
+        "source": "markdown",
+        "err": "",
+        "fetched_at": "2026-10-10T00:00:04"
+      }
+    }
+  ],
+  "class_stats": {
+    "computed_at": "2026-10-10T00:00:04",
+    "students_total": 33,
+    "students_with_csdn": 33,
+    "students_active": 31,
+    "students_inactive": 2,
+    "csdn": {
+      "total_posts": 219,
+      "total_views": 9484,
+      "total_likes": 0,
+      "total_comments": 0,
+      "total_collections": 82,
+      "avg_posts_per_active": 7.06,
+      "avg_views_per_student": 287.4
     },
     "gitee": {
-      "students_with_repo": 30,
+      "students_with_repo": 31,
       "total_commits": 0,
       "total_stars": 0,
       "total_forks": 0,
