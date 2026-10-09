@@ -1,11 +1,17 @@
 """
 csdn_incremental.py
-Ma: 增量抓取 — 老文章只更新 views/likes, 新文章全抓
+Ma: 真正的增量抓取 — 老文章只更新 views/likes, 新文章全抓
+
+策略:
+  1. 翻 CSDN 列表 (1-20 页), 拿到所有可见文章
+  2. 跟 data.json 里的对比:
+     - 已存在 (老文章): 只更新 views/likes/comments/collections
+     - 不存在 (新文章): 全字段抓取 + 加进去
+  3. 老文章不重抓 title/link/pubDate (已经存了)
 
 用法:
-  python csdn_incremental.py --all          # 所有学生增量抓
-  python csdn_incremental.py --student name # 单个学生
-  python csdn_incremental.py --since 7days  # 只抓最近 7 天新文章
+  python csdn_incremental.py --all           # 所有学生
+  python csdn_incremental.py --student name  # 单个学生
 """
 import json
 import re
@@ -14,10 +20,10 @@ import argparse
 import urllib.request
 import urllib.error
 import time
+import ssl
 from pathlib import Path
 from datetime import datetime, timedelta
 
-# 路径
 SCRIPT_DIR = Path(__file__).resolve().parent
 DASHBOARD_DIR = SCRIPT_DIR.parent
 DATA_PATH = DASHBOARD_DIR / "data.json"
@@ -35,7 +41,6 @@ def log(msg):
 
 def http_get(url, timeout=15, retries=2):
     """带重试的 HTTP GET"""
-    import ssl
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
@@ -66,10 +71,9 @@ def fetch_article_stats(article_id, username):
         r = http_get(url, timeout=15)
         html = r.read().decode("utf-8", errors="ignore")
 
-        # CSDN 文章页的统计
         stats = {"views": 0, "likes": 0, "comments": 0, "collections": 0}
 
-        # 1. 阅读量: data-v-xxx 或 class="read-count"
+        # 1. 阅读量
         m = re.search(r'<span[^>]*class="read-count"[^>]*>\s*(\d+)', html)
         if m:
             stats["views"] = int(m.group(1))
@@ -89,7 +93,7 @@ def fetch_article_stats(article_id, username):
         if m:
             stats["collections"] = int(m.group(1))
 
-        # 备选: 从 script 里找
+        # 备选
         if stats["views"] == 0:
             m = re.search(r'"view_count"\s*:\s*(\d+)', html)
             if m:
@@ -101,19 +105,20 @@ def fetch_article_stats(article_id, username):
         return None
 
 
-def fetch_new_posts(username, since_days=7):
-    """抓取最近 N 天的文章列表 (轻量)
+def fetch_blog_list(username, max_pages=20):
+    """Ma: 翻 CSDN 列表, 找到所有可见文章 (增量模式用)
 
-    只翻 1-2 页,找新文章
+    跟 fetch_new_posts 不同:
+    - fetch_new_posts: 只翻 1-2 页,找最近 N 天
+    - fetch_blog_list: 翻 1-20 页, 找到所有老文章为止 (增量抓)
     """
-    new_posts = []
-    for page in [1, 2]:
+    all_articles = []
+    for page in range(1, max_pages + 1):
         url = f"https://blog.csdn.net/{username}?type=blog&page={page}"
         try:
             r = http_get(url, timeout=15)
             html = r.read().decode("utf-8", errors="ignore")
 
-            # 找文章块
             blocks = re.findall(
                 r'<article[^>]*class="blog-list-box"[^>]*>(.*?)</article>',
                 html, re.DOTALL,
@@ -123,36 +128,40 @@ def fetch_new_posts(username, since_days=7):
                 break
 
             for block in blocks:
-                # 提取 link
-                m = re.search(r'href="(https?://blog\.csdn\.net/[^/]+/article/details/(\d+))"', block)
+                m = re.search(
+                    r'href="(https?://blog\.csdn\.net/[^/]+/article/details/(\d+))"',
+                    block,
+                )
                 if not m:
                     continue
                 link = m.group(1)
                 article_id = m.group(2)
 
-                # 提取 title
                 m_t = re.search(r'<h[34][^>]*>(.*?)</h[34]>', block, re.DOTALL)
                 title = re.sub(r"<[^>]+>", "", m_t.group(1)).strip() if m_t else ""
 
-                # 提取发布时间
                 m_d = re.search(
                     r'<div class="view-time-box"[^>]*>\s*博文更新于\s*([^<·]+?)\s*(?:·|</div>)',
                     block,
                 )
                 pub_raw = m_d.group(1).strip() if m_d else ""
 
-                new_posts.append({
+                all_articles.append({
                     "article_id": article_id,
                     "link": link,
                     "title": title,
                     "pub_raw": pub_raw,
                 })
 
+            # 少于 15 篇说明是最后一页
+            if len(blocks) < 15:
+                break
+
         except Exception as e:
             log(f"  ⚠️ 抓列表 page {page} 失败: {str(e)[:50]}")
             break
 
-    return new_posts
+    return all_articles
 
 
 def parse_relative_date(raw):
@@ -161,7 +170,6 @@ def parse_relative_date(raw):
         return None
     raw = raw.strip()
 
-    # 1. 绝对日期
     m = re.search(r"(\d{4})[.-](\d{1,2})[.-](\d{1,2})", raw)
     if m:
         try:
@@ -169,117 +177,151 @@ def parse_relative_date(raw):
         except:
             pass
 
-    # 2. 相对时间
     now = datetime.now()
     m = re.search(r"(\d+)\s*小时前", raw)
     if m:
         return now - timedelta(hours=int(m.group(1)))
+    m = re.search(r"(\d+)\s*分钟前", raw)
+    if m:
+        return now - timedelta(minutes=int(m.group(1)))
     m = re.search(r"(\d+)\s*天前", raw)
     if m:
         return now - timedelta(days=int(m.group(1)))
+    m = re.search(r"(\d+)\s*周前", raw)
+    if m:
+        return now - timedelta(weeks=int(m.group(1)))
+    m = re.search(r"(\d+)\s*月前", raw)
+    if m:
+        return now - timedelta(days=30 * int(m.group(1)))
 
     return None
 
 
-def incremental_update_student(student, since_days=7, update_stats=True):
-    """增量更新单个学生
+def incremental_update_student(student, max_pages=20):
+    """Ma 真正想要的增量抓取:
 
-    Args:
-        student: data.json 里的学生 dict
-        since_days: 只找 N 天内新文章
-        update_stats: 是否更新已有文章的 views/likes
-
-    Returns:
-        dict: 统计信息
+    1. 翻 CSDN 列表 (1-20 页), 拿到所有可见文章
+    2. 跟 data.json 对比:
+       - 老文章: 只更新 views/likes
+       - 新文章: 全字段抓取 + views
+    3. 老文章不重抓 title/link/pubDate
     """
     username = student.get("csdn_username")
     if not username:
-        return {"new": 0, "updated": 0, "skipped": "no_username"}
+        return {"new": 0, "updated_stats": 0, "missing": 0, "skipped": "no_username"}
 
-    # 1. 拿到现有文章的 ID 集合
+    # 1. 抓 CSDN 列表 (翻多页, 找到所有可见文章)
+    articles = fetch_blog_list(username, max_pages=max_pages)
+    if not articles:
+        return {"new": 0, "updated_stats": 0, "missing": 0, "skipped": "fetch_failed"}
+
+    csdn_by_id = {a["article_id"]: a for a in articles}
+    csdn_ids = set(csdn_by_id.keys())
+
+    # 2. 当前 data.json 里的 ID
+    existing_posts = student.get("posts", [])
     existing_ids = set()
-    for p in student.get("posts", []):
+    for p in existing_posts:
         m = re.search(r"/article/details/(\d+)", p.get("link", ""))
         if m:
             existing_ids.add(m.group(1))
 
-    # 2. 抓新文章列表
-    candidates = fetch_new_posts(username, since_days=since_days)
-
-    # 3. 找新的 (不在 existing_ids 里)
     new_count = 0
-    for c in candidates:
-        if c["article_id"] in existing_ids:
+    updated_stats_count = 0
+    missing_count = 0
+
+    # 3. 找出新文章 (CSDN 有, data.json 没有)
+    new_posts_list = []
+    for article_id, cdn_article in csdn_by_id.items():
+        if article_id in existing_ids:
+            # 老文章: 标记需要更新统计
+            for p in existing_posts:
+                if f"/article/details/{article_id}" in p.get("link", ""):
+                    p["_needs_stats_update"] = True
+                    break
+        else:
+            # 新文章: 全字段抓取
+            pub_date = parse_relative_date(cdn_article["pub_raw"])
+            pub_iso = pub_date.isoformat() if pub_date else ""
+
+            new_posts_list.append({
+                "title": cdn_article["title"] or f"文章 #{article_id}",
+                "link": cdn_article["link"],
+                "pubDate": pub_iso,
+                "guid": cdn_article["link"],
+                "views": 0,
+                "likes": 0,
+                "comments": 0,
+                "collections": 0,
+                "is_new": True,
+                "_needs_stats_update": True,
+            })
+            new_count += 1
+
+    # 4. 标记 CSDN 上没有的 (data.json 里有但 CSDN 删了)
+    for p in existing_posts:
+        m = re.search(r"/article/details/(\d+)", p.get("link", ""))
+        if m and m.group(1) not in csdn_ids:
+            p["_missing_on_csdn"] = True
+            missing_count += 1
+
+    # 5. 添加新文章
+    if new_posts_list:
+        existing_posts = new_posts_list + existing_posts
+        log(f"  🆕 {new_count} 篇新文章")
+
+    # 6. 抓所有需要更新统计的文章 (老 + 新)
+    posts_to_update = [p for p in existing_posts if p.get("_needs_stats_update")]
+    log(f"  🔄 更新 {len(posts_to_update)} 篇文章的统计...")
+
+    for i, p in enumerate(posts_to_update, 1):
+        m = re.search(r"/article/details/(\d+)", p.get("link", ""))
+        if not m:
             continue
-        # 添加到 posts 列表
-        pub_date = parse_relative_date(c["pub_raw"])
-        pub_iso = pub_date.isoformat() if pub_date else ""
+        article_id = m.group(1)
 
-        student.setdefault("posts", []).insert(0, {
-            "title": c["title"],
-            "link": c["link"],
-            "pubDate": pub_iso,
-            "guid": c["link"],
-            "views": 0,
-            "likes": 0,
-            "comments": 0,
-            "collections": 0,
-            "is_new": True,
-        })
-        existing_ids.add(c["article_id"])
-        new_count += 1
+        stats = fetch_article_stats(article_id, username)
+        if stats:
+            old_views = p.get("views", 0)
+            p["views"] = stats["views"]
+            p["likes"] = stats["likes"]
+            p["comments"] = stats["comments"]
+            p["collections"] = stats["collections"]
+            p["stats_updated_at"] = datetime.now().isoformat()
+            if old_views != stats["views"]:
+                updated_stats_count += 1
+            log(f"    [{i}/{len(posts_to_update)}] {article_id}: views {old_views}→{stats['views']}")
 
-    # 4. 更新已有文章的 views/likes (只取前 10 篇节省请求)
-    updated_count = 0
-    if update_stats:
-        for p in student.get("posts", [])[:10]:  # 只更新最新 10 篇
-            m = re.search(r"/article/details/(\d+)", p.get("link", ""))
-            if not m:
-                continue
-            article_id = m.group(1)
+        p.pop("_needs_stats_update", None)
+        time.sleep(0.3)
 
-            # 跳过 30 天以上没新数据的 (避免浪费)
-            try:
-                pub = datetime.fromisoformat(p.get("pubDate", "").replace("Z", ""))
-                age_days = (datetime.now() - pub).days
-                if age_days > 90:  # 90 天前的文章不再追
-                    continue
-            except:
-                pass
+    # 7. 清理
+    for p in existing_posts:
+        p.pop("_missing_on_csdn", None)
 
-            stats = fetch_article_stats(article_id, username)
-            if stats:
-                old_views = p.get("views", 0)
-                p["views"] = stats["views"]
-                p["likes"] = stats["likes"]
-                p["comments"] = stats["comments"]
-                p["collections"] = stats["collections"]
-                p["stats_updated_at"] = datetime.now().isoformat()
-                if old_views != stats["views"]:
-                    updated_count += 1
-            time.sleep(0.5)  # 礼貌
-
-    # 5. 排序 (按发布时间倒序)
-    student["posts"].sort(
+    # 8. 排序 (按 pubDate 倒序)
+    existing_posts.sort(
         key=lambda x: x.get("pubDate", "") or "",
         reverse=True,
     )
 
-    # 6. 更新 post_count
-    student["post_count"] = len(student.get("posts", []))
+    student["posts"] = existing_posts
+    student["post_count"] = len(existing_posts)
 
-    return {"new": new_count, "updated": updated_count}
+    return {
+        "new": new_count,
+        "updated_stats": updated_stats_count,
+        "missing": missing_count,
+    }
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--all", action="store_true", help="所有学生")
     parser.add_argument("--student", help="单个学生名")
-    parser.add_argument("--since", type=int, default=7, help="新文章窗口(天)")
-    parser.add_argument("--no-stats", action="store_true", help="不更新 views/likes")
+    parser.add_argument("--max-pages", type=int, default=20, help="最大翻页数")
     args = parser.parse_args()
 
-    # 加载 data.json
     with open(DATA_PATH, encoding="utf-8") as f:
         d = json.load(f)
 
@@ -296,7 +338,7 @@ def main():
 
     total_new = 0
     total_updated = 0
-    success = 0
+    success_count = 0
 
     for i, s in enumerate(targets, 1):
         name = s.get("name", "?")
@@ -304,29 +346,31 @@ def main():
 
         result = incremental_update_student(
             s,
-            since_days=args.since,
-            update_stats=not args.no_stats,
+            max_pages=args.max_pages,
         )
 
-        total_new += result.get("new", 0)
-        total_updated += result.get("updated", 0)
-        if result.get("new", 0) > 0 or result.get("updated", 0) > 0:
-            success += 1
-        log(f"  +{result.get('new', 0)} 新文章, ↻{result.get('updated', 0)} 更新统计")
+        if result.get("skipped"):
+            log(f"  ⏭️  跳过 ({result['skipped']})")
+            continue
 
-    # 更新 last_update
+        new = result.get("new", 0)
+        upd = result.get("updated_stats", 0)
+        mis = result.get("missing", 0)
+        total_new += new
+        total_updated += upd
+        if new > 0 or upd > 0:
+            success_count += 1
+        log(f"  +{new} 新 | ↻{upd} 更新统计 | 缺{mis}")
+
     d["last_update"] = datetime.now().isoformat(timespec="seconds")
-
-    # 重新计算 total_posts
     d["total_posts"] = sum(len(s.get("posts", [])) for s in d.get("students", []))
 
-    # 保存
     with open(DATA_PATH, "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False, indent=2)
 
     log(f"")
     log(f"=== 抓取完成 ===")
-    log(f"✅ {success} 个学生有数据")
+    log(f"✅ {success_count} 个学生有数据")
     log(f"🆕 {total_new} 篇新文章")
     log(f"🔄 {total_updated} 篇文章统计更新")
     log(f"📊 总文章: {d['total_posts']}")
