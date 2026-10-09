@@ -490,6 +490,15 @@
       color: var(--stone);
       font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     }
+    .latest-section-hint {
+      font-size: 9px;
+      color: #b8521c;
+      background: var(--new-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 4px;
+      font-weight: 600;
+    }
     .latest-posts {
       list-style: none;
       margin: 0;
@@ -1232,8 +1241,9 @@
     } else if (!s.posts || s.posts.length === 0) {
     latestHtml = `<div class="latest-section"><div class="empty-latest">— 暂无文章 —</div></div>`;
     } else {
-    // 取最新 3 篇
-    const top3 = s.posts.slice(0, 3);
+    // Ma: 显示 5 篇最新文章 (从 3 改为 5)
+    const topN = 5;
+    const topPosts = s.posts.slice(0, topN);
     const total = s.posts.length;
     // v12 Ma: 格式化 pubDate (RFC 2822 / CSDN) -> 2025-09-20
     function fmtPubDate(s) {
@@ -1245,7 +1255,7 @@
       const day = String(d.getDate()).padStart(2, '0');
       return `${y}-${m}-${day}`;
     }
-    const items = top3.map((p, i) => {
+    const items = topPosts.map((p, i) => {
     const title = (p.title || '(无标题)').trim();
     const showTitle = title || extractGuidTitle(p.guid);
     const newCls = (isNew && i === 0) ? 'latest-post-item is-new' : 'latest-post-item';
@@ -1259,15 +1269,24 @@
     ${pubHtml}
     </li>`;
     }).join('');
-    const moreCount = Math.max(0, total - 3);
+    // Ma: 显示更早文章数 (如果有截断)
+    const moreCount = Math.max(0, total - topN);
+    // Ma: 提示数据可能截断 (>= 5 时怀疑被 limit 截断)
+    const likelyTruncated = total >= 5;
+    const truncatedHint = likelyTruncated
+      ? `<span class="latest-section-hint" title="数据可能被旧 limit 截断, 等待 cron 重抓">⚠️ 可能不全</span>`
+      : '';
     const moreHtml = moreCount > 0
     ? `<li class="latest-post-item" style="justify-content:flex-end;"><span class="idx" style="flex:1;text-align:right;color:var(--stone);">+ ${moreCount} 篇更早</span></li>`
     : '';
+    // Ma: 显示 5/共 N 篇 (实际抓到的 / 总抓到的)
+    // 如果 data.json 是 limit=5 截断的, 实际可能更多
+    const displayTotal = total;
     latestHtml = `
     <div class="latest-section">
     <div class="latest-section-header">
     <span class="latest-section-label">最新文章</span>
-    <span class="latest-section-count">${total} / 共 ${total} 篇</span>
+    <span class="latest-section-count">显示 ${topN} / 共 ${displayTotal} 篇 ${truncatedHint}</span>
     </div>
     <ul class="latest-posts">${items}${moreHtml}</ul>
     </div>
