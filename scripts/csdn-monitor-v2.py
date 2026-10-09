@@ -182,21 +182,26 @@ CSDN_HEADERS = {
 
 def _parse_relative_time_to_iso(s):
     """Ma: CSDN HTML view-time-box 返回 '博文更新于 22 小时前' 或 '2026.09.17'.
-    解析成 ISO 日期字符串,失败返回 ''"""
+    统一解析为 ISO datetime (带秒),失败返回 ''.
+    Bug 修复: 之前日期格式只到 day,前端按字符串排序错乱
+    """
     if not s:
         return ""
     s = s.strip()
-    # 1. 绝对日期 YYYY.MM.DD
-    m = re.search(r"(\d{4})[.-](\d{1,2})[.-](\d{1,2})", s)
+    import datetime as _dt
+    # 1. 绝对日期 YYYY.MM.DD (HH:MM:SS 可选)
+    m = re.search(r"(\d{4})[.-](\d{1,2})[.-](\d{1,2})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?", s)
     if m:
         y, mo, d = m.group(1), m.group(2).zfill(2), m.group(3).zfill(2)
+        hh = m.group(4) or "00"
+        mm = m.group(5) or "00"
+        ss = m.group(6) or "00"
         try:
-            import datetime as _dt
-            return _dt.date(int(y), int(mo), int(d)).isoformat()
+            return _dt.datetime(int(y), int(mo), int(d),
+                                int(hh), int(mm), int(ss)).isoformat(timespec="seconds")
         except Exception:
             return ""
-    # 2. 相对时间
-    import datetime as _dt
+    # 2. 相对时间 (统一带时分秒)
     now = _dt.datetime.now()
     m = re.search(r"(\d+)\s*小时前", s)
     if m:
@@ -206,13 +211,17 @@ def _parse_relative_time_to_iso(s):
         return (now - _dt.timedelta(minutes=int(m.group(1)))).isoformat(timespec="seconds")
     m = re.search(r"(\d+)\s*天前", s)
     if m:
-        return (now - _dt.timedelta(days=int(m.group(1)))).date().isoformat()
+        # 当天12:00 作为合理估值
+        dt = (now - _dt.timedelta(days=int(m.group(1))))
+        return dt.replace(hour=12, minute=0, second=0).isoformat(timespec="seconds")
     m = re.search(r"(\d+)\s*周前", s)
     if m:
-        return (now - _dt.timedelta(weeks=int(m.group(1)))).date().isoformat()
+        dt = (now - _dt.timedelta(weeks=int(m.group(1))))
+        return dt.replace(hour=12, minute=0, second=0).isoformat(timespec="seconds")
     m = re.search(r"(\d+)\s*月前", s)
     if m:
-        return (now - _dt.timedelta(days=30 * int(m.group(1)))).date().isoformat()
+        dt = (now - _dt.timedelta(days=30 * int(m.group(1))))
+        return dt.replace(hour=12, minute=0, second=0).isoformat(timespec="seconds")
     return ""
 
 
