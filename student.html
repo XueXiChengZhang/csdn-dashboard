@@ -359,6 +359,7 @@
     table.posts .num { font-variant-numeric: tabular-nums; text-align: right; color: var(--olive); }
     table.posts .num.read { color: var(--brand); font-weight: 600; }
     table.posts .ts { font-family: ui-monospace, monospace; font-size: 11px; color: var(--stone); }
+    .dim { color: var(--stone); opacity: 0.4; }
     .empty-state {
       background: var(--ivory);
       border: 0.6pt dashed var(--border);
@@ -566,7 +567,7 @@ function render(stu, history, lastUpdate) {
     <section class="section">
       <div class="section-title">
         <span>📝 文章详细</span>
-        <span class="hint">按 total_views 降序</span>
+        <span class="hint">按阅读量降序</span>
       </div>
       ${postsHtml}
     </section>
@@ -778,8 +779,13 @@ function renderHeat(stu) {
 
 function renderPosts(stu) {
   const posts = (stu.posts || []).slice();
-  // 按 total_views 降序 (没有此字段的排最后)
-  posts.sort((a, b) => (b.total_views || 0) - (a.total_views || 0));
+  // Ma: 兼容两个字段名 (新抓的用 views, 老的可能用 total_views)
+  const v = (p) => p.views ?? p.total_views ?? 0;
+  const l = (p) => p.likes ?? p.total_likes ?? 0;
+  const c = (p) => p.comments ?? p.total_comments ?? 0;
+  const col = (p) => p.collections ?? p.total_collections ?? 0;
+  // 按 views 降序 (没有此字段的排最后)
+  posts.sort((a, b) => v(b) - v(a));
 
   if (posts.length === 0) {
     return '<div class="empty-state">暂无文章</div>';
@@ -787,13 +793,23 @@ function renderPosts(stu) {
 
   const rows = posts.map((p, i) => {
     const ts = p.pubDate || (p.guid ? p.guid.slice(-10) : '—');
+    // Ma: 没抓的 views 显示 "—"
+    const viewsV = v(p);
+    const likesV = l(p);
+    const commentsV = c(p);
+    const colsV = col(p);
+    const statsFetched = p.stats_updated_at != null;
+    const viewsHtml = statsFetched ? fmt(viewsV) : '<span class="dim">—</span>';
+    const likesHtml = statsFetched ? fmt(likesV) : '<span class="dim">—</span>';
+    const commentsHtml = statsFetched ? fmt(commentsV) : '<span class="dim">—</span>';
+    const colsHtml = statsFetched ? fmt(colsV) : '<span class="dim">—</span>';
     return `<tr>
       <td>${i + 1}</td>
       <td class="ttl"><a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener">${escapeHtml(p.title || '(无标题)')}</a></td>
-      <td class="num read">${fmt(p.total_views)}</td>
-      <td class="num">${fmt(p.total_likes)}</td>
-      <td class="num">${fmt(p.total_comments)}</td>
-      <td class="num">${fmt(p.total_collections)}</td>
+      <td class="num read">${viewsHtml}</td>
+      <td class="num">${likesHtml}</td>
+      <td class="num">${commentsHtml}</td>
+      <td class="num">${colsHtml}</td>
       <td class="ts">${escapeHtml(ts)}</td>
     </tr>`;
   }).join('');
