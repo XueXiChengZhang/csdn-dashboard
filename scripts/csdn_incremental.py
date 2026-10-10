@@ -229,16 +229,16 @@ def incremental_update_student(student, max_pages=20):
     new_count = 0
     updated_stats_count = 0
     missing_count = 0
+    reused_count = 0
 
     # 3. 找出新文章 (CSDN 有, data.json 没有)
     new_posts_list = []
     for article_id, cdn_article in csdn_by_id.items():
         if article_id in existing_ids:
-            # 老文章: 标记需要更新统计
-            for p in existing_posts:
-                if f"/article/details/{article_id}" in p.get("link", ""):
-                    p["_needs_stats_update"] = True
-                    break
+            # 老文章: 不再标记 _needs_stats_update
+            # P0 #3 修复: 老文章不重抓 stats — CSDN 翻页拿到的 pub_raw 没 views,
+            # 老文章已有 views, 复用即可. 重新发 HTTP = 浪费 + 容易被限流.
+            pass
         else:
             # 新文章: 全字段抓取
             pub_date = parse_relative_date(cdn_article["pub_raw"])
@@ -270,9 +270,10 @@ def incremental_update_student(student, max_pages=20):
         existing_posts = new_posts_list + existing_posts
         log(f"  🆕 {new_count} 篇新文章")
 
-    # 6. 抓所有需要更新统计的文章 (老 + 新)
+    # 6. P0 #3 修复: 只抓新文章的 stats, 老文章复用 data.json 里的
+    #    老的 views/likes/comments/collections 已经是上次抓的, 直接保留
     posts_to_update = [p for p in existing_posts if p.get("_needs_stats_update")]
-    log(f"  🔄 更新 {len(posts_to_update)} 篇文章的统计...")
+    log(f"  🔄 更新 {len(posts_to_update)} 篇新文章的统计 (老文章复用, 不重抓)...")
 
     for i, p in enumerate(posts_to_update, 1):
         m = re.search(r"/article/details/(\d+)", p.get("link", ""))
@@ -295,6 +296,9 @@ def incremental_update_student(student, max_pages=20):
         p.pop("_needs_stats_update", None)
         time.sleep(0.3)
 
+    # 6b. 统计被复用的老文章
+    reused_count = len(existing_posts) - len(posts_to_update)
+
     # 7. 清理
     for p in existing_posts:
         p.pop("_missing_on_csdn", None)
@@ -312,6 +316,7 @@ def incremental_update_student(student, max_pages=20):
         "new": new_count,
         "updated_stats": updated_stats_count,
         "missing": missing_count,
+        "reused": reused_count,
     }
 
 
@@ -372,7 +377,8 @@ def main():
     log(f"=== 抓取完成 ===")
     log(f"✅ {success_count} 个学生有数据")
     log(f"🆕 {total_new} 篇新文章")
-    log(f"🔄 {total_updated} 篇文章统计更新")
+    log(f"🔄 {total_updated} 篇新文章统计更新")
+    log(f"♻️  老文章复用 views/likes (P0 #3 不重抓)")
     log(f"📊 总文章: {d['total_posts']}")
     log(f"💾 data.json 已保存")
 

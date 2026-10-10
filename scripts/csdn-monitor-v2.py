@@ -61,6 +61,10 @@ NOW_ISO = datetime.now().isoformat(timespec="seconds")
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
 
+# P2 #5 修复: 统一版本号 — 4 个 HTML 之前各自写 v13/v12/v10.0/v8.0
+# 现在统一读 data.json.dashboard_version, 后端改动即更新
+DASHBOARD_VERSION = "v22.0"
+
 # ---------- 时间窗 / Token 控制 ----------
 WINDOW_START = 0   # 00:00
 WINDOW_END = 6     # 06:00
@@ -382,17 +386,62 @@ def fetch_article_stats(article_id, username=""):
 
 
 def aggregate_user_stats(username, posts):
+    """P0 #2 修复: 每篇 post 都把 stats 写回, 不只算总和.
+    P0 #17 修复: 同时写 stats_updated_at.
+    P3 #14 优化: 复用 posts 已有的 stats_updated_at, 24h 内不重抓.
+    """
     article_stats = {"views": 0, "comments": 0, "collections": 0, "likes": 0}
     n_ok = 0
+    n_skipped = 0
+    stats_ts = NOW_ISO  # 这次抓取的整体时间戳
+
+    # 阈值: 24h 内已抓过的文章复用, 避免每跑全量都重抓一遍
+    reuse_threshold = datetime.fromisoformat(
+        (datetime.now() - timedelta(hours=24)).isoformat(timespec="seconds")
+    )
+
     for p in posts or []:
         m = re.search(r"/article/details/(\d+)", p.get("link") or "")
         if not m:
             continue
-        s = fetch_article_stats(m.group(1), username=username)
-        if s.get("ok"):
-            n_ok += 1
+        aid = m.group(1)
+
+        # 检查是否需要重抓 (没有 stats_updated_at 或超过 24h)
+        prev_ts_str = p.get("stats_updated_at")
+        need_fetch = True
+        if prev_ts_str:
+            try:
+                prev_ts = datetime.fromisoformat(prev_ts_str)
+                if prev_ts > reuse_threshold and isinstance(p.get("views"), int) and p["views"] > 0:
+                    # 复用已有 stats
+                    s = {
+                        "views": p.get("views", 0),
+                        "comments": p.get("comments", 0),
+                        "collections": p.get("collections", 0),
+                        "likes": p.get("likes", 0),
+                        "ok": True,
+                    }
+                    n_ok += 1
+                    n_skipped += 1
+                    need_fetch = False
+            except (ValueError, TypeError):
+                pass
+
+        if need_fetch:
+            s = fetch_article_stats(aid, username=username)
+            if s.get("ok"):
+                n_ok += 1
+                # ★ P0 #2 修复: 写回每篇 post
+                p["views"] = s.get("views", 0)
+                p["likes"] = s.get("likes", 0)
+                p["comments"] = s.get("comments", 0)
+                p["collections"] = s.get("collections", 0)
+                # ★ P0 #17 修复: 标记抓取时间
+                p["stats_updated_at"] = stats_ts
+
         for k in article_stats:
             article_stats[k] += s.get(k, 0)
+
     profile_views = fetch_user_total_views(username)
     return {
         "total_views": profile_views,
@@ -402,6 +451,8 @@ def aggregate_user_stats(username, posts):
         "total_comments": article_stats["comments"],
         "total_collections": article_stats["collections"],
         "articles_scanned": n_ok,
+        "articles_skipped_reuse": n_skipped,
+        "fetched_at": stats_ts,
     }
 
 
@@ -449,23 +500,28 @@ def fetch_gitee_last_commit_api(owner, repo):
 def fetch_gitee_commits_count_api(owner, repo):
     """通过 commits 列表分页估算总数 (per_page=100, 取最后一页 + 之前累加)
     Gitee API 默认返回最新 commits, 我们最多取 5 页 = 500 commits 估算
+    P2 #8 修复: 返回 (total, truncated) 让前端知道是否被截断
     """
     total = 0
+    truncated = False
     try:
         for page in range(1, 6):
             url = f"https://gitee.com/api/v5/repos/{owner}/{repo}/commits?per_page=100&page={page}"
             r = http_get(url, timeout=8, headers=GITEE_HEADERS, retries=0)
             if r.status_code != 200:
-                return total or None
+                return (total, truncated)
             data = r.json()
             if not isinstance(data, list) or not data:
                 break
             total += len(data)
             if len(data) < 100:
                 break
-        return total
+        # 跑完 5 页都没看到 < 100, 说明 > 500 被截断
+        if total >= 500:
+            truncated = True
+        return (total, truncated)
     except Exception:
-        return total or None
+        return (total, truncated)
 
 
 
@@ -582,9 +638,12 @@ def fetch_gitee_all(owner, repo):
         out["source"] = "api"
     # 3) commits count (仅 API)
     if api_repo:
-        cnt = fetch_gitee_commits_count_api(owner, repo)
-        if cnt is not None:
+        cnt, truncated = fetch_gitee_commits_count_api(owner, repo)
+        if cnt:
             out["commit_count"] = cnt
+        if truncated:
+            out["commit_count_truncated"] = True
+            out["commit_count_note"] = "500+ (估算被截断)"
     # 4) Markdown fallback (gitee 当前未登录访问返回 markdown)
     if not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
         md = fetch_gitee_markdown(owner, repo)
@@ -686,6 +745,7 @@ def write_data_json(students_state, fetch_meta, class_stats=None):
         "last_update": NOW_ISO,
         "total_students": len(out_students),
         "total_posts": total_posts,
+        "dashboard_version": DASHBOARD_VERSION,  # P2 #5: 前端读这个显示版本
         "last_fetch_meta": fetch_meta,
         "students": out_students,
     }
@@ -811,7 +871,7 @@ def build_report(students_state, missing_csdn, fetch_meta, class_stats):
     if missing_csdn:
         lines.append("⚠️ **缺 CSDN 博客**")
         for s in missing_csdn:
-            lines.append(f"- {s['sid']} {s['name']} → 仅 Gitee: {s['gitee']}")
+            lines.append(f"- {s['sid']} {s['name']} → 仅 Gitee: {s.get('gitee_url', '')}")
         lines.append("")
 
     # Gitee 今日 commit
@@ -941,19 +1001,44 @@ def send_feishu(text, dry=False, attachment=None):
 
 
 # ---------- 主流程 ----------
+def _count_actual_requests(students_state):
+    """P2 #7 修复: 数实际 HTTP 请求数 (近似).
+    CSDN: 1 列表 + 1 profile_views + N article_stats (实际抓的, 非复用)
+    Gitee: 3-4 个 API 调用 (repo + commit + commits_count 翻页)
+    """
+    total = 0
+    for s in students_state:
+        if s.get("csdn_status") == "ok":
+            total += 1  # csdn html list
+            total += 1  # profile_views
+            stats = s.get("stats", {})
+            scanned = stats.get("articles_scanned", 0)
+            reused = stats.get("articles_skipped_reuse", 0)
+            actual_fetches = max(0, scanned - reused)
+            total += actual_fetches
+        elif s.get("csdn_status") == "failed":
+            total += 1  # failed html attempt
+        if s.get("gitee_url"):
+            g = s.get("gitee") or {}
+            if g.get("source") == "api":
+                total += 3  # repo + commit + commits_count (估算)
+            elif g.get("source") == "html":
+                total += 1
+    return total
+
+
 def fetch_csdn_for_student(st):
+    """P2 #9 修复: gitee 不再存 URL, 统一用 gitee_url 字段, gitee{} 留给 API 结果."""
     rec = {
         "sid": st["sid"], "name": st["name"],
-        "csdn": st["csdn"], "gitee": st["gitee"], "note": st.get("note", ""),
+        "csdn": st["csdn"], "note": st.get("note", ""),
         "csdn_username": "",
         "csdn_status": "no_csdn" if not st["csdn"] else "pending",
         "posts": [], "new_posts": [], "stats": {}, "csdn_err": "",
         "gitee_status": "pending",
-        "gitee": {},  # 用 watchlist 的 gitee URL
+        "gitee_url": st.get("gitee", ""),
+        "gitee": {},  # 仅存放 fetch_gitee_all() 的结果
     }
-    # Gitee URL 保留在 rec['gitee_url'] 用作抓取
-    rec["gitee_url"] = st["gitee"]
-    rec["gitee"] = {}  # 占位,抓完填
     if st["csdn"]:
         user = extract_csdn_username(st["csdn"])
         rec["csdn_username"] = user
@@ -972,8 +1057,27 @@ def fetch_csdn_for_student(st):
 
 
 def fetch_stats_for(rec):
+    """P2 #6 修复: 单学生失败时 fallback 到上次的 stats, 而不是清零."""
     if rec["csdn_status"] == "ok" and rec.get("csdn_username"):
-        rec["stats"] = aggregate_user_stats(rec["csdn_username"], rec["posts"])
+        try:
+            rec["stats"] = aggregate_user_stats(rec["csdn_username"], rec["posts"])
+        except Exception as e:
+            # 单学生失败 - fallback 到上次 data
+            prev = load_existing_data()
+            prev_by_sid = {s["sid"]: s for s in prev.get("students", [])}
+            p = prev_by_sid.get(rec["sid"], {})
+            rec["stats"] = {
+                "total_views": p.get("total_views", 0),
+                "total_likes": p.get("total_likes", 0),
+                "total_comments": p.get("total_comments", 0),
+                "total_collections": p.get("total_collections", 0),
+                "profile_views": p.get("total_views", 0),
+                "articles_scanned": p.get("articles_scanned", 0),
+                "fetched_at": p.get("last_fetch_meta", {}).get("fetched_at", ""),
+                "error": str(e)[:100],
+            }
+            rec["csdn_err"] = f"stats_failed: {str(e)[:80]}"
+            print(f"[stats-fallback] {rec.get('name')}: {e}")
     else:
         rec["stats"] = {
             "total_views": 0, "total_likes": 0, "total_comments": 0,
@@ -1082,7 +1186,10 @@ def run(args):
             "gitee_api": sum(1 for s in students_state if (s.get("gitee") or {}).get("source") == "api"),
             "gitee_html": sum(1 for s in students_state if (s.get("gitee") or {}).get("source") == "html"),
         },
-        "total_requests": len(students_state) * 2,
+        # P2 #7 修复: total_requests 用实际抓取数, 不再假报 = students*2
+        # 算法: 1 (CSDN 列表) + 1 (profile_views) + 实际 article_stats 抓取数
+        #      + ~4 (gitee: repo + commit + commits_count 翻页)
+        "total_requests": _count_actual_requests(students_state),
         "success_count": csdn_ok + gitee_ok,
         "fail_count": csdn_fail + gitee_fail,
         "stages": {

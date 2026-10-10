@@ -328,11 +328,19 @@
     }
 
     /* 文章表格 */
+    /* P3 #13: 移动端横向滚动 - table 外包 .section-table-wrap */
+    .section-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 0.6pt solid var(--border);
+      border-radius: 2px;
+      background: var(--ivory);
+    }
     table.posts {
       width: 100%;
       border-collapse: collapse;
       background: var(--ivory);
-      border: 0.6pt solid var(--border);
+      border: none;
       border-radius: 2px;
       overflow: hidden;
       font-size: 13px;
@@ -456,7 +464,8 @@
 
 <script>
 // Ma: v8 - 个人详情页
-const VERSION = 'v8.0-student';
+// P2 #5: 版本号从 data.json.dashboard_version 读
+let VERSION = '...';
 const NAME = new URLSearchParams(location.search).get('name') || '';
 
 function fmt(n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-US'); }
@@ -474,6 +483,13 @@ async function loadAll() {
 
     // 2) load history snapshots (尝试 history-test/ 优先, history/ 其次)
     let history = await loadHistory();
+
+    // P2 #5: 同步版本号到 nav
+    if (DATA.dashboard_version) {
+      VERSION = DATA.dashboard_version;
+      const navVer = document.querySelector('nav .ver');
+      if (navVer) navVer.textContent = VERSION + ' · STUDENT-DETAIL';
+    }
 
     render(stu, history, DATA.last_update);
   } catch (e) {
@@ -815,6 +831,7 @@ function renderPosts(stu) {
   }).join('');
 
   return `
+    <div class="section-table-wrap">
     <table class="posts">
       <thead><tr>
         <th>#</th><th>标题</th>
@@ -826,6 +843,7 @@ function renderPosts(stu) {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
+    </div>
   `;
 }
 
@@ -839,30 +857,6 @@ if (!NAME) {
   // 注: history 每天只刷一次, 不每分钟 reload
 }
 </script>
-  <script>
-// apply_dark.js — content that should be appended before </body> of each HTML page
-// Renders the dark toggle button and applies theme from localStorage
-(function() {
-    const DARK_KEY = 'csdn-dashboard-dark';
-    function applyDark(on) {
-      document.documentElement.classList.toggle('dark', on);
-      var btn = document.getElementById('dark-toggle');
-      if (btn) btn.textContent = on ? '☀' : '🌙';
-    }
-    // Restore saved preference
-    try {
-      if (localStorage.getItem(DARK_KEY) === '1') applyDark(true);
-    } catch (e) {}
-    // Wait for DOM to be ready so toggle button exists
-    document.addEventListener('DOMContentLoaded', function() {
-      var btn = document.getElementById('dark-toggle');
-      if (!btn) return;
-      btn.addEventListener('click', function() {
-        var isDark = !document.documentElement.classList.contains('dark');
-        applyDark(isDark);
-        try { localStorage.setItem(DARK_KEY, isDark ? '1' : '0'); } catch (e) {}
-      });
-    });
-})();  </script>
+  <script src="assets/apply-dark.js"></script>
   </body>
 </html>

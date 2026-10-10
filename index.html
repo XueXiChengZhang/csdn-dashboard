@@ -764,10 +764,10 @@
     <div class="header-main">
       <div class="eyebrow">CSDN 学生项目监控</div>
       <h1>软件 24-10 / 24-20 博客更新</h1>
-      <div class="subtitle">31 名学生 · 每日自动抓取 CSDN 文章 · 8:00 推送飞书</div>
+      <div class="subtitle" id="subtitle-count"><span class="loading">加载中</span> · 每日自动抓取 CSDN 文章 · 8:00 推送飞书</div>
       <div class="meta">最近更新 · <strong id="last-update">加载中...</strong></div>
     </div>
-    <div class="version-badge">DASHBOARD v13</div>
+    <div class="version-badge" id="version-badge">DASHBOARD ...</div>
   </div>
 
   <div id="alert-box"></div>
@@ -871,8 +871,8 @@
   </div>
 
   <script>
-    // Ma: 仪表板 v12 - 综合活跃度排序 + 文章发布日期
-    const DASHBOARD_VERSION = 'v12';
+    // P2 #5: 版本号从 data.json.dashboard_version 读, 不再硬编码
+    let DASHBOARD_VERSION = '...';
     let ALL_STUDENTS = [];
     let LAST_UPDATE_ISO = null;
     let CLASS_STATS = null;
@@ -909,6 +909,15 @@
     renderGiteeCard();
     render();
     document.getElementById('last-update').textContent = formatTime(data.last_update);
+    // P2 #5: 同步版本号到页面顶部 badge + footer
+    if (data.dashboard_version) {
+      DASHBOARD_VERSION = data.dashboard_version;
+      const vBadge = document.getElementById('version-badge');
+      if (vBadge) vBadge.textContent = 'DASHBOARD ' + DASHBOARD_VERSION;
+      // 顶 nav 的 .ver 也要同步
+      const navVer = document.querySelector('nav .ver');
+      if (navVer) navVer.textContent = DASHBOARD_VERSION + ' · DASHBOARD';
+    }
     document.getElementById('footer-update').innerHTML =
     `<span>最后更新: ${formatTime(data.last_update)}</span>` +
     `<span>·</span>` +
@@ -934,6 +943,9 @@
     document.getElementById('stat-posts').textContent = posts;
     document.getElementById('stat-active').textContent = active;
     document.getElementById('stat-avg').textContent = avg;
+    // P1 修复: 动态学生数 (data.total_students 来自 data.json)
+    const subEl = document.getElementById('subtitle-count');
+    if (subEl) subEl.innerHTML = `${total} 名学生 · 每日自动抓取 CSDN 文章 · 8:00 推送飞书`;
     // v7: 健康度 + fetch_meta
     renderFetchMeta(data.last_fetch_meta || {});
     }
@@ -1469,25 +1481,8 @@
     document.getElementById('export-btn').addEventListener('click', () => exportCsv());
     document.addEventListener('dblclick', () => loadData());
 
-    // v21: 暗色模式 toggle — 持久化到 localStorage
-    const DARK_KEY = 'csdn-dashboard-dark';
-    function applyDark(on) {
-      if (on) {
-        document.documentElement.classList.add('dark');
-        document.getElementById('dark-toggle').textContent = '☀';
-      } else {
-        document.documentElement.classList.remove('dark');
-        document.getElementById('dark-toggle').textContent = '🌙';
-      }
-    }
-    // 首次加载恢复
-    const _savedDark = localStorage.getItem(DARK_KEY);
-    if (_savedDark === '1') applyDark(true);
-    document.getElementById('dark-toggle').addEventListener('click', () => {
-      const isDark = document.documentElement.classList.toggle('dark');
-      applyDark(isDark);
-      try { localStorage.setItem(DARK_KEY, isDark ? '1' : '0'); } catch (e) {}
-    });
+    // v22: 暗色模式 — P3 #10 抽出到 assets/apply-dark.js
+    // 旧的 18 行 inline 代码已删除, 改用统一脚本
 
     // v10: 时间筛选按钮事件
     document.querySelectorAll('#time-filter button').forEach(btn => {
@@ -1552,5 +1547,6 @@
     // 首次进入页面时也跑一次
     setTimeout(applyDeepLink, 1500);
 </script>
+<script src="assets/apply-dark.js"></script>
 </body>
 </html>
