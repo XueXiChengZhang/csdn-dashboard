@@ -7,10 +7,13 @@ set SCRIPT_DIR=%~dp0
 set DASHBOARD_DIR=%SCRIPT_DIR%..
 set PYTHON=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\python.exe
 
-REM 1. 增量抓取 (新文章 + 更新 views)
-"%PYTHON%" "%SCRIPT_DIR%csdn_incremental.py" --all --since 7
+REM 1. 增量抓取 (新文章 + 更新 views).
+REM    Ma: 增量模式遍历所有页(老文章也持续更新 views),不加 --since 窗口 —
+REM         "--since 7" 之前传给脚本但脚本只接受 --all/--student/--max-pages,
+REM         导致 cron 启动即抛 SystemExit。已移除。
+"%PYTHON%" "%SCRIPT_DIR%csdn_incremental.py" --all
 
-REM 2. 提交 + push
+REM 2. 提交 + push (HTTPS -> SSH 兜底,与 daily-monitor-and-push.cmd 保持一致)
 cd /d "%DASHBOARD_DIR%"
 git add data.json
 git diff --cached --quiet
