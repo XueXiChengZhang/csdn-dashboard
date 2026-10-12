@@ -1358,13 +1358,16 @@
     </div>`;
     }
     const tv = s.total_views;
-    const haveAny = tv != null && tv > 0;
-    if (!haveAny) {
-    // 有 CSDN 但阅读量为 0 - 可能是抓取失败或新博客
-    return `<div class="stats-row" title="尚无阅读量">
-    <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>暂无数据</span></span>
-    </div>`;
-    }
+        // P1-2: 把开关从 "tv > 0" 放宽到 "tv != null",
+        // 这样 total_views=0 的学生也能显示 "0" 而不是 "— 暂无数据",
+        // 避免后端一过性 0 让学生卡片永久显示 "—".
+        const haveAny = tv != null;
+        if (!haveAny) {
+        // 完全没抓过 - 留原 "— 暂无数据" 占位
+        return `<div class="stats-row" title="尚无数据">
+        <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>暂无数据</span></span>
+        </div>`;
+        }
     return `<div class="stats-row">
     <span class="stats-item"><span class="ico">👁</span><span class="num">${fmtNum(tv)}</span><span>阅读</span></span>
     </div>`;

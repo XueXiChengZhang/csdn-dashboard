@@ -808,17 +808,24 @@ function renderPosts(stu) {
   }
 
   const rows = posts.map((p, i) => {
-    const ts = p.pubDate || (p.guid ? p.guid.slice(-10) : '—');
-    // Ma: 没抓的 views 显示 "—"
-    const viewsV = v(p);
-    const likesV = l(p);
-    const commentsV = c(p);
-    const colsV = col(p);
-    const statsFetched = p.stats_updated_at != null;
-    const viewsHtml = statsFetched ? fmt(viewsV) : '<span class="dim">—</span>';
-    const likesHtml = statsFetched ? fmt(likesV) : '<span class="dim">—</span>';
-    const commentsHtml = statsFetched ? fmt(commentsV) : '<span class="dim">—</span>';
-    const colsHtml = statsFetched ? fmt(colsV) : '<span class="dim">—</span>';
+      const ts = p.pubDate || (p.guid ? p.guid.slice(-10) : '—');
+      // Ma: 没抓的 views 显示 "—"
+      const viewsV = v(p);
+      const likesV = l(p);
+      const commentsV = c(p);
+      const colsV = col(p);
+      // P1-1: 用 views/likes/comments/collections 任意有效字段做开关,
+      // 不再死扣 stats_updated_at (后端可能漏写, 死扣会导致所有文章都 "—")
+      const hasAnyStat = p.stats_updated_at != null
+        || (p.views != null && Number.isFinite(p.views))
+        || (p.likes != null && Number.isFinite(p.likes))
+        || (p.comments != null && Number.isFinite(p.comments))
+        || (p.collections != null && Number.isFinite(p.collections));
+      const fmtCell = (x, hasStat) => hasStat ? fmt(x) : '<span class="dim">—</span>';
+      const viewsHtml = fmtCell(viewsV, hasAnyStat);
+      const likesHtml = fmtCell(likesV, hasAnyStat);
+      const commentsHtml = fmtCell(commentsV, hasAnyStat);
+      const colsHtml = fmtCell(colsV, hasAnyStat);
     return `<tr>
       <td>${i + 1}</td>
       <td class="ttl"><a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener">${escapeHtml(p.title || '(无标题)')}</a></td>

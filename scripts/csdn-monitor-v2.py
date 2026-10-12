@@ -361,7 +361,13 @@ def fetch_article_stats(article_id, username=""):
         else f"https://blog.csdn.net/article/details/{article_id}"
     try:
         r = http_get(url, timeout=10, headers=CSDN_HEADERS, retries=1)
-        if r.status_code != 200 or not r.text:
+        # P0-2: 区分 "HTTP 错误" 与 "200 但空文 (软反爬)" — 都打印并返回失败
+        if r.status_code != 200:
+            print(f"[stats] HTTP {r.status_code} aid={article_id} url={url[:80]}")
+            return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
+        if not r.text or len(r.text) < 500:
+            # CSDN 偶发 200 + 空 HTML (软反爬/地域重定向)
+            print(f"[stats] HTTP 200 but empty/short aid={article_id} len={len(r.text or '')} url={url[:80]}")
             return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
         html = r.text
         stats = {"views": 0, "comments": 0, "collections": 0, "likes": 0, "ok": True}
@@ -372,16 +378,44 @@ def fetch_article_stats(article_id, username=""):
             m = re.search(r"文章浏览阅读\s*([\d,]+)\s*次", html)
             if m:
                 stats["views"] = int(re.sub(r"[^\d]", "", m.group(1)) or 0)
+            # P0-2 兜底: 旧 span 格式 <span class="read-count">170 阅读
+            if not stats["views"]:
+                m2 = re.search(r'<span class="read-count">\s*(\d[\d,]*)', html)
+                if m2:
+                    stats["views"] = int(re.sub(r"[^\d]", "", m2.group(1)) or 0)
+        # 点赞: <span class="read">N</span> (变长顺序, 不能用第一个)
+        # 实际页面里 span.read 出现的顺序是: 收藏 点赞 评论 推荐
+        # 用 data-num 更稳
+        m_like = re.search(r'data-num="(\d+)"\s+[^>]*title="点赞"|class="tool-like"[^>]*data-num="(\d+)"', html)
+        if m_like:
+            stats["likes"] = int(m_like.group(1) or m_like.group(2) or 0)
+        else:
+            # 最稳的兜底: 找所有 class="read" 节点的数字
+            reads = re.findall(r'<span class="read">\s*([\d,]+)\s*</span>', html)
+            if len(reads) >= 4:
+                # 顺序固定: [收藏, 点赞, 评论, 推荐] (基于 2026-10 测试)
+                try:
+                    stats["collections"] = int(re.sub(r"[^\d]", "", reads[0]) or 0)
+                    stats["likes"] = int(re.sub(r"[^\d]", "", reads[1]) or 0)
+                    stats["comments"] = int(re.sub(r"[^\d]", "", reads[2]) or 0)
+                except Exception:
+                    pass
         m = re.search(r"commentscount\s*=\s*(\d+)", html)
         if m:
-            stats["comments"] = int(m.group(1))
+            stats["comments"] = max(stats["comments"], int(m.group(1)))
         m = re.search(r'id="get-collection"\s+[^>]*data-num="(\d+)"', html)
         if not m:
             m = re.search(r'data-num="(\d+)"\s+id="get-collection"', html)
         if m:
-            stats["collections"] = int(m.group(1))
+            stats["collections"] = max(stats["collections"], int(m.group(1)))
+        # P0-2: 三零 + 页面长 → 打印调试信息 (可能是页面结构变化)
+        if stats["views"] == 0 and stats["comments"] == 0 and stats["likes"] == 0 and stats["collections"] == 0:
+            if len(html) > 1000:
+                print(f"[stats] all zeros aid={article_id} len(html)={len(html)} views_match={'viewCountFormat' in html}, read_count_match={'read-count' in html}")
+                print(f"[stats] html_head={html[:300]!r}")
         return stats
-    except Exception:
+    except Exception as e:
+        print(f"[stats] exception aid={article_id} err={type(e).__name__}: {str(e)[:80]}")
         return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
 
 
@@ -1076,7 +1110,19 @@ def fetch_stats_for(rec):
                 "fetched_at": p.get("last_fetch_meta", {}).get("fetched_at", ""),
                 "error": str(e)[:100],
             }
-            rec["csdn_err"] = f"stats_failed: {str(e)[:80]}"
+            # P0-3: 保护旧 posts (含 stats_updated_at) — 否则兜底分支
+            # 写入的 4 字段 posts 会让前端全部显示 "—"
+            prev_posts = p.get("posts") or []
+            has_stale_stats = any(
+                isinstance(post, dict) and post.get("stats_updated_at")
+                for post in prev_posts
+            )
+            if has_stale_stats:
+                rec["posts"] = prev_posts
+                rec["csdn_err"] = f"stats_failed_posts_preserved: {str(e)[:80]}"
+                print(f"[stats-fallback-preserve] {rec.get('name')}: kept {len(prev_posts)} old posts with stats_updated_at")
+            else:
+                rec["csdn_err"] = f"stats_failed: {str(e)[:80]}"
             print(f"[stats-fallback] {rec.get('name')}: {e}")
     else:
         rec["stats"] = {
