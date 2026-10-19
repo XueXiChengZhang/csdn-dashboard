@@ -59,7 +59,8 @@ TODAY = datetime.now().strftime("%Y-%m-%d")
 NOW_ISO = datetime.now().isoformat(timespec="seconds")
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-      "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36")
+      "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 "
+      "Edg/126.0.0.0")
 
 # P2 #5 修复: 统一版本号 — 4 个 HTML 之前各自写 v13/v12/v10.0/v8.0
 # 现在统一读 data.json.dashboard_version, 后端改动即更新
@@ -177,9 +178,16 @@ def parse_gitee_repo(gitee_url):
 # ---------- CSDN 抓取 (复用 v1 逻辑, 精简) ----------
 CSDN_HEADERS = {
     "User-Agent": UA,
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
     "Referer": "https://blog.csdn.net/",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
 }
 
 
