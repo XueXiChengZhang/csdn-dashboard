@@ -1,0 +1,57 @@
+@echo off
+REM ============================================================================
+REM gitee-monitor.cmd — 每日 05:30 的 Gitee 刷新 (只跑 Gitee, 不碰 CSDN)
+REM
+REM 为什么把 05:30 那个任务从"全量 CSDN"改成"只跑 Gitee":
+REM   00:00 和 05:30 都跑全量 CSDN 是这次"阅读量归零"事故的直接原因 ——
+REM   第二次全量必然被 CSDN 的 521 风控拦掉, 然后把第一次的好数据覆盖成 0。
+REM   (实测: 00:00 -> total_views 7,604;  05:30 -> total_views 1,297)
+REM
+REM 现在两次任务的分工:
+REM   00:00  增量抓 CSDN (最近 4 篇 + 轮转 2 篇 + 个人主页)
+REM   05:30  只刷 Gitee (便宜, 不受 CSDN 风控影响, 数据也值得每天刷新)
+REM   周日03:00  全量兜底 (修数据漂移/补漏, --no-reuse 强制全部重抓)
+REM
+REM --gitee-only 模式下 v2 会复用 data.json 里已有的 CSDN posts/stats 原样写回,
+REM 不会把 CSDN 的数据冲掉。
+REM ============================================================================
+chcp 65001 >nul
+setlocal
+set SCRIPT_DIR=%~dp0
+set DASHBOARD_DIR=%SCRIPT_DIR%..
+set PYTHON=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\python.exe
+set LOGDIR=%DASHBOARD_DIR%\logs
+if not exist "%LOGDIR%" mkdir "%LOGDIR%"
+
+cd /d "%DASHBOARD_DIR%"
+
+REM 1. 只跑 Gitee 阶段
+"%PYTHON%" "%SCRIPT_DIR%csdn-monitor-v2.py" --gitee-only --force-now >> "%LOGDIR%\gitee-cron.log" 2>&1
+if errorlevel 1 (
+    echo [%date% %time%] GITEE-ONLY FAILED
+    exit /b 1
+)
+
+REM 2. 提交 + push
+git add data.json
+git diff --cached --quiet
+if errorlevel 1 (
+    git commit -m "data: %date:~0,10% Gitee 刷新"
+    git -c pack.window=0 -c pack.depth=0 push origin main
+    if errorlevel 1 (
+        echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
+        git remote set-url origin git@github.com:XueXiChengZhang/csdn-dashboard.git
+        git -c pack.window=0 -c pack.depth=0 push origin main
+        git remote set-url origin https://github.com/XueXiChengZhang/csdn-dashboard.git
+    )
+)
+
+git fetch origin main >nul 2>&1
+for /f "tokens=*" %%i in ('git rev-parse HEAD') do set LOCAL=%%i
+for /f "tokens=*" %%i in ('git rev-parse origin/main') do set REMOTE=%%i
+if not "%LOCAL%"=="%REMOTE%" (
+    echo [%date% %time%] STILL OUT OF SYNC: local=%LOCAL% remote=%REMOTE%
+) else (
+    echo [%date% %time%] In sync OK
+)
+endlocal
