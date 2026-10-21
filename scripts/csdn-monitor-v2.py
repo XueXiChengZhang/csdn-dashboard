@@ -1064,19 +1064,24 @@ def build_report(students_state, missing_csdn, fetch_meta, class_stats):
     lines.append("")
     for s in students_state:
         name = f"{s['name']}({s['sid']})"
-        csdn_st = "✅" if s.get("csdn_status") == "ok" else ("⚠️" if s.get("csdn_status") == "no_csdn" else "❌")
+        # --gitee-only 时 csdn_status = "skipped_reused", 表示 CSDN 数据是
+        # 原样复用过来的 (不是没抓到)。它必须按 "ok" 渲染, 否则整份日报
+        # 会显示成 "CSDN 未抓取" 的假报告 (2026-10-21 05:30 实测踩到)。
+        csdn_st = "✅" if s.get("csdn_status") in ("ok", "skipped_reused") else ("⚠️" if s.get("csdn_status") == "no_csdn" else "❌")
         g = s.get("gitee") or {}
         gitee_st = "✅" if g.get("ok") else ("⚠️" if g.get("err") and "rate" in (g.get("err") or "").lower() else "❌")
         lines.append(f"{csdn_st}{gitee_st} **{name}**")
         # CSDN
         if s.get("csdn_status") == "no_csdn":
             lines.append(f"   - CSDN: 未提供")
-        elif s.get("csdn_status") == "ok":
+        elif s.get("csdn_status") in ("ok", "skipped_reused"):
             new_n = len(s.get("new_posts", []))
+            suffix = " · (复用上次数据)" if s.get("csdn_status") == "skipped_reused" else ""
             lines.append(
                 f"   - CSDN: @{s.get('csdn_username')} · "
                 f"文章 {len(s['posts'])} · 阅读 {s.get('stats',{}).get('total_views', 0):,}"
                 + (f" · **新 {new_n}**" if new_n else "")
+                + suffix
             )
             for p in s.get("new_posts", [])[:3]:
                 lines.append(f"     - {short(p['title'])} ({fmt_date(p.get('pubDate', ''))})")
@@ -1105,7 +1110,9 @@ def build_summary(students_state, new_posts_total, class_stats):
         f"今日 Gitee commit {class_stats['gitee']['total_commits'] - sum(1 for s in students_state if (s.get('gitee') or {}).get('date','')[:10] != TODAY and (s.get('gitee') or {}).get('ok'))}",
     ]
     missing_csdn = [s for s in students_state if s.get("csdn_status") == "no_csdn"]
-    failed_csdn = [s for s in students_state if s.get("csdn_status") not in ("ok", "no_csdn")]
+    # "skipped_reused" = --gitee-only 时复用了上次的 CSDN 数据, 不是失败
+    failed_csdn = [s for s in students_state
+                   if s.get("csdn_status") not in ("ok", "skipped_reused", "no_csdn")]
     failed_gitee = [s for s in students_state if not (s.get("gitee") or {}).get("ok")]
     if missing_csdn:
         names = "、".join(s["name"] for s in missing_csdn[:5])
@@ -1564,8 +1571,9 @@ def run(args):
     missing_csdn = [s for s in students_state if s.get("csdn_status") == "no_csdn"]
 
     # --- fetch_meta ---
-    csdn_ok = sum(1 for s in students_state if s.get("csdn_status") == "ok")
-    csdn_fail = sum(1 for s in students_state if s.get("csdn_status") == "failed")
+    csdn_ok = sum(1 for s in students_state if s.get("csdn_status") in ("ok", "skipped_reused"))
+    csdn_fail = sum(1 for s in students_state
+                    if s.get("csdn_status") not in ("ok", "skipped_reused", "no_csdn"))
     gitee_ok = sum(1 for s in students_state if (s.get("gitee") or {}).get("ok"))
     gitee_fail = sum(1 for s in students_state if not (s.get("gitee") or {}).get("ok"))
     fetch_meta = {
