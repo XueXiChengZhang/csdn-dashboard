@@ -1,37 +1,37 @@
 {
-  "last_update": "2026-10-21T11:04:34",
+  "last_update": "2026-10-21T11:31:30",
   "total_students": 34,
   "total_posts": 385,
   "dashboard_version": "v22.0",
   "last_fetch_meta": {
-    "fetched_at": "2026-10-21T11:04:34",
-    "duration_ms": 703948,
+    "fetched_at": "2026-10-21T11:31:30",
+    "duration_ms": 79648,
     "method_breakdown": {
-      "csdn_html": 34,
+      "csdn_html": 0,
       "csdn_rss": 0,
       "gitee_api": 0,
       "gitee_html": 0
     },
-    "total_requests": 217,
-    "csdn_requests": 217,
+    "total_requests": 0,
+    "csdn_requests": 0,
     "rate_limiter": {
-      "waits": 216,
+      "waits": 0,
       "min_interval": 2.5,
       "current_interval": 2.5,
       "max_interval": 9.0,
       "jitter": 0.8,
       "escalations": 0
     },
-    "success_count": 66,
+    "success_count": 32,
     "fail_count": 2,
     "stages": {
       "csdn": {
-        "duration_ms": 625802,
-        "ok": 34,
+        "duration_ms": 3,
+        "ok": 0,
         "fail": 0
       },
       "gitee": {
-        "duration_ms": 78146,
+        "duration_ms": 79644,
         "ok": 32,
         "fail": 2
       }
@@ -145,7 +145,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -321,7 +321,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -398,7 +398,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -552,7 +552,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -761,7 +761,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -849,7 +849,7 @@
         "msg": "",
         "source": "",
         "err": "bad gitee url",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -1058,7 +1058,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -1245,7 +1245,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -1454,7 +1454,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -1553,7 +1553,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -1762,7 +1762,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -1938,7 +1938,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -2070,7 +2070,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -2169,7 +2169,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -2356,7 +2356,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -2532,7 +2532,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -2631,7 +2631,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -2862,7 +2862,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -3060,7 +3060,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -3242,7 +3242,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -3440,7 +3440,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -3627,7 +3627,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -3814,7 +3814,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -4023,7 +4023,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -4232,7 +4232,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -4452,7 +4452,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -4628,7 +4628,7 @@
         "msg": "",
         "source": "",
         "err": "all sources failed (likely 403/rate-limited)",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -4815,7 +4815,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -4870,7 +4870,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -5035,7 +5035,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -5255,7 +5255,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -5431,7 +5431,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -5607,7 +5607,7 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     },
     {
@@ -5761,12 +5761,12 @@
         "msg": "",
         "source": "markdown",
         "err": "",
-        "fetched_at": "2026-10-21T11:04:34"
+        "fetched_at": "2026-10-21T11:31:30"
       }
     }
   ],
   "class_stats": {
-    "computed_at": "2026-10-21T11:04:34",
+    "computed_at": "2026-10-21T11:31:30",
     "students_total": 34,
     "students_with_csdn": 34,
     "students_active": 34,
