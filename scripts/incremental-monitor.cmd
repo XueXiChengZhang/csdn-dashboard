@@ -19,6 +19,14 @@ REM   - 顺带抓一次个人主页总访问量 (权威的 total_views)
 REM   请求数与文章总数无关, 34 个学生约 280 个请求。
 REM ============================================================================
 chcp 65001 >nul
+REM ★ 必须设 UTF-8 模式: 计划任务跑的时候没有 PYTHONIOENCODING/PYTHONUTF8,
+REM   Python 的 stdout 会退到系统 ANSI 代码页 (GBK/936)。日志是重定向到文件的,
+REM   于是 print() 遇到 openclaw 输出里的 emoji (U+2705) 就会抛
+REM   UnicodeEncodeError: 'gbk' codec can't encode character '✅'
+REM   —— 实测 2026-10-21: 飞书其实**已经发成功了**, 只是打印日志那一步炸了,
+REM   看起来像发送失败。PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 一起解决。
+set PYTHONIOENCODING=utf-8
+set PYTHONUTF8=1
 setlocal
 set SCRIPT_DIR=%~dp0
 set DASHBOARD_DIR=%SCRIPT_DIR%..
