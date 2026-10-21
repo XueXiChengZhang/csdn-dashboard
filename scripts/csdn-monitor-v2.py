@@ -30,10 +30,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
@@ -41,6 +43,15 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 import requests
+
+# 公共解析模块 (增量脚本 csdn_incremental.py 也用同一个, 避免两份正则各坏各的)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from csdn_stats import (  # noqa: E402
+    RateLimiter,
+    article_id_from_link,
+    parse_article_stats,
+    parse_profile_views,
+)
 
 # ---------- 路径 ----------
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -114,6 +125,66 @@ def http_get(url, timeout=12, headers=None, retries=2):
                 text = str(last_err)
             return _Err()
     return None
+
+
+# ---------- CSDN 限流 ----------
+# 实测 (2026-10-21, 同一 IP):
+#   - 不加延迟连打 40 篇文章 -> 第 17 篇开始大量 HTTP 521 (CSDN WAF 反爬)
+#   - 间隔 3.0s 连打 30 篇     -> 30/30 全部 200, 零 521
+# 521 是 CSDN 的风控响应, 所以全站共用一个节流器 (瓶颈是 IP, 不是线程数)。
+# 线程数从 3 降到 2 —— 线程多只会更快撞墙, 然后在重试里白白耗掉 10 分钟。
+CSDN_MIN_INTERVAL = float(os.environ.get("CSDN_MIN_INTERVAL", "2.5"))
+# 测试钩子: 把 CSDN 的基址换掉, 就能在**真实跑一遍**的前提下模拟 "CSDN 完全挂掉",
+# 用来端到端验证数据保护逻辑 (见 scripts/test_csdn_stats.py)。
+# 生产环境不设这个变量, 行为完全不变。
+CSDN_BASE = os.environ.get("CSDN_BASE_URL", "https://blog.csdn.net").rstrip("/")
+CSDN_LIMITER = RateLimiter(min_interval=CSDN_MIN_INTERVAL, jitter=0.8)
+CSDN_REQUESTS = 0
+CSDN_REQUESTS_LOCK = threading.Lock()
+
+# 上一次跑出来的 posts, 按 link 索引。fetch_csdn_html 用它把 stats 合并进
+# 新拿到的 4 字段 post 里, 让 aggregate_user_stats 的 24h 复用生效。
+PREV_POSTS_BY_LINK: dict[str, dict] = {}
+
+
+def csdn_get(url, timeout=12, headers=None, retries=1):
+    """CSDN 专用 GET: 全局限流 + 计数 + 521 冷却。
+
+    返回 requests.Response (失败时返回带 status_code 的伪对象)。
+    """
+    global CSDN_REQUESTS
+    headers = headers or CSDN_HEADERS
+    last_err = None
+    for attempt in range(retries + 1):
+        CSDN_LIMITER.wait()
+        with CSDN_REQUESTS_LOCK:
+            CSDN_REQUESTS += 1
+        try:
+            r = requests.get(url, timeout=timeout, headers=headers)
+            if r.status_code in (521, 403, 429):
+                # 被风控: 全局冷却 + **拉长基准间隔** (CSDN 的风控会随请求量
+                # 收紧, 固定间隔扛不住; 自适应能自己找到当下安全的速率)
+                CSDN_LIMITER.escalate(1.5)
+                CSDN_LIMITER.penalize(5.0 + attempt * 5)
+                last_err = RuntimeError(f"HTTP {r.status_code}")
+                if attempt < retries:
+                    continue
+            else:
+                CSDN_LIMITER.decay()
+            return r
+        except Exception as e:
+            last_err = e
+            if attempt < retries:
+                CSDN_LIMITER.penalize(3.0)
+                continue
+            class _Err:
+                status_code = -1
+                text = str(last_err)
+            return _Err()
+    class _Err:
+        status_code = -1
+        text = str(last_err)
+    return _Err()
 
 
 # ---------- Watchlist ----------
@@ -242,6 +313,13 @@ def fetch_csdn_html(username, limit=50):
 
     修复: 之前 limit=5 且只抓第 1 页,很多人显示 5 篇.
     现在通过 page 参数翻页,直到抓满 limit 或所有页都爬过.
+
+    ★ E 修复 (2026-10-21): 列表页只能拿到 title/link/pubDate/guid 四个字段,
+      拿不到 stats。但如果不把**上次抓到的 stats 合并进来**, aggregate_user_stats
+      里的 "24h 内复用" 判断 (要求 posts 带 views + stats_updated_at) 永远不成立
+      -> 每次全量都重抓 385 篇 -> 必然撞 521 风控。
+      所以这里按 link/guid 从 PREV_POSTS_BY_LINK 里把
+      views/likes/comments/collections/stats_updated_at 合并进来。
     """
     items = []
     page_size = 20  # CSDN 每页大约 20 篇
@@ -252,13 +330,13 @@ def fetch_csdn_html(username, limit=50):
         if len(items) >= limit:
             break
         urls = [
-            f"https://blog.csdn.net/{username}?type=blog&page={page}",
-            f"https://blog.csdn.net/{username}?page={page}",
+            f"{CSDN_BASE}/{username}?type=blog&page={page}",
+            f"{CSDN_BASE}/{username}?page={page}",
         ]
         page_has_data = False
         for url in urls:
             try:
-                r = http_get(url, timeout=12, headers=CSDN_HEADERS, retries=2)
+                r = csdn_get(url, timeout=12, headers=CSDN_HEADERS, retries=1)
                 if r.status_code != 200 or not r.text:
                     continue
                 html = r.text
@@ -295,7 +373,15 @@ def fetch_csdn_html(username, limit=50):
                     )
                     raw_time = time_match.group(1).strip() if time_match else ""
                     pub_iso = _parse_relative_time_to_iso(raw_time)
-                    items.append({"title": title, "link": link, "pubDate": pub_iso, "guid": link})
+                    item = {"title": title, "link": link, "pubDate": pub_iso, "guid": link}
+                    # ★ E: 把上次的 stats 合并进来, 让 24h 复用逻辑真正生效
+                    prev = PREV_POSTS_BY_LINK.get(link)
+                    if prev:
+                        for key in ("views", "likes", "comments", "collections",
+                                    "stats_updated_at"):
+                            if key in prev and prev[key] is not None:
+                                item[key] = prev[key]
+                    items.append(item)
                 if items:
                     break
             except Exception:
@@ -334,41 +420,48 @@ def fetch_csdn_rss(username, limit=50):
 
 
 def fetch_user_total_views(username):
+    """抓个人主页的"总访问量"。
+
+    ★ 关键语义: **失败返回 None, 不是 0**。
+      旧代码失败返回 0, 上层 `total_views = profile_views` 直接把整个人的
+      阅读量归零 —— 于是一次被 521 风控的请求就能把上一次的好数据覆盖成 0
+      (2026-10-21 05:30 那次就是这么把李瑞 7254 冲成 0 的)。
+      返回 None 后, aggregate_user_stats 会退到 article_views_sum 兜底。
+
+    三层兜底正则在 scripts/csdn_stats.py::parse_profile_views 里
+    (精确容器 -> 标签前后 200 字符 -> 双向宽松)。
+    """
     if not username:
-        return 0
+        return None
     for url in [
-        f"https://blog.csdn.net/{username}?type=blog",
-        f"https://blog.csdn.net/{username}",
+        f"{CSDN_BASE}/{username}?type=blog",
+        f"{CSDN_BASE}/{username}",
     ]:
         try:
-            r = http_get(url, timeout=10, headers=CSDN_HEADERS, retries=2)
+            r = csdn_get(url, timeout=12, headers=CSDN_HEADERS, retries=1)
             if r.status_code != 200 or not r.text:
+                print(f"[profile] {username} HTTP {r.status_code} url={url[:70]}")
                 continue
-            html = r.text
-            m = re.search(
-                r'user-profile-statistics-views[^>]*>\s*<div[^>]*user-profile-statistics-num[^>]*>\s*([\d,]+)\s*<',
-                html, re.DOTALL,
-            )
-            if m:
-                return int(re.sub(r"[^\d]", "", m.group(1)) or 0)
-            m = re.search(
-                r'user-profile-statistics-num[^>]*>\s*([\d,]+)\s*<[^>]*>\s*总访问量',
-                html, re.DOTALL,
-            )
-            if m:
-                return int(re.sub(r"[^\d]", "", m.group(1)) or 0)
-        except Exception:
+            if len(r.text) < 2000:
+                print(f"[profile] {username} 响应过短 len={len(r.text)} (疑似风控)")
+                continue
+            val = parse_profile_views(r.text)
+            if val is not None:
+                return val
+            print(f"[profile] {username} 页面里找不到'总访问量' (len={len(r.text)})")
+        except Exception as e:
+            print(f"[profile] {username} 异常 {type(e).__name__}: {str(e)[:60]}")
             continue
-    return 0
+    return None
 
 
 def fetch_article_stats(article_id, username=""):
     if not article_id:
         return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
-    url = f"https://blog.csdn.net/{username}/article/details/{article_id}" if username \
-        else f"https://blog.csdn.net/article/details/{article_id}"
+    url = f"{CSDN_BASE}/{username}/article/details/{article_id}" if username \
+        else f"{CSDN_BASE}/article/details/{article_id}"
     try:
-        r = http_get(url, timeout=10, headers=CSDN_HEADERS, retries=1)
+        r = csdn_get(url, timeout=12, headers=CSDN_HEADERS, retries=1)
         # P0-2: 区分 "HTTP 错误" 与 "200 但空文 (软反爬)" — 都打印并返回失败
         if r.status_code != 200:
             print(f"[stats] HTTP {r.status_code} aid={article_id} url={url[:80]}")
@@ -378,63 +471,36 @@ def fetch_article_stats(article_id, username=""):
             print(f"[stats] HTTP 200 but empty/short aid={article_id} len={len(r.text or '')} url={url[:80]}")
             return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
         html = r.text
-        stats = {"views": 0, "comments": 0, "collections": 0, "likes": 0, "ok": True}
-        m = re.search(r"viewCountFormat\s*=\s*(\d+)", html)
-        if m:
-            stats["views"] = int(m.group(1))
-        else:
-            m = re.search(r"文章浏览阅读\s*([\d,]+)\s*次", html)
-            if m:
-                stats["views"] = int(re.sub(r"[^\d]", "", m.group(1)) or 0)
-            # P0-2 兜底: 旧 span 格式 <span class="read-count">170 阅读
-            if not stats["views"]:
-                m2 = re.search(r'<span class="read-count">\s*(\d[\d,]*)', html)
-                if m2:
-                    stats["views"] = int(re.sub(r"[^\d]", "", m2.group(1)) or 0)
-        # 点赞: <span class="read">N</span> (变长顺序, 不能用第一个)
-        # 实际页面里 span.read 出现的顺序是: 收藏 点赞 评论 推荐
-        # 用 data-num 更稳
-        m_like = re.search(r'data-num="(\d+)"\s+[^>]*title="点赞"|class="tool-like"[^>]*data-num="(\d+)"', html)
-        if m_like:
-            stats["likes"] = int(m_like.group(1) or m_like.group(2) or 0)
-        else:
-            # 最稳的兜底: 找所有 class="read" 节点的数字
-            reads = re.findall(r'<span class="read">\s*([\d,]+)\s*</span>', html)
-            if len(reads) >= 4:
-                # 顺序固定: [收藏, 点赞, 评论, 推荐] (基于 2026-10 测试)
-                try:
-                    stats["collections"] = int(re.sub(r"[^\d]", "", reads[0]) or 0)
-                    stats["likes"] = int(re.sub(r"[^\d]", "", reads[1]) or 0)
-                    stats["comments"] = int(re.sub(r"[^\d]", "", reads[2]) or 0)
-                except Exception:
-                    pass
-        m = re.search(r"commentscount\s*=\s*(\d+)", html)
-        if m:
-            stats["comments"] = max(stats["comments"], int(m.group(1)))
-        m = re.search(r'id="get-collection"\s+[^>]*data-num="(\d+)"', html)
-        if not m:
-            m = re.search(r'data-num="(\d+)"\s+id="get-collection"', html)
-        if m:
-            stats["collections"] = max(stats["collections"], int(m.group(1)))
-        # P0-2: 三零 + 页面长 → 打印调试信息 (可能是页面结构变化)
-        if stats["views"] == 0 and stats["comments"] == 0 and stats["likes"] == 0 and stats["collections"] == 0:
-            if len(html) > 1000:
-                print(f"[stats] all zeros aid={article_id} len(html)={len(html)} views_match={'viewCountFormat' in html}, read_count_match={'read-count' in html}")
-                print(f"[stats] html_head={html[:300]!r}")
+        # 解析全部交给公共模块 (增量脚本共用同一套正则, 不会再各坏各的)
+        parsed = parse_article_stats(html)
+        stats = {
+            "views": parsed["views"] if parsed["views"] is not None else 0,
+            "comments": parsed["comments"] if parsed["comments"] is not None else 0,
+            "collections": parsed["collections"] if parsed["collections"] is not None else 0,
+            "likes": parsed["likes"] if parsed["likes"] is not None else 0,
+            "ok": True,
+        }
+        # 抓到了页面但一个数都没解析出来 → 页面结构变了, 打印出来便于诊断
+        if not any(stats[k] for k in ("views", "comments", "collections", "likes")):
+            print(f"[stats] all zeros aid={article_id} len(html)={len(html)} "
+                  f"meta_desc={'文章浏览阅读' in html} view_count_format={'viewCountFormat' in html}")
+            print(f"[stats] html_head={html[:300]!r}")
         return stats
     except Exception as e:
         print(f"[stats] exception aid={article_id} err={type(e).__name__}: {str(e)[:80]}")
         return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
 
 
-def aggregate_user_stats(username, posts):
+def aggregate_user_stats(username, posts, no_reuse=False):
     """P0 #2 修复: 每篇 post 都把 stats 写回, 不只算总和.
     P0 #17 修复: 同时写 stats_updated_at.
     P3 #14 优化: 复用 posts 已有的 stats_updated_at, 24h 内不重抓.
+    no_reuse=True: 忽略 24h 复用, 全部重抓 (每周全量兜底用)。
     """
     article_stats = {"views": 0, "comments": 0, "collections": 0, "likes": 0}
     n_ok = 0
     n_skipped = 0
+    n_failed = 0
     stats_ts = NOW_ISO  # 这次抓取的整体时间戳
 
     # 阈值: 24h 内已抓过的文章复用, 避免每跑全量都重抓一遍
@@ -442,16 +508,22 @@ def aggregate_user_stats(username, posts):
         (datetime.now() - timedelta(hours=24)).isoformat(timespec="seconds")
     )
 
+    # 连续失败 N 次就放弃这个学生的 stats, 走保护逻辑。
+    # 原因: CSDN 被 521 风控后, 再死磕只会把 10 分钟耗在重试上,
+    # 而且每次重试都在加深封禁 (旧代码 CSDN 阶段跑过 627 秒)。
+    MAX_CONSECUTIVE_FAILURES = 5
+    consecutive_failures = 0
+    abandoned = False
+
     for p in posts or []:
-        m = re.search(r"/article/details/(\d+)", p.get("link") or "")
-        if not m:
+        aid = article_id_from_link(p.get("link"))
+        if not aid:
             continue
-        aid = m.group(1)
 
         # 检查是否需要重抓 (没有 stats_updated_at 或超过 24h)
         prev_ts_str = p.get("stats_updated_at")
         need_fetch = True
-        if prev_ts_str:
+        if prev_ts_str and not no_reuse:
             try:
                 prev_ts = datetime.fromisoformat(prev_ts_str)
                 if prev_ts > reuse_threshold and isinstance(p.get("views"), int) and p["views"] > 0:
@@ -466,13 +538,25 @@ def aggregate_user_stats(username, posts):
                     n_ok += 1
                     n_skipped += 1
                     need_fetch = False
+                    consecutive_failures = 0
             except (ValueError, TypeError):
                 pass
 
-        if need_fetch:
+        if need_fetch and abandoned:
+            # 已放弃: 用上次的值 (如果有), 不要再发请求
+            s = {
+                "views": p.get("views", 0) or 0,
+                "comments": p.get("comments", 0) or 0,
+                "collections": p.get("collections", 0) or 0,
+                "likes": p.get("likes", 0) or 0,
+                "ok": True,
+            }
+            n_skipped += 1
+        elif need_fetch:
             s = fetch_article_stats(aid, username=username)
             if s.get("ok"):
                 n_ok += 1
+                consecutive_failures = 0
                 # ★ P0 #2 修复: 写回每篇 post
                 p["views"] = s.get("views", 0)
                 p["likes"] = s.get("likes", 0)
@@ -480,20 +564,54 @@ def aggregate_user_stats(username, posts):
                 p["collections"] = s.get("collections", 0)
                 # ★ P0 #17 修复: 标记抓取时间
                 p["stats_updated_at"] = stats_ts
+            else:
+                n_failed += 1
+                consecutive_failures += 1
+                # 抓取失败: 这次没拿到新数, 但**不能把上次的值当 0 累加**,
+                # 否则 article_views_sum 会凭空缩水, 触发 C 臂的保护逻辑。
+                # 用 post 里已有的值 (来自 PREV_POSTS_BY_LINK 合并) 参与求和。
+                s = {
+                    "views": p.get("views", 0) or 0,
+                    "comments": p.get("comments", 0) or 0,
+                    "collections": p.get("collections", 0) or 0,
+                    "likes": p.get("likes", 0) or 0,
+                    "ok": False,
+                }
+                if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+                    abandoned = True
+                    print(f"[stats] {username}: 连续 {consecutive_failures} 次失败, "
+                          f"放弃该学生剩余文章的抓取 (交给保护逻辑兜底)")
 
         for k in article_stats:
             article_stats[k] += s.get(k, 0)
 
     profile_views = fetch_user_total_views(username)
+
+    # ★ C: total_views 三源择优 — profile -> 文章累加 -> 0
+    #   profile 拿不到时 (None) 绝不能用 0 冒充, 否则一次风控就把人清零。
+    if profile_views is not None and profile_views > 0:
+        total_views = profile_views
+        views_source = "profile"
+    elif article_stats["views"] > 0:
+        total_views = article_stats["views"]
+        views_source = "articles"
+    else:
+        total_views = 0
+        views_source = "none"
+
     return {
-        "total_views": profile_views,
+        "total_views": total_views,
+        # 两个来源都单独保留, 报告里能看出这个人的阅读量到底是从哪来的
         "profile_views": profile_views,
         "article_views_sum": article_stats["views"],
+        "views_source": views_source,
         "total_likes": article_stats["likes"],
         "total_comments": article_stats["comments"],
         "total_collections": article_stats["collections"],
         "articles_scanned": n_ok,
         "articles_skipped_reuse": n_skipped,
+        "articles_failed": n_failed,
+        "abandoned": abandoned,
         "fetched_at": stats_ts,
     }
 
@@ -765,6 +883,11 @@ def write_data_json(students_state, fetch_meta, class_stats=None):
             "total_comments": (s.get("stats") or {}).get("total_comments", 0),
             "total_collections": (s.get("stats") or {}).get("total_collections", 0),
             "articles_scanned": (s.get("stats") or {}).get("articles_scanned", 0),
+            # ★ C: 三个来源都保留, 报告/前端能看出这个数字是从哪来的
+            "profile_views": (s.get("stats") or {}).get("profile_views"),
+            "article_views_sum": (s.get("stats") or {}).get("article_views_sum", 0),
+            "views_source": (s.get("stats") or {}).get("views_source", "none"),
+            "stats_updated_at": (s.get("stats") or {}).get("fetched_at", ""),
             "gitee": {
                 "ok": g.get("ok", False),
                 "url": g.get("url", ""),
@@ -1044,22 +1167,15 @@ def send_feishu(text, dry=False, attachment=None):
 
 # ---------- 主流程 ----------
 def _count_actual_requests(students_state):
-    """P2 #7 修复: 数实际 HTTP 请求数 (近似).
-    CSDN: 1 列表 + 1 profile_views + N article_stats (实际抓的, 非复用)
-    Gitee: 3-4 个 API 调用 (repo + commit + commits_count 翻页)
+    """数实际 HTTP 请求数.
+
+    ★ 2026-10-21: CSDN 部分改用**真实计数器** CSDN_REQUESTS (由 csdn_get 累加),
+      不再用"1 列表 + 1 profile + N 篇"去估算 —— 估算在复用/放弃/限流重试
+      这些情况下会算错, 而报告里要用它对比"增量 vs 全量"的请求数, 必须准。
+    Gitee 部分仍然是估算 (那边没有统一计数器)。
     """
-    total = 0
+    total = CSDN_REQUESTS
     for s in students_state:
-        if s.get("csdn_status") == "ok":
-            total += 1  # csdn html list
-            total += 1  # profile_views
-            stats = s.get("stats", {})
-            scanned = stats.get("articles_scanned", 0)
-            reused = stats.get("articles_skipped_reuse", 0)
-            actual_fetches = max(0, scanned - reused)
-            total += actual_fetches
-        elif s.get("csdn_status") == "failed":
-            total += 1  # failed html attempt
         if s.get("gitee_url"):
             g = s.get("gitee") or {}
             if g.get("source") == "api":
@@ -1098,11 +1214,12 @@ def fetch_csdn_for_student(st):
     return rec
 
 
-def fetch_stats_for(rec):
+def fetch_stats_for(rec, no_reuse=False):
     """P2 #6 修复: 单学生失败时 fallback 到上次的 stats, 而不是清零."""
     if rec["csdn_status"] == "ok" and rec.get("csdn_username"):
         try:
-            rec["stats"] = aggregate_user_stats(rec["csdn_username"], rec["posts"])
+            rec["stats"] = aggregate_user_stats(rec["csdn_username"], rec["posts"],
+                                                no_reuse=no_reuse)
         except Exception as e:
             # 单学生失败 - fallback 到上次 data
             prev = load_existing_data()
@@ -1113,7 +1230,9 @@ def fetch_stats_for(rec):
                 "total_likes": p.get("total_likes", 0),
                 "total_comments": p.get("total_comments", 0),
                 "total_collections": p.get("total_collections", 0),
-                "profile_views": p.get("total_views", 0),
+                "profile_views": p.get("profile_views"),
+                "article_views_sum": p.get("article_views_sum", 0),
+                "views_source": p.get("views_source", "preserved"),
                 "articles_scanned": p.get("articles_scanned", 0),
                 "fetched_at": p.get("last_fetch_meta", {}).get("fetched_at", ""),
                 "error": str(e)[:100],
@@ -1149,6 +1268,177 @@ def fetch_gitee_for(rec):
     return rec
 
 
+STATS_KEYS = ("views", "likes", "comments", "collections", "stats_updated_at")
+
+
+def merge_posts_stats(new_posts, prev_posts):
+    """把上一轮的 stats 合并进这一轮新拿到的 posts。
+
+    为什么要这个: 列表抓取成功但**文章详情被限流**时, 新拿到的 posts 只有
+    title/link/pubDate/guid 四个字段 (没有 stats), 前端会全部显示 "—"。
+    skill student-data-monitor 说得很清楚:
+        "The fallback must preserve posts, not just stats."
+    这里做得比"整个替换成 prev 数组"更好一点:
+      - 新发现的文章保留 (prev 里没有的)
+      - prev 里有、新一轮列表里没了的文章也保留 (不因为一次抓取异常就丢文章)
+      - 同一篇文章的 stats 用 prev 的补上 (如果新的没有)
+    """
+    prev_by_link = {}
+    for p in (prev_posts or []):
+        link = p.get("link") or p.get("guid")
+        if link:
+            prev_by_link[link] = p
+
+    merged = []
+    seen_links = set()
+    for p in (new_posts or []):
+        link = p.get("link") or p.get("guid")
+        seen_links.add(link)
+        prev = prev_by_link.get(link)
+        if prev:
+            has_stat = any(prev.get(k) is not None for k in STATS_KEYS)
+            if has_stat:
+                for k in STATS_KEYS:
+                    if p.get(k) is None and prev.get(k) is not None:
+                        p[k] = prev[k]
+        merged.append(p)
+
+    # prev 里有、这一轮没抓到的文章也保留 (防止一次异常导致文章数塌方)
+    for p in (prev_posts or []):
+        link = p.get("link") or p.get("guid")
+        if link and link not in seen_links:
+            merged.append(p)
+    return merged
+
+
+def apply_data_protection(students_state, prev_data, verbose=True):
+    """★ D: 数据保护 —— 如果这次抓取明显残废, 保留上一次的 posts/stats。
+
+    ═══════════════════════════════════════════════════════════════════════
+    为什么要加 "stats 维度" 的触发臂 (2026-10-21)
+    ═══════════════════════════════════════════════════════════════════════
+    原来的保护只有一个触发臂:
+        csdn_fail_count > 0.3 * len(students_state)
+    而 csdn_fail_count **只统计列表抓取失败**。列表抓取 34/34 全成功,
+    只是**文章详情被 CSDN 的 521 风控拦了** -> csdn_fail_count = 0
+    -> 保护永远不触发 -> 00:00 那次的好数据 (total_views 7604)
+    被 05:30 那次的零值 (1297) 覆盖掉。
+
+    触发臂 (任一成立即视为"这次抓取明显残废"):
+      A) 列表维度 (原有): 列表失败率 > 30% 且 总文章数 < 上次 70%
+      B) stats 维度 1: sum(articles_scanned) < 上次 60% 且 上次 > 10
+      C) stats 维度 2: sum(total_views) == 0 或 < 上次 30%, 且 上次 > 1000
+      D) stats 维度 3: 总 posts < 上次 70%
+
+    触发后的保留范围:
+      - **整个 post 数组** (含 views/likes/comments/collections/stats_updated_at),
+        不能只保 stats —— 只保 stats 的话前端每篇文章还是显示 "—"
+        (见 skill student-data-monitor: "The fallback must preserve posts,
+        not just stats")。
+      - 上次 total_views > 0 而这次是 0 时, 保留上次的 total_views。
+    """
+    prev_by_sid = {s["sid"]: s for s in prev_data.get("students", [])}
+    csdn_fail_count = sum(1 for s in students_state if s.get("csdn_status") == "failed")
+    prev_total_posts = prev_data.get("total_posts", 0)
+    new_total_posts_est = sum(len(s.get("posts", [])) for s in students_state)
+
+    def _sum_stat(key):
+        return sum((s.get("stats") or {}).get(key, 0) or 0 for s in students_state)
+
+    prev_scanned = sum((s.get("articles_scanned", 0) or 0)
+                       for s in prev_data.get("students", []))
+    prev_views = sum((s.get("total_views", 0) or 0)
+                     for s in prev_data.get("students", []))
+    new_scanned = _sum_stat("articles_scanned")
+    new_views = _sum_stat("total_views")
+
+    should_preserve = False
+    reasons = []
+    if prev_total_posts > 0:
+        # A) 原有臂: 列表抓取失败
+        if (csdn_fail_count > 0.3 * len(students_state)
+                and new_total_posts_est < 0.7 * prev_total_posts):
+            should_preserve = True
+            reasons.append(
+                f"CSDN 列表失败率 {csdn_fail_count}/{len(students_state)} > 30% "
+                f"AND 新文章 {new_total_posts_est} < 70% of 上次 {prev_total_posts}")
+        # B) stats 维度: 抓到的文章数骤降
+        if prev_scanned > 10 and new_scanned < 0.6 * prev_scanned:
+            should_preserve = True
+            reasons.append(
+                f"articles_scanned {new_scanned} < 60% of 上次 {prev_scanned}")
+        # C) stats 维度: 阅读量塌方
+        if prev_views > 1000 and (new_views == 0 or new_views < 0.3 * prev_views):
+            should_preserve = True
+            reasons.append(
+                f"total_views {new_views} 塌方 (上次 {prev_views}, "
+                f"门槛 {int(0.3 * prev_views)})")
+        # D) stats 维度: 总文章数骤降
+        if new_total_posts_est < 0.7 * prev_total_posts:
+            should_preserve = True
+            reasons.append(
+                f"总文章数 {new_total_posts_est} < 70% of 上次 {prev_total_posts}")
+
+    if verbose and reasons:
+        print(f"[protect] 触发数据保护 ({len(reasons)} 条):")
+        for r in reasons:
+            print(f"[protect]   - {r}")
+        print("[protect] preserving previous posts/stats per student")
+
+    if not should_preserve:
+        return False
+
+    for rec in students_state:
+        p = prev_by_sid.get(rec["sid"])
+        if not p:
+            continue
+        prev_posts = p.get("posts") or []
+        prev_total = p.get("total_views", 0) or 0
+        rec_total = (rec.get("stats") or {}).get("total_views", 0) or 0
+        rec_posts = rec.get("posts") or []
+
+        # 需要保 posts: 这次没抓到文章, 或者列表抓取失败,
+        #              或者新抓到的 posts 全都没有 stats (详情被限流了)
+        prev_has_stats = any(
+            isinstance(pp, dict) and pp.get("stats_updated_at") is not None
+            for pp in prev_posts)
+        new_has_stats = any(
+            isinstance(pp, dict) and pp.get("stats_updated_at") is not None
+            for pp in rec_posts)
+        need_posts = ((not rec_posts)
+                      or (rec.get("csdn_status") == "failed")
+                      or (prev_has_stats and not new_has_stats))
+
+        # 需要保 stats: 这次 stats 缺失, 或者这次是 0 而上次不是 0,
+        #              或者这次比上次腰斩 (阅读量只涨不跌, 腰斩=抓取残废)
+        need_stats = ((not rec.get("stats"))
+                      or (rec_total == 0 and prev_total > 0)
+                      or (prev_total > 100 and rec_total < 0.5 * prev_total))
+
+        if need_posts and prev_posts:
+            # ★ 保留整个 post 数组 (含 views/likes/comments/collections/
+            #   stats_updated_at), 不能只保 stats —— 只保 stats 的话前端
+            #   每篇文章还是显示 "—"。
+            rec["posts"] = merge_posts_stats(rec_posts, prev_posts)
+            rec["csdn_username"] = p.get("csdn_username", rec.get("csdn_username", ""))
+            rec["latest_post"] = p.get("latest_post", {})
+        if need_stats and prev_total > 0:
+            rec["stats"] = {
+                "total_views": prev_total,
+                "total_likes": p.get("total_likes", 0),
+                "total_comments": p.get("total_comments", 0),
+                "total_collections": p.get("total_collections", 0),
+                "profile_views": p.get("profile_views"),
+                "article_views_sum": p.get("article_views_sum", 0),
+                "views_source": p.get("views_source", "preserved"),
+                "articles_scanned": p.get("articles_scanned", 0),
+                "articles_skipped_reuse": 0,
+                "fetched_at": p.get("stats_updated_at", ""),
+                "preserved": True,
+            }
+    return True
+
+
 def run(args):
     wl = find_watchlist()
     if not wl:
@@ -1160,6 +1450,32 @@ def run(args):
     prev = load_snapshot()
     prev_students = prev.get("students", {})
 
+    # ★ E: 建 link -> 上次 post 的索引, 供 fetch_csdn_html 合并 stats。
+    #   来源两个: cache/csdn/snapshot.json (历史快照) 和 data.json (当前),
+    #   snapshot 优先 (它更新), data.json 兜底。
+    PREV_POSTS_BY_LINK.clear()
+
+    def _index_posts(posts):
+        for _p in (posts or []):
+            _link = _p.get("link") or _p.get("guid")
+            if not _link:
+                continue
+            _old = PREV_POSTS_BY_LINK.get(_link)
+            if _old is None:
+                PREV_POSTS_BY_LINK[_link] = _p
+            elif (_old.get("stats_updated_at") is None
+                  and _p.get("stats_updated_at") is not None):
+                PREV_POSTS_BY_LINK[_link] = _p
+
+    for _sid, _stu in prev_students.items():
+        _index_posts(_stu.get("posts"))
+    for _pdata in load_existing_data().get("students", []):
+        _index_posts(_pdata.get("posts"))
+    _with_stats = sum(1 for _p in PREV_POSTS_BY_LINK.values()
+                      if _p.get("stats_updated_at") is not None)
+    print(f"[prev-index] 载入 {len(PREV_POSTS_BY_LINK)} 篇历史 post "
+          f"(其中 {_with_stats} 篇带 stats, 可复用)")
+
     run_csdn = not args.gitee_only
     run_gitee = not args.csdn_only
 
@@ -1169,13 +1485,16 @@ def run(args):
     csdn_t = time.time()
     students_state = []
     if run_csdn:
-        with ThreadPoolExecutor(max_workers=3) as ex:
+        # 线程数 3 -> 2: 瓶颈是 CSDN 的 IP 级风控, 线程多只会更快撞 521
+        # 然后在重试里白白烧掉 10 分钟 (实测旧代码 CSDN 阶段 627 秒)。
+        with ThreadPoolExecutor(max_workers=2) as ex:
             futs = {ex.submit(fetch_csdn_for_student, st): st for st in students}
             for fut in as_completed(futs):
                 students_state.append(fut.result())
         # stats
-        with ThreadPoolExecutor(max_workers=3) as ex:
-            futs = {ex.submit(fetch_stats_for, rec): rec for rec in students_state}
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            futs = {ex.submit(fetch_stats_for, rec, args.no_reuse): rec
+                    for rec in students_state}
             for fut in as_completed(futs):
                 fut.result()
     else:
@@ -1197,13 +1516,19 @@ def run(args):
                 rec["posts"] = p.get("posts", [])
                 rec["csdn_username"] = p.get("csdn_username", "")
                 rec["csdn_status"] = "skipped_reused"
+                # --gitee-only: CSDN 的数据原样复用, 一个字段都不能丢
+                # (特别是 profile_views / article_views_sum / views_source,
+                #  丢了就没法看出阅读量的数据来源了)
                 rec["stats"] = {
                     "total_views": p.get("total_views", 0),
                     "total_likes": p.get("total_likes", 0),
                     "total_comments": p.get("total_comments", 0),
                     "total_collections": p.get("total_collections", 0),
-                    "profile_views": p.get("total_views", 0),
+                    "profile_views": p.get("profile_views"),
+                    "article_views_sum": p.get("article_views_sum", 0),
+                    "views_source": p.get("views_source", "reused"),
                     "articles_scanned": p.get("articles_scanned", 0),
+                    "fetched_at": p.get("stats_updated_at", ""),
                 }
     csdn_ms = int((time.time() - csdn_t) * 1000)
 
@@ -1244,6 +1569,8 @@ def run(args):
         # 算法: 1 (CSDN 列表) + 1 (profile_views) + 实际 article_stats 抓取数
         #      + ~4 (gitee: repo + commit + commits_count 翻页)
         "total_requests": _count_actual_requests(students_state),
+        "csdn_requests": CSDN_REQUESTS,
+        "rate_limiter": CSDN_LIMITER.stats(),
         "success_count": csdn_ok + gitee_ok,
         "fail_count": csdn_fail + gitee_fail,
         "stages": {
@@ -1258,35 +1585,7 @@ def run(args):
     # 保留之前 data.json 里的 posts/stats/csdn_username 而不是覆盖为空。
     # 否则限流/网络故障一次,所有 129 篇博客就全没了。
     prev_data = load_existing_data()
-    prev_by_sid = {s["sid"]: s for s in prev_data.get("students", [])}
-    csdn_fail_count = sum(1 for s in students_state if s.get("csdn_status") == "failed")
-    csdn_ok_count = sum(1 for s in students_state if s.get("csdn_status") == "ok")
-    # 触发条件: CSDN 失败率 > 30% 且成功数 < 之前的 70%
-    prev_total_posts = prev_data.get("total_posts", 0)
-    new_total_posts_est = sum(len(s.get("posts", [])) for s in students_state)
-    should_preserve = False
-    if prev_total_posts > 0:
-        if csdn_fail_count > 0.3 * len(students_state) and new_total_posts_est < 0.7 * prev_total_posts:
-            should_preserve = True
-            print(f"[protect] CSDN fail rate {csdn_fail_count}/{len(students_state)} > 30% AND "
-                  f"new posts {new_total_posts_est} < 70% of prev {prev_total_posts}: "
-                  f"preserving previous posts/stats per student")
-    if should_preserve:
-        for rec in students_state:
-            p = prev_by_sid.get(rec["sid"])
-            if p and (not rec.get("posts") or rec.get("csdn_status") == "failed"):
-                rec["posts"] = p.get("posts", [])
-                rec["csdn_username"] = p.get("csdn_username", rec.get("csdn_username", ""))
-                rec["latest_post"] = p.get("latest_post", {})
-                if not rec.get("stats") or rec["stats"].get("total_views", 0) == 0:
-                    rec["stats"] = {
-                        "total_views": p.get("total_views", 0),
-                        "total_likes": p.get("total_likes", 0),
-                        "total_comments": p.get("total_comments", 0),
-                        "total_collections": p.get("total_collections", 0),
-                        "profile_views": p.get("total_views", 0),
-                        "articles_scanned": p.get("articles_scanned", 0),
-                    }
+    apply_data_protection(students_state, prev_data)
 
     class_stats = compute_class_stats(students_state)
 
@@ -1354,6 +1653,8 @@ def main():
                     help="只跑 Gitee 抓取阶段")
     ap.add_argument("--csdn-only", action="store_true",
                     help="只跑 CSDN 抓取阶段")
+    ap.add_argument("--no-reuse", action="store_true",
+                    help="忽略 24h stats 复用, 全部文章重抓 (每周日全量兜底用)")
     args = ap.parse_args()
 
     # 时间窗

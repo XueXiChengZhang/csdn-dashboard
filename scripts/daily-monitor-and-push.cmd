@@ -1,9 +1,32 @@
 @echo off
+REM ============================================================================
+REM daily-monitor-and-push.cmd — 全量抓取 + push (手动 / 兜底用)
+REM
+REM ⚠ 2026-10-21 起, 每日定时任务**不再**跑这个文件:
+REM   00:00 -> incremental-monitor.cmd  (增量, 轻量, 阅读量每天都会涨)
+REM   05:30 -> gitee-monitor.cmd        (只刷 Gitee, 不碰 CSDN)
+REM   周日03:00 -> weekly-full-monitor.cmd (全量兜底)
+REM   原因: 两个定时任务都跑全量 CSDN, 第二次必然被 521 风控限流,
+REM         于是把第一次的好数据覆盖成 0 (7604 -> 1297)。
+REM
+REM 本文件保留给"手动全量"用, 例如想立刻刷新一次完整数据时。
+REM ============================================================================
 chcp 65001 >nul
-cd /d D:\WebArchives\csdn-dashboard
+setlocal
+set SCRIPT_DIR=%~dp0
+set DASHBOARD_DIR=%SCRIPT_DIR%..
+set PYTHON=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\python.exe
+set LOGDIR=%DASHBOARD_DIR%\logs
+if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
-REM 1. 抓数据
-C:\Users\Administrator\AppData\Local\Programs\Python\Python314\python.exe scripts\csdn-monitor-v2.py --force-now
+cd /d "%DASHBOARD_DIR%"
+
+REM 1. 全量抓取 (--no-reuse: 忽略 24h 复用, 每篇都重抓)
+"%PYTHON%" "%SCRIPT_DIR%csdn-monitor-v2.py" --force-now --no-reuse >> "%LOGDIR%\full-monitor.log" 2>&1
+if errorlevel 1 (
+    echo [%date% %time%] FULL MONITOR FAILED
+    exit /b 1
+)
 
 REM 2. 如果有变化, commit + push
 if exist data.json (
@@ -11,18 +34,19 @@ if exist data.json (
     git diff --cached --quiet
     if errorlevel 1 (
         git commit -m "data: %date:~0,10% 自动更新"
-        REM 3. push 优先 HTTPS,失败回退 SSH (Ma: 家里 HTTPS 443 经常被屏蔽,SSH 更稳)
-        git push origin main
+        REM push 优先 HTTPS,失败回退 SSH (Ma: 家里 HTTPS 443 经常被屏蔽,SSH 更稳)
+        REM pack flags 避开 Windows 上 git push 的 OOM
+        git -c pack.window=0 -c pack.depth=0 push origin main
         if errorlevel 1 (
             echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
             git remote set-url origin git@github.com:XueXiChengZhang/csdn-dashboard.git
-            git push origin main
+            git -c pack.window=0 -c pack.depth=0 push origin main
             git remote set-url origin https://github.com/XueXiChengZhang/csdn-dashboard.git
         )
     )
 )
 
-REM 4. 推送后, 检查是否同步
+REM 3. 推送后, 检查是否同步
 git fetch origin main >nul 2>&1
 for /f "tokens=*" %%i in ('git rev-parse HEAD') do set LOCAL=%%i
 for /f "tokens=*" %%i in ('git rev-parse origin/main') do set REMOTE=%%i
@@ -31,3 +55,4 @@ if not "%LOCAL%"=="%REMOTE%" (
 ) else (
     echo [%date% %time%] In sync OK
 )
+endlocal
