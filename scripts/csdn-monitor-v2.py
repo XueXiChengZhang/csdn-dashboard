@@ -1140,6 +1140,18 @@ def send_feishu(text, dry=False, attachment=None):
     if not openclaw_cmd:
         print("[feishu] ERROR: openclaw not found")
         return False
+    # stdout 被重定向到日志文件时, 代码页可能是 GBK, 打印 emoji 会抛
+    # UnicodeEncodeError —— 那会让"其实已经发成功"看起来像"发送失败"。
+    # 所以这里统一用一个**不会因为编码问题炸掉**的打印函数。
+    def safe_print(msg):
+        try:
+            print(msg)
+        except UnicodeEncodeError:
+            try:
+                print(msg.encode("ascii", "replace").decode("ascii"))
+            except Exception:
+                pass
+
     try:
         cmd = [openclaw_cmd, "message", "send",
                "--channel", "feishu",
@@ -1152,16 +1164,16 @@ def send_feishu(text, dry=False, attachment=None):
                                 encoding="utf-8", errors="replace")
         out = (result.stdout or "") + (result.stderr or "")
         if result.returncode != 0:
-            print(f"[feishu] failed: rc={result.returncode} out={out[:300]}")
+            safe_print(f"[feishu] failed: rc={result.returncode} out={out[:300]}")
             return False
-        print(f"[feishu] sent ok, {len(text)} chars; out={out[:160]}")
+        safe_print(f"[feishu] sent ok, {len(text)} chars; out={out[:160]}")
         # extract message_id from output if present
         m = re.search(r'(?:message_id|msg_id|"id")\s*[:=]\s*"?([A-Za-z0-9_-]+)"?', out)
         if m:
-            print(f"[feishu] message_id: {m.group(1)}")
+            safe_print(f"[feishu] message_id: {m.group(1)}")
         return True
     except Exception as e:
-        print(f"[feishu] exception: {e}")
+        safe_print(f"[feishu] exception: {type(e).__name__}: {e}")
         return False
 
 
