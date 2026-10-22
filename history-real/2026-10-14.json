@@ -1,0 +1,1115 @@
+{
+  "date": "2026-10-14",
+  "snapshots": [
+    {
+      "at": "2026-10-14T00:00:08",
+      "total_students": 34,
+      "total_posts": 282,
+      "class_stats": {
+        "computed_at": "2026-10-14T00:00:08",
+        "students_total": 34,
+        "students_with_csdn": 34,
+        "students_active": 33,
+        "students_inactive": 1,
+        "csdn": {
+          "total_posts": 282,
+          "total_views": 46955,
+          "total_likes": 56527,
+          "total_comments": 44733,
+          "total_collections": 99689,
+          "avg_posts_per_active": 8.55,
+          "avg_views_per_student": 1381.0
+        },
+        "gitee": {
+          "students_with_repo": 32,
+          "total_commits": 12,
+          "total_stars": 0,
+          "total_forks": 0,
+          "avg_commits_per_student": 0.4
+        }
+      },
+      "students_summary": [
+        {
+          "sid": "240110103",
+          "name": "李瑞",
+          "post_count": 10,
+          "total_views": 6800,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110102",
+          "name": "庞嘉良",
+          "post_count": 3,
+          "total_views": 565,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110106",
+          "name": "武明光",
+          "post_count": 8,
+          "total_views": 1420,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110108",
+          "name": "陈艳",
+          "post_count": 11,
+          "total_views": 1619,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110110",
+          "name": "李振宇",
+          "post_count": 3,
+          "total_views": 494,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110112",
+          "name": "韩博",
+          "post_count": 11,
+          "total_views": 1615,
+          "gitee_ok": true,
+          "gitee_commit_count": 11,
+          "gitee_sha": "2df0e75",
+          "gitee_date": "2026-10-12T09:48:08+08:00"
+        },
+        {
+          "sid": "240110113",
+          "name": "牛佳祺",
+          "post_count": 10,
+          "total_views": 1202,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110104",
+          "name": "彭轩昊",
+          "post_count": 0,
+          "total_views": 0,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110114",
+          "name": "高宾",
+          "post_count": 11,
+          "total_views": 1350,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110115",
+          "name": "董泽玉",
+          "post_count": 3,
+          "total_views": 361,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110117",
+          "name": "韩泽威",
+          "post_count": 11,
+          "total_views": 1219,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110118",
+          "name": "黄中旭",
+          "post_count": 10,
+          "total_views": 1572,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110119",
+          "name": "康子健",
+          "post_count": 5,
+          "total_views": 730,
+          "gitee_ok": true,
+          "gitee_commit_count": 1,
+          "gitee_sha": "d7d7803",
+          "gitee_date": "2026-09-09T00:59:45+00:00"
+        },
+        {
+          "sid": "240110120",
+          "name": "杨智",
+          "post_count": 2,
+          "total_views": 337,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-10-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110121",
+          "name": "吕致迅",
+          "post_count": 10,
+          "total_views": 1971,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110122",
+          "name": "季政科",
+          "post_count": 8,
+          "total_views": 1044,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110126",
+          "name": "刘名昊",
+          "post_count": 4,
+          "total_views": 669,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-14T00:00:00+08:00"
+        },
+        {
+          "sid": "240110128",
+          "name": "李可欣",
+          "post_count": 13,
+          "total_views": 1533,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110129",
+          "name": "冯雪娇",
+          "post_count": 11,
+          "total_views": 2158,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110130",
+          "name": "吕涵",
+          "post_count": 10,
+          "total_views": 1294,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110201",
+          "name": "郑翔",
+          "post_count": 10,
+          "total_views": 1637,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110207",
+          "name": "吴梦瑶",
+          "post_count": 9,
+          "total_views": 1251,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-11T00:00:00+08:00"
+        },
+        {
+          "sid": "240110209",
+          "name": "沈亿",
+          "post_count": 10,
+          "total_views": 1299,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110212",
+          "name": "张昊",
+          "post_count": 11,
+          "total_views": 1865,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110213",
+          "name": "杜广庆",
+          "post_count": 11,
+          "total_views": 1703,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110215",
+          "name": "郑泽镪",
+          "post_count": 12,
+          "total_views": 2121,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110220",
+          "name": "任晓莉",
+          "post_count": 8,
+          "total_views": 1249,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110221",
+          "name": "王森",
+          "post_count": 11,
+          "total_views": 1688,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110224",
+          "name": "王润田",
+          "post_count": 1,
+          "total_views": 216,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-17T00:00:00+08:00"
+        },
+        {
+          "sid": "240110225",
+          "name": "赵丁闫",
+          "post_count": 8,
+          "total_views": 703,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-10-05T00:00:00+08:00"
+        },
+        {
+          "sid": "240110226",
+          "name": "王明硕",
+          "post_count": 12,
+          "total_views": 1722,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110227",
+          "name": "张宇梦",
+          "post_count": 8,
+          "total_views": 1064,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-11T00:00:00+08:00"
+        },
+        {
+          "sid": "240110232",
+          "name": "王翼洲",
+          "post_count": 11,
+          "total_views": 1653,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110233",
+          "name": "王杰",
+          "post_count": 6,
+          "total_views": 831,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-21T00:00:00+08:00"
+        }
+      ]
+    },
+    {
+      "at": "2026-10-14T05:30:05",
+      "total_students": 34,
+      "total_posts": 282,
+      "class_stats": {
+        "computed_at": "2026-10-14T05:30:05",
+        "students_total": 34,
+        "students_with_csdn": 34,
+        "students_active": 33,
+        "students_inactive": 1,
+        "csdn": {
+          "total_posts": 282,
+          "total_views": 47301,
+          "total_likes": 44622,
+          "total_comments": 37294,
+          "total_collections": 86034,
+          "avg_posts_per_active": 8.55,
+          "avg_views_per_student": 1391.2
+        },
+        "gitee": {
+          "students_with_repo": 32,
+          "total_commits": 0,
+          "total_stars": 0,
+          "total_forks": 0,
+          "avg_commits_per_student": 0.0
+        }
+      },
+      "students_summary": [
+        {
+          "sid": "240110102",
+          "name": "庞嘉良",
+          "post_count": 3,
+          "total_views": 568,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110103",
+          "name": "李瑞",
+          "post_count": 10,
+          "total_views": 6822,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110108",
+          "name": "陈艳",
+          "post_count": 11,
+          "total_views": 1631,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110106",
+          "name": "武明光",
+          "post_count": 8,
+          "total_views": 1428,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110110",
+          "name": "李振宇",
+          "post_count": 3,
+          "total_views": 498,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110112",
+          "name": "韩博",
+          "post_count": 11,
+          "total_views": 1629,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-10-12T00:00:00+08:00"
+        },
+        {
+          "sid": "240110113",
+          "name": "牛佳祺",
+          "post_count": 10,
+          "total_views": 1212,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110114",
+          "name": "高宾",
+          "post_count": 11,
+          "total_views": 1365,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110115",
+          "name": "董泽玉",
+          "post_count": 3,
+          "total_views": 364,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110117",
+          "name": "韩泽威",
+          "post_count": 11,
+          "total_views": 1230,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110104",
+          "name": "彭轩昊",
+          "post_count": 0,
+          "total_views": 0,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110118",
+          "name": "黄中旭",
+          "post_count": 10,
+          "total_views": 1585,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110119",
+          "name": "康子健",
+          "post_count": 5,
+          "total_views": 735,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110120",
+          "name": "杨智",
+          "post_count": 2,
+          "total_views": 347,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-10-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110121",
+          "name": "吕致迅",
+          "post_count": 10,
+          "total_views": 1986,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110122",
+          "name": "季政科",
+          "post_count": 8,
+          "total_views": 1053,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110126",
+          "name": "刘名昊",
+          "post_count": 4,
+          "total_views": 673,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-14T00:00:00+08:00"
+        },
+        {
+          "sid": "240110128",
+          "name": "李可欣",
+          "post_count": 13,
+          "total_views": 1547,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110129",
+          "name": "冯雪娇",
+          "post_count": 11,
+          "total_views": 2170,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110130",
+          "name": "吕涵",
+          "post_count": 10,
+          "total_views": 1303,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110201",
+          "name": "郑翔",
+          "post_count": 10,
+          "total_views": 1647,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110207",
+          "name": "吴梦瑶",
+          "post_count": 9,
+          "total_views": 1260,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-11T00:00:00+08:00"
+        },
+        {
+          "sid": "240110209",
+          "name": "沈亿",
+          "post_count": 10,
+          "total_views": 1311,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110212",
+          "name": "张昊",
+          "post_count": 11,
+          "total_views": 1885,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110213",
+          "name": "杜广庆",
+          "post_count": 11,
+          "total_views": 1714,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110215",
+          "name": "郑泽镪",
+          "post_count": 12,
+          "total_views": 2144,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110220",
+          "name": "任晓莉",
+          "post_count": 8,
+          "total_views": 1257,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110221",
+          "name": "王森",
+          "post_count": 11,
+          "total_views": 1700,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110224",
+          "name": "王润田",
+          "post_count": 1,
+          "total_views": 217,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-17T00:00:00+08:00"
+        },
+        {
+          "sid": "240110225",
+          "name": "赵丁闫",
+          "post_count": 8,
+          "total_views": 711,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-10-05T00:00:00+08:00"
+        },
+        {
+          "sid": "240110226",
+          "name": "王明硕",
+          "post_count": 12,
+          "total_views": 1735,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110227",
+          "name": "张宇梦",
+          "post_count": 8,
+          "total_views": 1073,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-11T00:00:00+08:00"
+        },
+        {
+          "sid": "240110232",
+          "name": "王翼洲",
+          "post_count": 11,
+          "total_views": 1664,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-09T00:00:00+08:00"
+        },
+        {
+          "sid": "240110233",
+          "name": "王杰",
+          "post_count": 6,
+          "total_views": 837,
+          "gitee_ok": true,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": "2026-09-21T00:00:00+08:00"
+        }
+      ]
+    },
+    {
+      "at": "2026-10-14T09:28:24",
+      "total_students": 34,
+      "total_posts": 284,
+      "class_stats": {
+        "computed_at": "2026-10-14T09:28:24",
+        "students_total": 34,
+        "students_with_csdn": 34,
+        "students_active": 33,
+        "students_inactive": 1,
+        "csdn": {
+          "total_posts": 284,
+          "total_views": 47866,
+          "total_likes": 54838,
+          "total_comments": 40888,
+          "total_collections": 83900,
+          "avg_posts_per_active": 8.61,
+          "avg_views_per_student": 1407.8
+        },
+        "gitee": {
+          "students_with_repo": 0,
+          "total_commits": 0,
+          "total_stars": 0,
+          "total_forks": 0,
+          "avg_commits_per_student": 0
+        }
+      },
+      "students_summary": [
+        {
+          "sid": "240110102",
+          "name": "庞嘉良",
+          "post_count": 3,
+          "total_views": 575,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110103",
+          "name": "李瑞",
+          "post_count": 11,
+          "total_views": 6844,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110106",
+          "name": "武明光",
+          "post_count": 8,
+          "total_views": 1445,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110108",
+          "name": "陈艳",
+          "post_count": 11,
+          "total_views": 1654,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110110",
+          "name": "李振宇",
+          "post_count": 3,
+          "total_views": 504,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110112",
+          "name": "韩博",
+          "post_count": 11,
+          "total_views": 1651,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110113",
+          "name": "牛佳祺",
+          "post_count": 10,
+          "total_views": 1232,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110114",
+          "name": "高宾",
+          "post_count": 11,
+          "total_views": 1388,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110117",
+          "name": "韩泽威",
+          "post_count": 11,
+          "total_views": 1255,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110115",
+          "name": "董泽玉",
+          "post_count": 3,
+          "total_views": 370,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110104",
+          "name": "彭轩昊",
+          "post_count": 0,
+          "total_views": 0,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110118",
+          "name": "黄中旭",
+          "post_count": 10,
+          "total_views": 1609,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110119",
+          "name": "康子健",
+          "post_count": 5,
+          "total_views": 745,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110120",
+          "name": "杨智",
+          "post_count": 2,
+          "total_views": 351,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110121",
+          "name": "吕致迅",
+          "post_count": 11,
+          "total_views": 2009,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110122",
+          "name": "季政科",
+          "post_count": 8,
+          "total_views": 1069,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110126",
+          "name": "刘名昊",
+          "post_count": 4,
+          "total_views": 681,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110129",
+          "name": "冯雪娇",
+          "post_count": 11,
+          "total_views": 2193,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110128",
+          "name": "李可欣",
+          "post_count": 13,
+          "total_views": 1574,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110130",
+          "name": "吕涵",
+          "post_count": 10,
+          "total_views": 1323,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110201",
+          "name": "郑翔",
+          "post_count": 10,
+          "total_views": 1667,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110207",
+          "name": "吴梦瑶",
+          "post_count": 9,
+          "total_views": 1278,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110209",
+          "name": "沈亿",
+          "post_count": 10,
+          "total_views": 1331,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110213",
+          "name": "杜广庆",
+          "post_count": 11,
+          "total_views": 1748,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110212",
+          "name": "张昊",
+          "post_count": 11,
+          "total_views": 1926,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110215",
+          "name": "郑泽镪",
+          "post_count": 12,
+          "total_views": 2168,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110220",
+          "name": "任晓莉",
+          "post_count": 8,
+          "total_views": 1267,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110221",
+          "name": "王森",
+          "post_count": 11,
+          "total_views": 1724,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110224",
+          "name": "王润田",
+          "post_count": 1,
+          "total_views": 218,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110225",
+          "name": "赵丁闫",
+          "post_count": 8,
+          "total_views": 720,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110226",
+          "name": "王明硕",
+          "post_count": 12,
+          "total_views": 1748,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110227",
+          "name": "张宇梦",
+          "post_count": 8,
+          "total_views": 1081,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110232",
+          "name": "王翼洲",
+          "post_count": 11,
+          "total_views": 1675,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        },
+        {
+          "sid": "240110233",
+          "name": "王杰",
+          "post_count": 6,
+          "total_views": 843,
+          "gitee_ok": false,
+          "gitee_commit_count": 0,
+          "gitee_sha": "",
+          "gitee_date": ""
+        }
+      ]
+    }
+  ]
+}

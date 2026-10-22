@@ -98,6 +98,27 @@ from csdn_stats import (  # noqa: E402
 
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+# ---------- stdout 编码兜底 (必须在 import 之后, 且在任何 print 之前) ----------
+# 计划任务 / 手动运行时 stdout 可能是 GBK(936), 非 ASCII 会抛 UnicodeEncodeError。
+# ★ 本脚本的 log() 里全是 emoji (⚠️👁️🆕♻️), 在 GBK 下会直接崩在抓取中途。
+#   更糟的是崩之前的那几行 print 会被上层 except 吞掉 -> 静默丢数据。
+def safe_print(msg, **kwargs):
+    """打印任何内容都不会因为编码问题炸掉。"""
+    try:
+        print(msg, **kwargs)
+    except UnicodeEncodeError:
+        try:
+            print(msg.encode("ascii", "replace").decode("ascii"), **kwargs)
+        except Exception:
+            pass
+
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0")
 CSDN_HEADERS = {
@@ -119,6 +140,11 @@ CSDN_MIN_INTERVAL = float(os.environ.get("CSDN_MIN_INTERVAL", "2.2"))
 CSDN_JITTER = float(os.environ.get("CSDN_JITTER", "0.6"))
 LIMITER = RateLimiter(min_interval=CSDN_MIN_INTERVAL, jitter=CSDN_JITTER)
 
+# ★ 521 (CSDN 风控) 命中后的冷却秒数。
+#   521 是 IP 级封禁, 持续分钟级 —— 5~6 秒的冷却等于没冷却
+#   (实测 6/7 篇两次尝试全挂)。默认 45 秒。
+CSDN_521_COOLDOWN = float(os.environ.get("CSDN_521_COOLDOWN", "45"))
+
 REQUESTS = 0
 
 # 连续失败多少次就放弃这个学生的 stats (交给保护逻辑兜底, 别死磕)
@@ -127,7 +153,7 @@ MAX_CONSECUTIVE_FAILURES = 5
 
 def log(msg):
     line = f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"
-    print(line, flush=True)
+    safe_print(line, flush=True)
     try:
         with open(LOG_PATH, "a", encoding="utf-8") as f:
             f.write(line + "\n")
@@ -136,7 +162,16 @@ def log(msg):
 
 
 def csdn_get(url, timeout=15, retries=1):
-    """带全局限流 + 计数的 GET。521 = CSDN 风控, 会触发全局冷却。"""
+    """带全局限流 + 计数的 GET。521 = CSDN 风控, 会触发全局冷却。
+
+    ★ 2026-10-22 (R2): 521 的冷却从 5~6 秒改成 **45 秒**。
+      原因: CSDN 的 521 是 **IP 级风控, 封禁持续分钟级**, 不是"下个请求
+      就恢复"的软限流。实测 (2026-10-22): 只冷却 5~6 秒时, 6/7 篇文章
+      两次尝试**全挂** —— 封禁根本没解除就重试, 当然还是 521, 等于白烧
+      请求。45 秒是分钟级封禁的量级, 冷却完再试才有意义。
+      副作用: 45 秒 × 6 次 ≈ 多花 4.5 分钟, 整轮 24→29 分钟,
+      任务上限 2 小时, 没有问题。
+    """
     global REQUESTS
     last_err = None
     for attempt in range(retries + 1):
@@ -145,13 +180,17 @@ def csdn_get(url, timeout=15, retries=1):
         try:
             r = requests.get(url, timeout=timeout, headers=CSDN_HEADERS)
             if r.status_code in (521, 403, 429):
-                # 撞风控: 冷却 + 拉长基准间隔 (自适应退避)
+                # 撞风控: 拉长基准间隔 (自适应退避) + 按封禁时长冷却
                 LIMITER.escalate(1.5)
-                LIMITER.penalize(5.0 + attempt * 5)
                 last_err = f"HTTP {r.status_code}"
-                log(f"    ⚠️ {last_err} (风控) url={url[:70]}")
                 if attempt < retries:
+                    LIMITER.penalize(CSDN_521_COOLDOWN)
+                    log(f"    ⚠️ {last_err} (风控), {CSDN_521_COOLDOWN:.0f}s 冷却后重试 "
+                        f"url={url[:70]}")
                     continue
+                # 最后一次尝试: 短一点冷却, 免得白拖慢后面的学生
+                LIMITER.penalize(10.0)
+                log(f"    ⚠️ {last_err} (风控), 放弃本篇 url={url[:70]}")
             else:
                 LIMITER.decay()
             return r
@@ -168,14 +207,33 @@ def csdn_get(url, timeout=15, retries=1):
 
 
 # ---------- 列表抓取 ----------
+# CSDN 空博客页会显示这些字样 —— 用来区分"这个学生真没文章"和"被软反爬"
+EMPTY_BLOG_MARKERS = ("暂无博客", "暂无文章", "还没有发布", "暂无技术博客",
+                      "您还未发布", "无文章")
+
+
 def fetch_blog_list(username, max_pages=20):
-    """翻 CSDN 列表, 拿到所有可见文章 (增量模式用)"""
+    """翻 CSDN 列表, 拿到所有可见文章 (增量模式用)。
+
+    返回 (articles, reason):
+      reason = "ok"           正常抓到文章
+              "no_posts"     这个博客**真的没有文章** (HTTP 200 + 空状态标志)
+              "fetch_failed" 抓取失败 (HTTP 非 200 / 响应过短 / 没解析到文章块)
+
+    ★ 为什么要区分 (2026-10-22, R4):
+      以前这两种都走 `if not articles: skipped = "fetch_failed"`,
+      冯雪娇那次 fetch_failed **连一行日志都没有** —— 响应是 200,
+      但一个 blog-list-box 块都没解析到, `if not blocks: break` 静默返回空。
+      根本分不清"这个学生没发文章"和"我们被软反爬了"。
+    """
     all_articles = []
+    reason = "ok"
     for page in range(1, max_pages + 1):
         url = f"https://blog.csdn.net/{username}?type=blog&page={page}"
         r = csdn_get(url, timeout=15)
         if r.status_code != 200 or not r.text:
             log(f"  ⚠️ 抓列表 page {page} 失败 (HTTP {r.status_code})")
+            reason = "fetch_failed"
             break
         html = r.text
 
@@ -184,6 +242,23 @@ def fetch_blog_list(username, max_pages=20):
             html, re.DOTALL,
         )
         if not blocks:
+            # ★ 兜底 (同 v2 的做法): CSDN 偶尔改版, class 不再是 blog-list-box,
+            #   但 <article> 标签还在。
+            blocks = re.findall(r'<article[^>]*>(.*?)</article>', html, re.DOTALL)
+        if not blocks:
+            # 一个文章块都没解析到 —— 必须分清"真没文章"和"被软反爬"
+            if len(html) < 800:
+                log(f"  ⚠️ 抓列表 page {page} 异常: HTTP 200 但响应过短 "
+                    f"(len={len(html)}), 疑似软反爬")
+                reason = "fetch_failed"
+            elif any(m in html for m in EMPTY_BLOG_MARKERS):
+                log(f"  ℹ️ 抓列表 page {page}: HTTP 200 且页面显示'暂无文章' "
+                    f"(len={len(html)}) -> 该博客确实没有文章")
+                reason = "no_posts"
+            else:
+                log(f"  ⚠️ 抓列表 page {page} 异常: HTTP 200 但没解析到文章块 "
+                    f"(len={len(html)}), 疑似软反爬")
+                reason = "fetch_failed"
             break
 
         for block in blocks:
@@ -194,6 +269,11 @@ def fetch_blog_list(username, max_pages=20):
             if not m:
                 continue
             link, article_id = m.group(1), m.group(2)
+            # ★ 安全过滤: 只认**本人**的文章链接。
+            #   兜底用的通用 <article> 正则会连"相关推荐"里的**别人**的文章
+            #   一起捞进来, 那些会被当成"新文章"写进这个学生的数据里 —— 脏数据。
+            if f"/{username}/article/details/" not in link:
+                continue
 
             m_t = re.search(r'<h[34][^>]*>(.*?)</h[34]>', block, re.DOTALL)
             title = re.sub(r"<[^>]+>", "", m_t.group(1)).strip() if m_t else ""
@@ -215,7 +295,7 @@ def fetch_blog_list(username, max_pages=20):
         if len(blocks) < 15:
             break
 
-    return all_articles
+    return all_articles, reason
 
 
 def parse_relative_date(raw):
@@ -252,6 +332,14 @@ def fetch_article_stats(article_id, username):
     """
     url = f"https://blog.csdn.net/{username}/article/details/{article_id}"
     r = csdn_get(url, timeout=15)
+    # ★ 2026-10-22 (R3): 详情页 404 = 文章已被作者从 CSDN 删除
+    #   (列表页还挂着, 但文章没了)。这不是"抓取失败", 重试多少次都是 404 ——
+    #   实测文章 164961487 (吕涵) 每次轮到它就白烧一个请求, 永远失败,
+    #   385 篇里就它一篇 views 恒为 None。
+    if r.status_code == 404:
+        log(f"    🗑️ {article_id} 详情页 404 (文章已从 CSDN 删除)")
+        return {"deleted": True, "views": None, "likes": None,
+                "comments": None, "collections": None}
     if r.status_code != 200 or not r.text or len(r.text) < 500:
         log(f"    ⚠️ 抓 {article_id} 失败 (HTTP {r.status_code}, len={len(r.text or '')})")
         return None
@@ -302,12 +390,19 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     stats = {
         "new": 0, "new_posts": 0, "updated": 0, "rotated": 0, "reused": 0,
         "missing": 0, "fetched": 0, "failed": 0, "skipped": None,
+        "deleted": 0, "backfill": 0, "backfilled": 0, "backfill_deferred": 0,
     }
 
     # --- A. 列表抓取 ---
-    articles = fetch_blog_list(username, max_pages=max_pages)
+    articles, list_reason = fetch_blog_list(username, max_pages=max_pages)
     if not articles:
-        stats["skipped"] = "fetch_failed"
+        # ★ 区分"确实没文章"和"被风控/软反爬" (R4) —— 以前两种都叫
+        #   fetch_failed, 日志里连一行都没有, 根本查不出原因。
+        stats["skipped"] = list_reason or "fetch_failed"
+        if stats["skipped"] == "no_posts":
+            log(f"  ℹ️ {username} 的 CSDN 博客没有文章 (不是抓取失败)")
+        else:
+            log(f"  ⚠️ {username} 列表抓取失败 (疑似风控/软反爬), 本轮跳过")
         return stats
     csdn_by_id = {a["article_id"]: a for a in articles}
     csdn_ids = set(csdn_by_id.keys())
@@ -341,14 +436,21 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     old_posts = [p for aid, p in existing_by_id.items() if aid in csdn_ids]
     old_posts.sort(key=_post_sort_key, reverse=True)
 
+    # ★ 2026-10-22 (R3): 已删除的文章 (详情页 404) **不再进任何"要重抓"的队列**
+    #   —— 否则它每天都会被"最近 N 篇"或轮转池捞到, 白烧一个请求, 永远失败。
+    #   _deleted_on_csdn 是**持久标记** (写进 data.json), 以后的每天都会跳过它。
+    deleted_old = [p for p in old_posts if p.get("_deleted_on_csdn")]
+    live_old = [p for p in old_posts if not p.get("_deleted_on_csdn")]
+    stats["deleted"] = len(deleted_old)
+
     if full:
-        # 全量: 所有老文章都重抓
-        recent_set = {id(p) for p in old_posts}
+        # 全量: 所有老文章都重抓 (已删除的除外)
+        recent_set = {id(p) for p in live_old}
         rotate_set = set()
     else:
-        recent_set = {id(p) for p in old_posts[:recent_n]}
-        # 轮转池 = 除去最近 N 篇的老文章
-        pool = old_posts[recent_n:]
+        recent_set = {id(p) for p in live_old[:recent_n]}
+        # 轮转池 = 除去最近 N 篇的老文章 (已删除的不进池)
+        pool = live_old[recent_n:]
         if pool and rotate_m > 0:
             offset = (datetime.now().toordinal() * rotate_m) % len(pool)
             picked = pool[offset:offset + rotate_m]
@@ -374,8 +476,8 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
             to_fetch.append((p, "recent"))
         elif id(p) in rotate_set:
             to_fetch.append((p, "rotate"))
-    backfill_posts = [
-        p for p in old_posts
+    backfill_candidates = [
+        p for p in live_old
         if id(p) not in recent_set and id(p) not in rotate_set
         and not isinstance(p.get("views"), int)
     ]
@@ -385,16 +487,26 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     #   整个跑批会超时。限成每人 3 篇 -> 34 × 3 = 102 个请求 ≈ 4.3 分钟,
     #   剩下的分摊到后面几天补完 (它们的 views 还是 None, 所以一直在队列里)。
     if backfill_per_student > 0:
-        backfill_posts = backfill_posts[:backfill_per_student]
+        backfill_posts = backfill_candidates[:backfill_per_student]
+    else:
+        backfill_posts = backfill_candidates
     for p in backfill_posts:
         to_fetch.append((p, "backfill"))
 
-    stats["reused"] = len(old_posts) - len(recent_set) - len(rotate_set) - len(backfill_posts)
     stats["backfill"] = len(backfill_posts)
+    # ★ R8: 被 backfill 截断顺延的那几篇今天不补 (明天继续), 但它们本轮
+    #   确实**没有重抓**, 用的还是上次的值 —— 单独记一笔, 别混进"补历史"。
+    stats["backfill_deferred"] = len(backfill_candidates) - len(backfill_posts)
 
     # --- 抓 stats (带限流 + 连续失败放弃 + 全局时间预算) ---
     consecutive_failures = 0
     abandoned = False
+    # ★ R8: 记下本轮**真的发起过请求**的老文章。"复用" 的准确定义是
+    #   "本轮没重抓、值还是上次的" —— 计划内却因时间预算/连续失败放弃/
+    #   没有 article_id 而没抓成的, 以及被 backfill 截断顺延的, 都算复用。
+    #   以前用 len(live_old) - recent - rotate - backfill 去算, 这些漏掉的
+    #   情况会让复用数被低估。
+    attempted = set()
     now_iso = datetime.now().isoformat(timespec="seconds")
     for i, (p, kind) in enumerate(to_fetch, 1):
         if abandoned:
@@ -410,7 +522,18 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
         aid = article_id_from_link(p.get("link"))
         if not aid:
             continue
+        attempted.add(id(p))
         s = fetch_article_stats(aid, username)
+        if s and s.get("deleted"):
+            # ★ 2026-10-22 (R3): 文章在 CSDN 上已被删除 —— 打标记, **不再重试**,
+            #   也不计入"失败" (失败会触发连续失败放弃, 把后面的文章也搭进去)。
+            #   数据保留 (不删文章), 只是标记出来, 避免误伤。
+            p["_deleted_on_csdn"] = True
+            p["_deleted_at"] = now_iso
+            stats["deleted"] = stats.get("deleted", 0) + 1
+            consecutive_failures = 0
+            log(f"    🗑️ {aid} 已从 CSDN 删除 (404), 标记 _deleted_on_csdn, 以后不再重抓")
+            continue
         if s:
             consecutive_failures = 0
             old_views = p.get("views")
@@ -442,6 +565,8 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     # --- E. 复用: 其余老文章原样保留 (views 不变) ---
     #     这里不做任何修改 —— 这正是 Bug A 的错误做法;
     #     区别在于: 上面的 recent/rotate 已经把"会增长"的部分重抓了。
+    # ★ R8: "复用" = 本轮**真的没重抓**的老文章 (值还是上次的)。
+    stats["reused"] = len(live_old) - sum(1 for p in live_old if id(p) in attempted)
 
     # --- 组装最终 posts ---
     all_posts = new_posts_list + existing_posts
@@ -449,6 +574,9 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     for p in all_posts:
         p.pop("_needs_stats_update", None)
         p.pop("_missing_on_csdn", None)
+        # ★ _deleted_on_csdn **不能** pop 掉 —— 它是"这篇文章在 CSDN 上没了"
+        #   的持久标记, 留着才能让以后每天的"最近 N 篇"/轮转池/补历史都跳过它
+        #   (否则它又会被捞到, 白烧一个请求, 永远失败)。
     # 标记 CSDN 上已经删掉的 (不删数据, 只标记, 避免误伤)
     for p in existing_posts:
         aid = article_id_from_link(p.get("link"))
@@ -534,7 +662,10 @@ def write_snapshot(d):
         },
     }
     (snap_dir / "snapshot.json").write_text(
-        json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+        # R10: 紧凑格式 (和 v2 的 save_snapshot 保持一致 ——
+        #     否则每天 00:00 增量跑完会把它改回缩进形态, 紧凑化白做)
+        json.dumps(snap, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8")
 
 
 def write_history_snapshot(d):
@@ -590,6 +721,135 @@ def write_history_snapshot(d):
     path.write_text(json.dumps(hist, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def compute_class_stats(d):
+    """按 v2 (csdn-monitor-v2.py: compute_class_stats) **同样的结构**重算班级统计。
+
+    ★ 2026-10-22 (R5): 以前增量脚本写 data.json 时**完全不碰 class_stats**
+      —— 班级统计永远是上一次全量跑的那份数字, 增量抓到的阅读量增长
+      一条都没进 class_stats。结果: 仪表盘/日报上的"班级总阅读""人均阅读"
+      常年停在全量那天的数字, 增量抓了个寂寞。
+
+    注意: v2 的 compute_class_stats 吃的是**内存态** students_state
+    (字段在 s["stats"] 里), 而本脚本拿到的是 **data.json 落盘态**
+    (字段已经摊平在 s 顶层)。这里按落盘态读, 但**输出的 key 完全一致**,
+    前端/报告读 class_stats 的地方不用改。
+    """
+    students = d.get("students", []) or []
+    total = len(students)
+    has_csdn = sum(1 for s in students if s.get("csdn_username"))
+    active = sum(1 for s in students if len(s.get("posts", []) or []) > 0)
+    total_posts = sum(len(s.get("posts", []) or []) for s in students)
+    total_views = sum(s.get("total_views") or 0 for s in students)
+    total_likes = sum(s.get("total_likes") or 0 for s in students)
+    total_comments = sum(s.get("total_comments") or 0 for s in students)
+    total_collections = sum(s.get("total_collections") or 0 for s in students)
+
+    g_ok = sum(1 for s in students if (s.get("gitee") or {}).get("ok"))
+    g_total_commits = sum((s.get("gitee") or {}).get("commit_count", 0) or 0
+                           for s in students)
+    g_total_stars = sum((s.get("gitee") or {}).get("stars", 0) or 0
+                         for s in students)
+    g_total_forks = sum((s.get("gitee") or {}).get("forks", 0) or 0
+                         for s in students)
+
+    return {
+        "computed_at": d.get("last_update") or datetime.now().isoformat(timespec="seconds"),
+        "students_total": total,
+        "students_with_csdn": has_csdn,
+        "students_active": active,
+        "students_inactive": total - active,
+        "csdn": {
+            "total_posts": total_posts,
+            "total_views": total_views,
+            "total_likes": total_likes,
+            "total_comments": total_comments,
+            "total_collections": total_collections,
+            "avg_posts_per_active": round(total_posts / active, 2) if active else 0,
+            "avg_views_per_student": round(total_views / total, 1) if total else 0,
+        },
+        "gitee": {
+            "students_with_repo": g_ok,
+            "total_commits": g_total_commits,
+            "total_stars": g_total_stars,
+            "total_forks": g_total_forks,
+            "avg_commits_per_student": round(g_total_commits / g_ok, 1) if g_ok else 0,
+        },
+    }
+
+
+def build_incremental_meta(d, elapsed, agg, students_ok, students_total,
+                            full=False, recent=4, rotate=2):
+    """构造 last_fetch_meta 的**增量块** (2026-10-22 R1: 按模式分块)。
+
+    ★ 关键约定: 本函数**只写 incremental 块**, **绝不碰 gitee 块**。
+      gitee 块是 csdn-monitor-v2.py 写的 —— 以前两个脚本抢同一个
+      last_fetch_meta 整个字典, 后写的赢, 增量那一跑的 438 个请求
+      被 gitee-only 整个抹掉 (仪表盘 19 小时假告警的根因)。
+
+    顶层汇总字段 (total_requests / success_count / fail_count) =
+    两个分块之和, 这样仪表盘一次就能同时看到"增量刷了"和"Gitee 刷了"。
+    """
+    meta = d.get("last_fetch_meta") or {}
+    git_block = meta.get("gitee") or {}
+    now_iso = d.get("last_update") or datetime.now().isoformat(timespec="seconds")
+    duration_ms = int(elapsed * 1000)
+
+    meta["fetched_at"] = now_iso
+    meta["duration_ms"] = duration_ms
+    meta["mode"] = "full" if full else "incremental"
+    meta["incremental"] = {
+        "fetched_at": now_iso,
+        "mode": "full" if full else "incremental",
+        "duration_ms": duration_ms,
+        "total_requests": REQUESTS,
+        "recent_per_student": recent,
+        "rotate_per_student": rotate,
+        "students_ok": students_ok,
+        "students_total": students_total,
+        "students_skipped": agg.get("skipped", 0),
+        "new_posts": agg.get("new", 0),
+        "updated_recent": agg.get("updated", 0),
+        "updated_rotated": agg.get("rotated", 0),
+        "backfilled": agg.get("backfilled", 0),
+        "reused": agg.get("reused", 0),
+        "failed": agg.get("failed", 0),
+        "deleted": agg.get("deleted", 0),
+        "class_total_views": agg.get("class_total_views", 0),
+        "class_total_views_all": agg.get("class_total_views_all", 0),
+    }
+    # 顶层汇总 = 两个分块之和 (仪表盘一次能同时看到增量和 Gitee)
+    meta["total_requests"] = REQUESTS + (git_block.get("total_requests") or 0)
+    meta["success_count"] = students_ok + (git_block.get("ok") or 0)
+    meta["fail_count"] = agg.get("skipped", 0) + (git_block.get("failed") or 0)
+    # 本次运行的明细 (日报"抓取健康度"行读它)
+    meta["last_run"] = {
+        "fetched_at": now_iso,
+        "mode": meta["mode"],
+        "csdn_ran": True,
+        "csdn_ms": duration_ms,
+        "gitee_ms": 0,
+        "duration_ms": duration_ms,
+        "total_requests": REQUESTS,
+        "students_ok": students_ok,
+        "students_total": students_total,
+        "gitee_ok": 0,
+        "gitee_empty": 0,
+        "reused_students": agg.get("skipped", 0),
+    }
+    return meta
+
+
+def class_total_line(covered, total, covered_sum, skipped, class_all):
+    """★ R8: 班级阅读合计那一行。
+
+    以前只打一个数 (本轮覆盖到的人的合计), 但仪表盘显示的是**全班**的数 ——
+    两个数不等 (63,112 vs 65,777), 日志不说清楚就像"少了几千阅读"。
+    现在明确说: 本次覆盖 N/M 人, 合计 X (K 人沿用上次数据, 全班 Y)。
+    """
+    return (f"👁️  本次覆盖 {covered}/{total} 人, 合计 {covered_sum:,} "
+            f"({skipped} 人沿用上次数据, 全班 {class_all:,})")
+
+
 def main():
     ap = argparse.ArgumentParser(description="CSDN 增量抓取 (Ma: 数据应该是增量的)")
     ap.add_argument("--all", action="store_true", help="所有学生")
@@ -635,7 +895,7 @@ def main():
     deadline = (t0 + args.max_minutes * 60) if args.max_minutes else None
     agg = {"new": 0, "new_posts": 0, "updated": 0, "rotated": 0, "reused": 0,
            "fetched": 0, "failed": 0, "skipped": 0, "backfill": 0, "backfilled": 0,
-           "budget_exhausted": 0}
+           "budget_exhausted": 0, "deleted": 0, "backfill_deferred": 0}
     total_views_sum = 0
     students_ok = 0
 
@@ -662,7 +922,9 @@ def main():
         total_views_sum += r.get("total_views", 0) or 0
         log(f"  🆕新{r['new']} 全抓{r['new_posts']} | ↻最近更新{r['updated']} "
             f"轮转{r['rotated']} | 🧹补历史{r.get('backfilled', 0)} | "
-            f"♻️复用{r['reused']} | 失败{r['failed']}")
+            f"♻️复用{r['reused']} | 失败{r['failed']}"
+            + (f" | ⏳顺延{r.get('backfill_deferred', 0)}" if r.get("backfill_deferred") else "")
+            + (f" | 🗑️已删除{r.get('deleted', 0)}" if r.get("deleted") else ""))
         log(f"  👁️ total_views={r['total_views']} (来源 {r['views_source']}, "
             f"profile={r['profile_views']}, 文章累加={r['article_views_sum']})")
 
@@ -675,12 +937,23 @@ def main():
     log(f"🆕 新文章 {agg['new']} (抓到 stats 的 {agg['new_posts']})")
     log(f"🔄 重抓 stats: 最近 {agg['updated']} + 轮转 {agg['rotated']} + "
         f"补历史 {agg['backfilled']} = {agg['fetched']} 篇")
-    log(f"♻️  复用旧值 {agg['reused']} 篇 (未重抓, 会按天轮转刷新)")
+    log(f"♻️  复用旧值 {agg['reused']} 篇 (本轮没重抓: 老文章按天轮转, "
+        f"没抓到 stats 的排队补历史)")
+    if agg.get("backfill_deferred"):
+        log(f"⏳  其中 {agg['backfill_deferred']} 篇是'补历史'顺延的 "
+            f"(backfill 每人有上限, 明天继续补)")
     log(f"❌ 失败 {agg['failed']} 篇")
+    if agg.get("deleted"):
+        log(f"🗑️ 已从 CSDN 删除 {agg['deleted']} 篇 (标记 _deleted_on_csdn, 以后不再重抓)")
     if agg.get("budget_exhausted"):
         log(f"⏱️  时间预算用尽, {agg['budget_exhausted']} 篇'补历史'留到下次 "
             f"(它们的 views 还是 None, 明天会继续补)")
-    log(f"👁️  班级 total_views 合计 = {total_views_sum}")
+    # ★ R8: 这个数只是**本轮覆盖到的人**的合计, 跳过的学生 (列表抓取失败)
+    #   沿用上次的数据。仪表盘显示的是**全班** (34 人) 的数, 两个数不等,
+    #   日志不说清楚就会看着像"少了几千阅读" —— 其实是口径不同。
+    class_all = sum(s.get("total_views") or 0 for s in d.get("students", []))
+    log(class_total_line(students_ok, len(targets), total_views_sum,
+                          agg['skipped'], class_all))
 
     if args.dry_run:
         log("🧪 --dry-run: 没有写 data.json")
@@ -688,27 +961,26 @@ def main():
 
     d["last_update"] = datetime.now().isoformat(timespec="seconds")
     d["total_posts"] = sum(len(s.get("posts", [])) for s in d.get("students", []))
-    meta = d.get("last_fetch_meta") or {}
-    meta["fetched_at"] = d["last_update"]
-    meta["mode"] = "full" if args.full else "incremental"
-    meta["duration_ms"] = int(elapsed * 1000)
-    meta["total_requests"] = REQUESTS
-    meta["incremental"] = {
-        "recent_per_student": args.recent,
-        "rotate_per_student": args.rotate,
-        "students_ok": students_ok,
-        "new_posts": agg["new"],
-        "updated_recent": agg["updated"],
-        "updated_rotated": agg["rotated"],
-        "backfilled": agg["backfilled"],
-        "reused": agg["reused"],
-        "failed": agg["failed"],
-        "class_total_views": total_views_sum,
-    }
+    # ★ 2026-10-22 (R5): 增量跑完**重算 class_stats** —— 否则班级总阅读/
+    #   人均阅读永远停在上一次全量跑的数字上, 增量抓到的增长体现不出来。
+    d["class_stats"] = compute_class_stats(d)
+    # ★ 2026-10-22 (R1): last_fetch_meta 改成**按模式分块**
+    #   - incremental 块 = 本脚本写的 (CSDN 抓取这一路)
+    #   - gitee 块       = csdn-monitor-v2.py 写的 (Gitee 抓取那一路)
+    #   两个脚本各写各的那块, **互不覆盖** —— 以前本脚本写的 438 个请求
+    #   会被 v2 的 gitee-only 整个抹掉 (仪表盘 19 小时假告警的根因)。
+    agg["class_total_views"] = total_views_sum
+    agg["class_total_views_all"] = sum(s.get("total_views") or 0
+                                       for s in d.get("students", []))
+    meta = build_incremental_meta(d, elapsed, agg, students_ok, len(targets),
+                                  full=args.full, recent=args.recent,
+                                  rotate=args.rotate)
     d["last_fetch_meta"] = meta
 
     with open(DATA_PATH, "w", encoding="utf-8") as f:
-        json.dump(d, f, ensure_ascii=False, indent=2)
+        # R10: 紧凑格式 —— 前端全部用 r.json() 解析, 缩进无关;
+        #      体积 -32% (传输/下载都快一截)
+        json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
 
     for _fn, _label in ((write_snapshot, "cache/csdn/snapshot.json"),
                         (write_history_snapshot, "history-real 快照")):

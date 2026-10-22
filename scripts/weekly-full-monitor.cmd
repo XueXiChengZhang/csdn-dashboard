@@ -15,6 +15,31 @@ REM
 REM --no-reuse: 忽略 24h 复用, 强制**每篇都重抓**。没有这个开关的话,
 REM   周日全量会把周日增量刚抓过的那几篇当成"24h 内已抓过"而跳过,
 REM   全量就名存实亡了。
+REM
+REM ★★★ R7 安全网 (2026-10-22) ★★★
+REM   这个任务**从未跑过一次** (上次运行 1999/11/30), 下次 2026/10/25 03:00。
+REM   而 --no-reuse 关掉的正是 24h 复用保护 —— 那是 2026-10-21 把
+REM   阅读量从 7,604 打成 1,297 的那个动作。同一条写入路径的故障已经
+REM   发生 7 次 (09-22 -67% / 09-30 -67% / 10-01 -39% / 10-02 -33% /
+REM   10-12 -100% / 10-19 -100% / 10-21 -83%), 10-16 那次 00:00 算出
+REM   50,686 被覆盖成 9,609, 仪表盘少了 81%。
+REM   它还用的是 `git add -A` —— 任何残缺结果都会被直接 commit + push。
+REM
+REM   所以本文件加了三道闸 (全部在 push 之前):
+REM     0) 备份   —— 跑之前把 data.json / snapshot.json / 当日归档存一份
+REM                  (带时间戳, 留最近 8 份, 在 cache/backup/)
+REM     1) 校验   —— 总阅读 < 上次 60% / 失败学生占比 > 20% /
+REM                  总文章 < 上次 70%  -> 任一成立就判不合格
+REM                  (比 apply_data_protection 的 C 臂严: C 臂只挡
+REM                   "总阅读 < 30%", 掉 40% 它挡不住)
+REM     2) 回滚   —— 校验不过 (或抓取直接报错) 就把备份原样恢复,
+REM                  **并且不 commit、不 push**
+REM
+REM   为什么**保留** --no-reuse 全量 (而不是改成限范围 --recent 8 --rotate 4):
+REM     全量能修复长期滞后的文章数据 (增量只碰最近 4 篇 + 轮转 2 篇,
+REM     老文章的 views 可能停在几周前), 限范围只是回避问题 —— 真出事了
+REM     数据还是错的, 而且错得没人知道。全量 + 严格的回滚校验 =
+REM     "敢跑全量, 但跑坏了自动退回去", 这才是根治。
 REM ============================================================================
 chcp 65001 >nul
 REM ★ 必须设 UTF-8 模式: 计划任务跑的时候没有 PYTHONIOENCODING/PYTHONUTF8,
@@ -30,18 +55,51 @@ set SCRIPT_DIR=%~dp0
 set DASHBOARD_DIR=%SCRIPT_DIR%..
 set PYTHON=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\python.exe
 set LOGDIR=%DASHBOARD_DIR%\logs
+set GUARDLOG=%LOGDIR%\weekly-guard.log
 if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
 cd /d "%DASHBOARD_DIR%"
 
+REM ---------------------------------------------------------------------------
+REM 0. R7 安全网 —— 备份 (没有备份就不敢跑)
+REM ---------------------------------------------------------------------------
+if exist "%DASHBOARD_DIR%\cache\backup\LATEST.txt" del /q "%DASHBOARD_DIR%\cache\backup\LATEST.txt"
+"%PYTHON%" "%SCRIPT_DIR%weekly_guard.py" --dir "%DASHBOARD_DIR%" backup --keep 8 >> "%GUARDLOG%" 2>&1
+if errorlevel 1 (
+    echo [%date% %time%] WEEKLY BACKUP FAILED - ABORT (没有备份就不跑全量)
+    exit /b 1
+)
+set BACKUP_DIR=
+if exist "%DASHBOARD_DIR%\cache\backup\LATEST.txt" set /p BACKUP_DIR=<"%DASHBOARD_DIR%\cache\backup\LATEST.txt"
+if not defined BACKUP_DIR (
+    echo [%date% %time%] WEEKLY BACKUP PATH UNKNOWN - ABORT
+    exit /b 1
+)
+echo [%date% %time%] weekly backup: %BACKUP_DIR%
+
+REM ---------------------------------------------------------------------------
 REM 1. 全量抓取 (含 Gitee), --no-reuse 强制每篇重抓
+REM ---------------------------------------------------------------------------
 "%PYTHON%" "%SCRIPT_DIR%csdn-monitor-v2.py" --force-now --no-reuse >> "%LOGDIR%\weekly-full-cron.log" 2>&1
 if errorlevel 1 (
-    echo [%date% %time%] WEEKLY FULL FAILED
+    echo [%date% %time%] WEEKLY FULL FAILED - 回滚到备份
+    "%PYTHON%" "%SCRIPT_DIR%weekly_guard.py" --dir "%DASHBOARD_DIR%" rollback --backup "%BACKUP_DIR%" >> "%GUARDLOG%" 2>&1
     exit /b 1
 )
 
-REM 2. 提交 + push
+REM ---------------------------------------------------------------------------
+REM 2. R7 安全网 —— 校验 (必须在 push 之前!)
+REM ---------------------------------------------------------------------------
+"%PYTHON%" "%SCRIPT_DIR%weekly_guard.py" --dir "%DASHBOARD_DIR%" check --backup "%BACKUP_DIR%" >> "%GUARDLOG%" 2>&1
+if errorlevel 1 (
+    echo [%date% %time%] WEEKLY VALIDATION FAILED - 回滚到备份, 不 commit 不 push
+    "%PYTHON%" "%SCRIPT_DIR%weekly_guard.py" --dir "%DASHBOARD_DIR%" rollback --backup "%BACKUP_DIR%" >> "%GUARDLOG%" 2>&1
+    exit /b 1
+)
+
+REM ---------------------------------------------------------------------------
+REM 3. 提交 + push (过了校验才轮到这一步)
+REM ---------------------------------------------------------------------------
 git add -A
 git diff --cached --quiet
 if errorlevel 1 (

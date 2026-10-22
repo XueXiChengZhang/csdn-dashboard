@@ -117,6 +117,126 @@ if (withViewsFilter) {
   check('人均阅读 > 0', avg > 0, `人均 ${avg}`);
 }
 
+// ---------- 4. index.html fetch_meta 分块 (R1) ----------
+console.log("\n[4] index.html fetch_meta 分块 (增量 + Gitee 同时可见)");
+const renderFetchMetaSrc = extractFunction(indexHtml, 'renderFetchMeta');
+const escapeHtmlSrc = extractFunction(indexHtml, 'escapeHtml');
+const relativeTimeSrc = extractFunction(indexHtml, 'relativeTime');
+const els = {};
+const fakeDoc = {
+  getElementById(id) {
+    if (!els[id]) els[id] = { textContent: '', innerHTML: '', classList: { add() {}, remove() {} } };
+    return els[id];
+  }
+};
+const renderFetchMeta = new Function('document', 'escapeHtml', 'relativeTime',
+  `${escapeHtmlSrc}\n${relativeTimeSrc}\n${renderFetchMetaSrc}\nreturn renderFetchMeta;`
+)(fakeDoc, escapeHtml, (iso) => iso);
+
+// 模拟"增量跑完 (438 请求) 之后又刷了一次 Gitee (66 请求)"的 meta
+renderFetchMeta({
+  fetched_at: '2026-10-22T00:24:00',
+  duration_ms: 1313,
+  total_requests: 504,
+  success_count: 37,
+  fail_count: 1,
+  incremental: { fetched_at: '2026-10-22T00:24:00', total_requests: 438, students_ok: 33, students_total: 34, new_posts: 2 },
+  gitee: { fetched_at: '2026-10-22T05:30:00', total_requests: 66, ok: 4, empty: 29, students_total: 34, total_commits: 12 },
+  method_breakdown: { csdn_html: 33, csdn_rss: 0, gitee_api: 30, gitee_html: 2, gitee_markdown: 0 },
+});
+const healthMeta = els['stat-health-meta'].innerHTML;
+check('健康度卡片同时显示增量和 Gitee',
+  healthMeta.includes('增量 438') && healthMeta.includes('Gitee 66'),
+  healthMeta);
+check('健康度卡片不是"尚未运行抓取任务"',
+  !healthMeta.includes('尚未运行'), healthMeta);
+const fmGrid = els['fetch-meta-grid'].innerHTML;
+check('折叠面板列出两个分块的请求数',
+  fmGrid.includes('增量(CSDN)请求') && fmGrid.includes('Gitee 请求'), '');
+check('折叠面板显示 Gitee 空仓库数 29',
+  fmGrid.includes('Gitee 空仓库') && fmGrid.includes('29'), '');
+check('抓取时间取顶层 fetched_at (最近一次运行)',
+  els['stat-last-fetch-meta'].textContent.startsWith('2026-10-22'),
+  els['stat-last-fetch-meta'].textContent);
+
+// ---------- 4b. R8: 抓取方式读**真实 key** ----------
+console.log("\n[4b] R8 — fetch_meta 面板的抓取方式读真实 key");
+check('面板列出 CSDN 列表 / CSDN RSS / Gitee API / Gitee HTML',
+  fmGrid.includes('抓取方式·CSDN 列表') && fmGrid.includes('抓取方式·CSDN RSS')
+  && fmGrid.includes('抓取方式·Gitee API') && fmGrid.includes('抓取方式·Gitee HTML'),
+  '');
+check('CSDN 列表数显示真实值 33',
+  fmGrid.includes('抓取方式·CSDN 列表</span><span class="v">33</span>'), '');
+check('Gitee API 数显示真实值 30',
+  fmGrid.includes('抓取方式·Gitee API</span><span class="v">30</span>'), '');
+check('Gitee HTML 数显示真实值 2',
+  fmGrid.includes('抓取方式·Gitee HTML</span><span class="v">2</span>'), '');
+check('不再读那些根本不存在的 key (requests/playwright/none)',
+  !indexHtml.includes('methods.requests') && !indexHtml.includes('methods.playwright')
+  && !indexHtml.includes('methods.none'), '');
+
+// ---------- 5. R6 口径透明化 ----------
+console.log("\n[5] R6 — 前端口径: 总访问量 / 文章累加 / 平均阅读");
+check('student.html 有「总访问量」标签', studentHtml.includes('总访问量'), '');
+check('student.html 有「文章阅读合计」标签', studentHtml.includes('文章阅读合计'), '');
+// 从 student.html 原样抠出「平均阅读/篇」的表达式, 真的跑一遍
+const avgMatch = studentHtml.match(
+  /<div class="head-stat"[^>]*><strong>\$\{(.+?)\}<\/strong>平均阅读\/篇<\/div>/);
+check('能从 student.html 抠到「平均阅读/篇」的表达式', !!avgMatch,
+  avgMatch ? avgMatch[1].trim() : '没找到');
+if (avgMatch) {
+  const avgOf = new Function('stu', 'fmt', `return (${avgMatch[1]});`);
+  const fake = { post_count: 10, total_views: 9999, article_views_sum: 500 };
+  const v = avgOf(fake, fmtNum);
+  check('平均阅读/篇 = article_views_sum ÷ post_count (500/10=50)',
+    v === '50', String(v));
+  check('平均阅读/篇 没有再用 total_views (9999/10=1000 不应出现)',
+    v !== '1,000', String(v));
+}
+// 总访问量那格必须还是 stu.total_views
+const tvMatch = studentHtml.match(
+  /<div class="head-stat"[^>]*><strong>\$\{(.+?)\}<\/strong>总访问量<\/div>/);
+check('能从 student.html 抠到「总访问量」的表达式', !!tvMatch,
+  tvMatch ? tvMatch[1].trim() : '没找到');
+if (tvMatch) {
+  const tvOf = new Function('stu', 'fmt', `return (${tvMatch[1]});`);
+  check('总访问量 = stu.total_views', tvOf({ total_views: 7379 }, fmtNum) === '7,379',
+    String(tvOf({ total_views: 7379 }, fmtNum)));
+}
+// 文章阅读合计那格必须用 article_views_sum
+const avsMatch = studentHtml.match(
+  /<div class="head-stat"[^>]*><strong>\$\{(.+?)\}<\/strong>文章阅读合计<\/div>/);
+if (avsMatch) {
+  const avsOf = new Function('stu', 'fmt', `return (${avsMatch[1]});`);
+  check('文章阅读合计 = stu.article_views_sum',
+    avsOf({ article_views_sum: 7337 }, fmtNum) === '7,337',
+    String(avsOf({ article_views_sum: 7337 }, fmtNum)));
+} else {
+  check('文章阅读合计那格用 article_views_sum', false, '没找到表达式');
+}
+// index.html 卡片: 标签 + tooltip
+const card = renderStatsRow({ csdn_url: 'https://blog.csdn.net/x', total_views: 7379, article_views_sum: 7337 });
+check('index.html 卡片显示「总访问量」', card.includes('总访问量'), card);
+check('index.html 卡片 tooltip 带「文章累加」和文章累加数字',
+  card.includes('文章累加') && card.includes('7,337'), card);
+check('index.html 卡片主数字仍是 total_views (7,379)',
+  card.includes('7,379'), card);
+// analytics.html
+check('analytics.html TOP10 提示改成「按总访问量降序」',
+  analyticsHtml.includes('按总访问量降序'), '');
+check('analytics.html 表头改成「总访问量」', analyticsHtml.includes('总访问量'), '');
+const aAvgMatch = analyticsHtml.match(
+  /const avSum = ([^;]+);\s*const avg = s\.post_count \? Math\.round\(([^)]+)\) : 0;/);
+check('能从 analytics.html 抠到 TOP10 平均阅读的表达式', !!aAvgMatch,
+  aAvgMatch ? aAvgMatch[2].trim() : '没找到');
+if (aAvgMatch) {
+  const aAvg = new Function('s',
+    `const avSum = ${aAvgMatch[1]}; return Math.round(${aAvgMatch[2]});`);
+  check('analytics TOP10 平均阅读/篇 用 article_views_sum (500/10=50)',
+    aAvg({ post_count: 10, article_views_sum: 500, total_views: 9999 }) === 50,
+    String(aAvg({ post_count: 10, article_views_sum: 500, total_views: 9999 })));
+}
+
 console.log('\n' + '='.repeat(70));
 console.log(`通过 ${pass} / 失败 ${fail}`);
 console.log('='.repeat(70));

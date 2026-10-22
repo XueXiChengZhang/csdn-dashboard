@@ -420,6 +420,7 @@
   <a class="tab" href="index.html">学生列表</a>
   <a class="tab active" href="analytics.html">班级分析</a>
     <a class="tab" href="ranking.html">学生排名</a>
+    <a class="tab" href="trend.html">阅读趋势</a>
       <button id="dark-toggle" class="dark-toggle" type="button" aria-label="切换暗色模式">🌙</button><span class="ver">v10.0 · DASHBOARD-ANALYTICS</span>
 </nav>
 
@@ -445,7 +446,7 @@
     <div class="stat">
       <div class="stat-label">平均阅读</div>
       <div class="stat-value" id="stat-avg-views">—</div>
-      <div class="stat-meta" id="stat-avg-views-meta">有阅读量学生人均</div>
+      <div class="stat-meta" id="stat-avg-views-meta">有阅读量学生人均 · 主页总访问量口径</div>
     </div>
     <div class="stat">
       <div class="stat-label">互动总数</div>
@@ -467,7 +468,7 @@
   <section class="section">
     <div class="section-title">
       <span>🏆 阅读量 TOP 10 学生</span>
-      <span class="hint">按 total_views 降序 · 点击行跳个人页</span>
+      <span class="hint">按总访问量降序 · 点击行跳个人页</span>
     </div>
     <div class="section-table-wrap">
     <table class="top-table">
@@ -476,8 +477,8 @@
           <th class="rank">#</th>
           <th>姓名</th>
           <th>文章数</th>
-          <th>总阅读</th>
-          <th>平均阅读/篇</th>
+          <th title="CSDN 个人主页口径的总访问量">总访问量</th>
+          <th title="每篇文章阅读数之和 ÷ 文章数 (同一口径)">平均阅读/篇 (文章累加)</th>
         </tr>
       </thead>
       <tbody id="top10-body">
@@ -671,15 +672,18 @@ function render() {
     tbody.innerHTML = '<tr><td colspan="5" class="empty" style="border:none;background:transparent;">暂无阅读量数据 · 等待下一次抓取</td></tr>';
   } else {
     tbody.innerHTML = top10.map((s, i) => {
-      const avg = s.post_count ? Math.round((s.total_views || 0) / s.post_count) : 0;
+      // ★ R6 口径: 平均阅读/篇 = 文章阅读合计 ÷ 文章数 (分子分母同口径)
+      //   以前用 total_views (主页访问量) ÷ 文章数, 分子含主页/搜索来源, 分母是文章数, 口径不一致。
+      const avSum = s.article_views_sum || 0;
+      const avg = s.post_count ? Math.round(avSum / s.post_count) : 0;
       const cls = i < 3 ? 'top3' : '';
       const rcls = i < 3 ? 'rank top' : 'rank';
       return `<tr class="${cls}" onclick="location.href='student.html?name=${encodeURIComponent(s.name)}'">
         <td class="${rcls}">#${i + 1}</td>
         <td>${escapeHtml(s.name)}</td>
         <td>${s.post_count || 0}</td>
-        <td class="views">${fmt(s.total_views)}</td>
-        <td>${fmt(avg)}</td>
+        <td class="views" title="CSDN 个人主页口径的总访问量">${fmt(s.total_views)}</td>
+        <td title="文章阅读合计 ${fmt(avSum)} ÷ ${s.post_count || 0} 篇">${fmt(avg)}</td>
       </tr>`;
     }).join('');
   }

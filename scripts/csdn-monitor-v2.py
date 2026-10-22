@@ -53,6 +53,32 @@ from csdn_stats import (  # noqa: E402
     parse_profile_views,
 )
 
+# ---------- stdout 编码兜底 (必须在 import 之后, 且在任何 print 之前) ----------
+# 计划任务 / 手动运行时 stdout 可能是 GBK(936), 非 ASCII 会抛 UnicodeEncodeError。
+# ★ 为什么这不只是"打印崩了": 在 fetch_user_total_views / fetch_article_stats 里
+#   那个异常会被 except 吞掉 → **静默丢数据** (profile_views 变 None /
+#   整篇 stats 被判失败, views 冻结在旧值)。静默丢数据比崩掉更糟。
+def safe_print(msg, **kwargs):
+    """打印任何内容都不会因为编码问题炸掉。
+
+    stdout 是 GBK 时, 中文/emoji 会被替换成 ASCII 占位符而不是抛异常;
+    stdout 能装下时就原样打印。
+    """
+    try:
+        print(msg, **kwargs)
+    except UnicodeEncodeError:
+        try:
+            print(msg.encode("ascii", "replace").decode("ascii"), **kwargs)
+        except Exception:
+            pass
+
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 # ---------- 路径 ----------
 SCRIPT_DIR = Path(__file__).resolve().parent
 DASHBOARD = SCRIPT_DIR.parent  # .../csdn-dashboard
@@ -138,6 +164,13 @@ CSDN_MIN_INTERVAL = float(os.environ.get("CSDN_MIN_INTERVAL", "2.5"))
 # 用来端到端验证数据保护逻辑 (见 scripts/test_csdn_stats.py)。
 # 生产环境不设这个变量, 行为完全不变。
 CSDN_BASE = os.environ.get("CSDN_BASE_URL", "https://blog.csdn.net").rstrip("/")
+# 文章详情的基址可以**单独**换 —— 用来模拟 "列表正常但文章详情全挂" 这种
+# 真实发生过的情况 (2026-10-21 05:30 那次就是它: 列表 34/34 全成功,
+# 只是详情页被 521 风控拦了, 于是保护逻辑的列表臂不触发, 好数据被覆盖成 0)。
+# 有了这个钩子就能端到端跑一遍那种场景, 而不用真的去打 CSDN。
+# 生产环境不设这个变量, 行为完全不变 (文章基址 = 列表基址)。
+CSDN_ARTICLE_BASE = os.environ.get(
+    "CSDN_ARTICLE_BASE_URL", CSDN_BASE).rstrip("/")
 CSDN_LIMITER = RateLimiter(min_interval=CSDN_MIN_INTERVAL, jitter=0.8)
 CSDN_REQUESTS = 0
 CSDN_REQUESTS_LOCK = threading.Lock()
@@ -393,9 +426,12 @@ def fetch_csdn_html(username, limit=50):
 
 def fetch_csdn_rss(username, limit=50):
     items = []
+    # 顺序很重要: **先试 CSDN 官方 RSS, 再试 rsshub 镜像**。
+    # rsshub.app 是公共镜像, 又慢又不稳 (实测经常几十秒超时),
+    # 把它放前面会让整个列表抓取慢一大截, 还会先撞上它的限流。
     feeds = [
+        f"{CSDN_BASE}/{username}/rss/list",
         f"https://rsshub.app/csdn/blog/{username}",
-        f"https://blog.csdn.net/{username}/rss/list",
     ]
     for feed_url in feeds:
         try:
@@ -440,17 +476,17 @@ def fetch_user_total_views(username):
         try:
             r = csdn_get(url, timeout=12, headers=CSDN_HEADERS, retries=1)
             if r.status_code != 200 or not r.text:
-                print(f"[profile] {username} HTTP {r.status_code} url={url[:70]}")
+                safe_print(f"[profile] {username} HTTP {r.status_code} url={url[:70]}")
                 continue
             if len(r.text) < 2000:
-                print(f"[profile] {username} 响应过短 len={len(r.text)} (疑似风控)")
+                safe_print(f"[profile] {username} 响应过短 len={len(r.text)} (疑似风控)")
                 continue
             val = parse_profile_views(r.text)
             if val is not None:
                 return val
-            print(f"[profile] {username} 页面里找不到'总访问量' (len={len(r.text)})")
+            safe_print(f"[profile] {username} 页面里找不到'总访问量' (len={len(r.text)})")
         except Exception as e:
-            print(f"[profile] {username} 异常 {type(e).__name__}: {str(e)[:60]}")
+            safe_print(f"[profile] {username} 异常 {type(e).__name__}: {str(e)[:60]}")
             continue
     return None
 
@@ -458,17 +494,17 @@ def fetch_user_total_views(username):
 def fetch_article_stats(article_id, username=""):
     if not article_id:
         return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
-    url = f"{CSDN_BASE}/{username}/article/details/{article_id}" if username \
-        else f"{CSDN_BASE}/article/details/{article_id}"
+    url = f"{CSDN_ARTICLE_BASE}/{username}/article/details/{article_id}" if username \
+        else f"{CSDN_ARTICLE_BASE}/article/details/{article_id}"
     try:
         r = csdn_get(url, timeout=12, headers=CSDN_HEADERS, retries=1)
         # P0-2: 区分 "HTTP 错误" 与 "200 但空文 (软反爬)" — 都打印并返回失败
         if r.status_code != 200:
-            print(f"[stats] HTTP {r.status_code} aid={article_id} url={url[:80]}")
+            safe_print(f"[stats] HTTP {r.status_code} aid={article_id} url={url[:80]}")
             return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
         if not r.text or len(r.text) < 500:
             # CSDN 偶发 200 + 空 HTML (软反爬/地域重定向)
-            print(f"[stats] HTTP 200 but empty/short aid={article_id} len={len(r.text or '')} url={url[:80]}")
+            safe_print(f"[stats] HTTP 200 but empty/short aid={article_id} len={len(r.text or '')} url={url[:80]}")
             return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
         html = r.text
         # 解析全部交给公共模块 (增量脚本共用同一套正则, 不会再各坏各的)
@@ -482,12 +518,12 @@ def fetch_article_stats(article_id, username=""):
         }
         # 抓到了页面但一个数都没解析出来 → 页面结构变了, 打印出来便于诊断
         if not any(stats[k] for k in ("views", "comments", "collections", "likes")):
-            print(f"[stats] all zeros aid={article_id} len(html)={len(html)} "
+            safe_print(f"[stats] all zeros aid={article_id} len(html)={len(html)} "
                   f"meta_desc={'文章浏览阅读' in html} view_count_format={'viewCountFormat' in html}")
-            print(f"[stats] html_head={html[:300]!r}")
+            safe_print(f"[stats] html_head={html[:300]!r}")
         return stats
     except Exception as e:
-        print(f"[stats] exception aid={article_id} err={type(e).__name__}: {str(e)[:80]}")
+        safe_print(f"[stats] exception aid={article_id} err={type(e).__name__}: {str(e)[:80]}")
         return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
 
 
@@ -579,7 +615,7 @@ def aggregate_user_stats(username, posts, no_reuse=False):
                 }
                 if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
                     abandoned = True
-                    print(f"[stats] {username}: 连续 {consecutive_failures} 次失败, "
+                    safe_print(f"[stats] {username}: 连续 {consecutive_failures} 次失败, "
                           f"放弃该学生剩余文章的抓取 (交给保护逻辑兜底)")
 
         for k in article_stats:
@@ -623,29 +659,84 @@ GITEE_HEADERS = {
     "Accept-Language": "zh-CN,zh;q=0.9",
 }
 
+# Gitee 的真实请求计数 (2026-10-22 修: 以前 _count_actual_requests 只认
+# source=="api"/"html", markdown 源一次都不算 -> gitee-only 那一跑
+# total_requests=0, 仪表盘健康度卡片显示"尚未运行抓取任务" 19 小时)。
+GITEE_REQUESTS = 0
+GITEE_REQUESTS_LOCK = threading.Lock()
+GITEE_REQUEST_BREAKDOWN = {"api": 0, "html": 0, "markdown": 0}
+
+
+def _gitee_count_request(kind):
+    """记录一次 Gitee 请求 (真实计数, 不再估算)"""
+    global GITEE_REQUESTS
+    with GITEE_REQUESTS_LOCK:
+        GITEE_REQUESTS += 1
+        GITEE_REQUEST_BREAKDOWN[kind] = GITEE_REQUEST_BREAKDOWN.get(kind, 0) + 1
+
+
+def _gitee_is_empty_response(r):
+    """Gitee 对**空仓库**的 commits API 返回 HTTP 404 + {"message":"Repository is empty"}。
+
+    ★ 这是 2026-10-22 实测出来的关键事实: 空仓库不是"抓取失败",
+      而是"学生建了仓库但没提交任何代码"。两者必须区分, 否则:
+        - 空仓库 -> 被报成 ok=True (假成功)
+        - 有 commit 的仓库 -> 因为上层分不清 404 和 200, 计数器归零
+    """
+    try:
+        body = (getattr(r, "text", "") or "")[:300].lower()
+    except Exception:
+        body = ""
+    return "is empty" in body or '"empty"' in body or "repository is empty" in body
+
 
 def fetch_gitee_repo_api(owner, repo):
-    """API 抓仓库基本信息: stars, forks, language, 默认分支"""
+    """API 抓仓库基本信息: stars, forks, language, 默认分支
+
+    ★ 2026-10-22: 非 200 时**必须打日志** —— 以前直接 return None,
+      一行日志都没有, 永远查不出为什么失败。
+    """
     url = f"https://gitee.com/api/v5/repos/{owner}/{repo}"
     try:
         r = http_get(url, timeout=10, headers=GITEE_HEADERS, retries=1)
+        _gitee_count_request("api")
         if r.status_code != 200:
+            safe_print(f"[gitee] repo API 失败 {url} HTTP {r.status_code}")
             return None
         return r.json()
-    except Exception:
+    except Exception as e:
+        safe_print(f"[gitee] repo API 异常 {url} {type(e).__name__}: {str(e)[:60]}")
         return None
 
 
 def fetch_gitee_last_commit_api(owner, repo):
-    """API 抓最后 commit"""
+    """API 抓最后 commit。
+
+    返回:
+      dict              正常的 commit 信息 (author/date/msg/sha)
+      {"empty": True}   空仓库 (HTTP 404 + "Repository is empty") —— **不是失败**
+      {"notfound": True} 仓库不存在 (HTTP 404 + 别的 message)
+      None              其它失败 (网络/限流/500)
+    """
     url = f"https://gitee.com/api/v5/repos/{owner}/{repo}/commits?per_page=1"
     try:
         r = http_get(url, timeout=10, headers=GITEE_HEADERS, retries=1)
+        _gitee_count_request("api")
         if r.status_code != 200:
+            if r.status_code == 404:
+                if _gitee_is_empty_response(r):
+                    safe_print(f"[gitee] {owner}/{repo} 是空仓库 (Repository is empty)")
+                    return {"empty": True}
+                safe_print(f"[gitee] {owner}/{repo} 仓库不存在 (HTTP 404)")
+                return {"notfound": True}
+            safe_print(f"[gitee] last-commit API 失败 {url} HTTP {r.status_code}")
             return None
         data = r.json()
-        if not isinstance(data, list) or not data:
+        if not isinstance(data, list):
             return None
+        if not data:
+            # 200 但列表是空的 -> 也是空仓库
+            return {"empty": True}
         head = data[0]
         commit = head.get("commit", {}) or {}
         author = (commit.get("author") or {}).get("name", "?")
@@ -653,25 +744,40 @@ def fetch_gitee_last_commit_api(owner, repo):
         msg = (commit.get("message") or "").splitlines()[0][:80]
         sha = head.get("sha", "")[:7]
         return {"author": author, "date": date, "msg": msg, "sha": sha}
-    except Exception:
+    except Exception as e:
+        safe_print(f"[gitee] last-commit API 异常 {url} {type(e).__name__}: {str(e)[:60]}")
         return None
 
 
 def fetch_gitee_commits_count_api(owner, repo):
     """通过 commits 列表分页估算总数 (per_page=100, 取最后一页 + 之前累加)
     Gitee API 默认返回最新 commits, 我们最多取 5 页 = 500 commits 估算
-    P2 #8 修复: 返回 (total, truncated) 让前端知道是否被截断
+
+    ★ 2026-10-22: 返回 (total, truncated, empty)。
+      empty=True 表示"空仓库" (404 + Repository is empty), **不是失败**。
+      以前对非 200 直接 return (total, truncated), 分不清"空仓库"和"抓取失败"。
     """
     total = 0
     truncated = False
+    empty = False
     try:
         for page in range(1, 6):
             url = f"https://gitee.com/api/v5/repos/{owner}/{repo}/commits?per_page=100&page={page}"
             r = http_get(url, timeout=8, headers=GITEE_HEADERS, retries=0)
+            _gitee_count_request("api")
             if r.status_code != 200:
-                return (total, truncated)
+                if r.status_code == 404:
+                    empty = _gitee_is_empty_response(r)
+                    if not empty:
+                        safe_print(f"[gitee] {owner}/{repo} commits API 404 (仓库不存在)")
+                else:
+                    safe_print(f"[gitee] commits API 失败 {url} HTTP {r.status_code}")
+                return (total, truncated, empty)
             data = r.json()
-            if not isinstance(data, list) or not data:
+            if not isinstance(data, list):
+                return (total, truncated, empty)
+            if not data:
+                empty = True
                 break
             total += len(data)
             if len(data) < 100:
@@ -679,9 +785,10 @@ def fetch_gitee_commits_count_api(owner, repo):
         # 跑完 5 页都没看到 < 100, 说明 > 500 被截断
         if total >= 500:
             truncated = True
-        return (total, truncated)
-    except Exception:
-        return (total, truncated)
+        return (total, truncated, empty)
+    except Exception as e:
+        safe_print(f"[gitee] commits API 异常 {type(e).__name__}: {str(e)[:60]}")
+        return (total, truncated, empty)
 
 
 
@@ -689,6 +796,11 @@ def fetch_gitee_markdown(owner, repo):
     """Gitee 在 /owner/repo.md 这个 URL 下对未登录请求返回 markdown。
     /owner/repo 主页面是 HTML (不能直接当 markdown 解析)。
     解析 markdown 拿 stars/forks/created/last_updated。
+
+    ★ 2026-10-22 实测: Gitee 现在的 markdown 格式是 "- **Stars**: 0"
+      (行首 "- " 前缀 + 冒号后有空格)。旧正则 ``\\*\\*Stars\\*\\*\\s*:?\\s*(\\d+)``
+      依然能匹配 (\\s* 吃掉 ": "), 所以数字解析本身是好的。
+      但**匹配不上时必须打日志** —— 以前静默留 0, 分不清"真的是 0"和"解析失败"。
     """
     url = f"https://gitee.com/{owner}/{repo}.md"
     try:
@@ -697,21 +809,28 @@ def fetch_gitee_markdown(owner, repo):
             "Accept": "text/markdown,text/plain,*/*",
             "Accept-Language": "zh-CN,zh;q=0.9",
         }, retries=1)
+        _gitee_count_request("markdown")
         if r.status_code != 200 or not r.text:
+            safe_print(f"[gitee] markdown 抓取失败 {url} HTTP {r.status_code}")
             return None
         text = r.text
         # 必须是 markdown 格式 (gitee 锁定页面)
         if "# " not in text or "**Stars**" not in text:
+            safe_print(f"[gitee] markdown 格式不对 {owner}/{repo} (len={len(text)})")
             return None
         info = {"source": "markdown"}
         # Stars
         m = re.search(r"\*\*Stars\*\*\s*:?\s*(\d+)", text)
         if m:
             info["stars"] = int(m.group(1))
+        else:
+            safe_print(f"[gitee] markdown 解析失败 {owner}/{repo}: 找不到 Stars 数字")
         # Forks
         m = re.search(r"\*\*Forks\*\*\s*:?\s*(\d+)", text)
         if m:
             info["forks"] = int(m.group(1))
+        else:
+            safe_print(f"[gitee] markdown 解析失败 {owner}/{repo}: 找不到 Forks 数字")
         # Last Updated (用来替代 commit date)
         m = re.search(r"\*\*Last Updated\*\*\s*:?\s*([\d-]+)", text)
         if m:
@@ -736,7 +855,9 @@ def fetch_gitee_html_fallback(owner, repo):
             "Accept": "text/html,*/*",
             "Accept-Language": "zh-CN,zh;q=0.9",
         }, retries=1)
+        _gitee_count_request("html")
         if r.status_code != 200 or not r.text:
+            safe_print(f"[gitee] HTML fallback 抓取失败 {url} HTTP {r.status_code}")
             return None
         html = r.text
         info = {"source": "html"}
@@ -766,11 +887,25 @@ def fetch_gitee_html_fallback(owner, repo):
 
 
 def fetch_gitee_all(owner, repo):
-    """统一入口: API 优先, HTML fallback
-    返回: {ok, url, stars, forks, commit_count, sha, date, msg, source, err}
+    """统一入口: API 优先, markdown/HTML fallback
+
+    返回: {ok, url, stars, forks, commit_count, sha, date, msg, source, err,
+           status, empty}
+
+    ★ 2026-10-22 的核心修复 —— **如实区分三种结局**, 不再一律报 ok=True:
+      status="ok"       真的抓到数据了 (有 sha / commit_count / stars / forks)
+      status="empty"    空仓库: 学生建了仓库但**没提交任何代码**
+                        (Gitee commits API 返回 404 + "Repository is empty")
+      status="notfound" 仓库不存在 (404)
+      status="failed"   其它失败 (限流/网络/格式变了)
+
+    以前 ok 的判定是 ``... or out["source"]`` —— 只要 source 字段非空就算成功,
+    于是 29 个空仓库全部报 "抓取成功", 仪表盘显示成 "⭐0 🍴0 📦commit 0"。
     """
     if not owner or not repo:
-        return {"ok": False, "err": "bad gitee url"}
+        return {"ok": False, "err": "bad gitee url", "status": "failed",
+                "empty": False, "source": "", "stars": 0, "forks": 0,
+                "commit_count": 0, "sha": "", "date": "", "msg": ""}
     out = {
         "ok": False,
         "url": f"https://gitee.com/{owner}/{repo}",
@@ -784,8 +919,12 @@ def fetch_gitee_all(owner, repo):
         "msg": "",
         "source": "",
         "err": "",
+        "status": "failed",
+        "empty": False,
     }
-    # 1) API repo info
+    empty = False
+    notfound = False
+    # 1) API repo info (200 = 仓库存在; 404 = 仓库不存在)
     api_repo = fetch_gitee_repo_api(owner, repo)
     if api_repo:
         out["stars"] = int(api_repo.get("stargazers_count", 0) or 0)
@@ -794,18 +933,28 @@ def fetch_gitee_all(owner, repo):
     # 2) API last commit
     api_commit = fetch_gitee_last_commit_api(owner, repo)
     if api_commit:
-        out.update(api_commit)
-        out["source"] = "api"
+        if api_commit.get("empty"):
+            empty = True
+        elif api_commit.get("notfound"):
+            notfound = True
+        else:
+            out.update(api_commit)
+            out["source"] = "api"
     # 3) commits count (仅 API)
-    if api_repo:
-        cnt, truncated = fetch_gitee_commits_count_api(owner, repo)
+    if api_repo and not empty and not notfound:
+        cnt, truncated, c_empty = fetch_gitee_commits_count_api(owner, repo)
+        if c_empty:
+            empty = True
         if cnt:
             out["commit_count"] = cnt
         if truncated:
             out["commit_count_truncated"] = True
             out["commit_count_note"] = "500+ (估算被截断)"
     # 4) Markdown fallback (gitee 当前未登录访问返回 markdown)
-    if not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
+    #    ★ 空仓库/不存在的仓库**不走 fallback**: markdown 里只有创建日期,
+    #      当成 "最后提交时间" 是误导, 而且白白多花两个请求。
+    if not empty and not notfound \
+            and not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
         md = fetch_gitee_markdown(owner, repo)
         if md:
             out["stars"] = md.get("stars", out["stars"])
@@ -814,7 +963,8 @@ def fetch_gitee_all(owner, repo):
                 out["date"] = md["date"]
             out["source"] = out["source"] or "markdown"
     # 5) HTML fallback (legacy)
-    if not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
+    if not empty and not notfound \
+            and not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
         html = fetch_gitee_html_fallback(owner, repo)
         if html:
             out["stars"] = html.get("stars", out["stars"])
@@ -823,9 +973,21 @@ def fetch_gitee_all(owner, repo):
             if html.get("date") and not out.get("date"):
                 out["date"] = html["date"]
             out["source"] = out["source"] or "html"
-    # 判定 ok — markdown fallback 也可以成功
-    out["ok"] = bool(out.get("sha") or out.get("date") or out.get("commit_count") > 0 or out.get("stars") > 0 or out.get("forks") > 0 or out["source"])
-    if not out["ok"]:
+    # ★ ok 判定改成**数据驱动**: 有任何一个真实数字才算成功。
+    #   (去掉以前的 `or out["source"]` —— 那让空仓库也报成功)
+    out["ok"] = bool(out.get("sha") or out.get("commit_count")
+                     or out.get("stars") or out.get("forks"))
+    if empty:
+        out["status"] = "empty"
+        out["empty"] = True
+        out["err"] = "仓库为空 (未提交任何代码)"
+    elif notfound:
+        out["status"] = "notfound"
+        out["err"] = "仓库不存在 (HTTP 404)"
+    elif out["ok"]:
+        out["status"] = "ok"
+    else:
+        out["status"] = "failed"
         out["err"] = out["err"] or "all sources failed (likely 403/rate-limited)"
     return out
 
@@ -842,7 +1004,10 @@ def load_snapshot():
 
 def save_snapshot(snap):
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    SNAPSHOT.write_text(json.dumps(snap, ensure_ascii=False, indent=2),
+    # R10: 紧凑格式 —— 前端全部用 r.json() 解析, 缩进无关;
+    #      体积 -32% (传输/下载都快一截)
+    SNAPSHOT.write_text(json.dumps(snap, ensure_ascii=False,
+                                   separators=(",", ":")),
                         encoding="utf-8")
 
 
@@ -901,6 +1066,9 @@ def write_data_json(students_state, fetch_meta, class_stats=None):
                 "msg": g.get("msg", ""),
                 "source": g.get("source", ""),
                 "err": g.get("err", ""),
+                # ★ 2026-10-22: 如实区分空仓库 / 不存在 / 抓取失败
+                "status": g.get("status", ""),
+                "empty": bool(g.get("empty", False)),
                 "fetched_at": g.get("fetched_at", ""),
             },
         })
@@ -916,7 +1084,10 @@ def write_data_json(students_state, fetch_meta, class_stats=None):
     }
     if class_stats:
         data["class_stats"] = class_stats
-    DATA_JSON.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+    # R10: 紧凑格式 —— 前端全部用 r.json() 解析, 缩进无关;
+    #      体积 -32% (传输/下载都快一截)
+    DATA_JSON.write_text(json.dumps(data, ensure_ascii=False,
+                                    separators=(",", ":")),
                         encoding="utf-8")
     return data
 
@@ -1052,11 +1223,40 @@ def build_report(students_state, missing_csdn, fetch_meta, class_stats):
             lines.append(f"  …还有 {len(fresh)-8} 个")
         lines.append("")
 
-    # 抓取健康度
-    csdn_ms = fetch_meta.get("stages", {}).get("csdn", {}).get("duration_ms", 0)
-    gitee_ms = fetch_meta.get("stages", {}).get("gitee", {}).get("duration_ms", 0)
-    lines.append(f"🩺 **抓取健康度**: CSDN {csdn_ms}ms / Gitee {gitee_ms}ms / "
-                f"成功 {fetch_meta.get('success_count', 0)}/{fetch_meta.get('total_requests', 0)}")
+    # Gitee 空仓库 (建了仓库但没提交任何代码 —— 不是抓取失败)
+    g_empty = sum(1 for s in students_state
+                  if (s.get("gitee") or {}).get("status") == "empty")
+    g_notfound = sum(1 for s in students_state
+                     if (s.get("gitee") or {}).get("status") == "notfound")
+    if g_empty or g_notfound:
+        lines.append(f"📦 **Gitee 空仓库 {g_empty} 个**"
+                     + (f" (另有 {g_notfound} 个仓库不存在)" if g_notfound else "")
+                     + " — 建了仓库但没提交任何代码, 不算抓取失败")
+        lines.append("")
+
+    # 抓取健康度 (2026-10-22 R1: 如实显示)
+    #  ★ 以前写的是 "成功 {success_count}/{total_requests}" —— 66 是**学生数**,
+    #    0 是被 gitee-only 覆盖掉的请求数, 两个数单位都不一样, 自相矛盾。
+    #  ★ 现在分成两句话: 本次跑了什么 (人) + 发了多少请求 (次), 单位明确。
+    #  ★ 数据来源是 last_run (本次运行), 不是分块 —— 分块是累计的,
+    #    拿分块会把上次跑的 CSDN 数据当成本次结果。
+    lr = fetch_meta.get("last_run") or {}
+    csdn_ms = lr.get("csdn_ms")
+    if csdn_ms is None:
+        csdn_ms = fetch_meta.get("stages", {}).get("csdn", {}).get("duration_ms", 0)
+    gitee_ms = lr.get("gitee_ms")
+    if gitee_ms is None:
+        gitee_ms = fetch_meta.get("stages", {}).get("gitee", {}).get("duration_ms", 0)
+    req = lr.get("total_requests", fetch_meta.get("total_requests", 0))
+    ok = lr.get("students_ok", fetch_meta.get("success_count", 0))
+    tot = lr.get("students_total") or ok or 0
+    if lr.get("csdn_ran") is False:
+        reused = lr.get("reused_students", 0)
+        lines.append(f"🩺 **抓取健康度**: CSDN 未抓取 (复用 {reused} 人) / "
+                     f"Gitee {gitee_ms}ms / 成功 {ok}/{tot} 人 · 请求 {req} 次")
+    else:
+        lines.append(f"🩺 **抓取健康度**: CSDN {csdn_ms}ms / Gitee {gitee_ms}ms / "
+                     f"成功 {ok}/{tot} 人 · 请求 {req} 次")
     lines.append("")
 
     lines.append("---")
@@ -1095,7 +1295,13 @@ def build_report(students_state, missing_csdn, fetch_meta, class_stats):
                 f"{fmt_date(g.get('date', ''))} {short(g.get('msg', ''))} ({g.get('source', '')})"
             )
         else:
-            lines.append(f"   - Gitee: 未抓取 ({g.get('err') or '?'})")
+            # ★ 2026-10-22 (d280330): 如实区分空仓库 / 仓库不存在 / 真失败
+            if g.get("status") == "empty":
+                lines.append("   - Gitee: 空仓库 (建了仓库但没提交任何代码)")
+            elif g.get("status") == "notfound":
+                lines.append("   - Gitee: 仓库不存在 (HTTP 404)")
+            else:
+                lines.append(f"   - Gitee: 未抓取 ({g.get('err') or '?'})")
         lines.append("")
     return "\n".join(lines)
 
@@ -1113,13 +1319,21 @@ def build_summary(students_state, new_posts_total, class_stats):
     # "skipped_reused" = --gitee-only 时复用了上次的 CSDN 数据, 不是失败
     failed_csdn = [s for s in students_state
                    if s.get("csdn_status") not in ("ok", "skipped_reused", "no_csdn")]
-    failed_gitee = [s for s in students_state if not (s.get("gitee") or {}).get("ok")]
+    failed_gitee = [s for s in students_state
+                    if (s.get("gitee") or {}).get("status") in ("failed", "notfound")]
+    # ★ 2026-10-22 (d280330): 空仓库 (建了仓库但没提交) **不是抓取失败**,
+    #   以前它 ok=False 被算进 failed_gitee, 日报显示"Gitee 抓取失败 29 人"
+    #   —— 实际上那 29 个人只是还没提交代码。
+    g_empty = [s for s in students_state
+               if (s.get("gitee") or {}).get("status") == "empty"]
     if missing_csdn:
         names = "、".join(s["name"] for s in missing_csdn[:5])
         lines.append(f"⚠️ 缺 CSDN: {names}{' 等 ' + str(len(missing_csdn)) if len(missing_csdn) > 5 else ''}")
     if failed_gitee:
         n = len(failed_gitee)
         lines.append(f"🔥 Gitee 抓取失败: {n} 人(可能限流)")
+    if g_empty:
+        lines.append(f"📦 Gitee 空仓库: {len(g_empty)} 个 (建了仓库但没提交代码)")
     # 今日 commit
     fresh = [s for s in students_state
              if (s.get("gitee") or {}).get("ok")
@@ -1135,7 +1349,7 @@ def build_summary(students_state, new_posts_total, class_stats):
 
 def send_feishu(text, dry=False, attachment=None):
     if dry:
-        print(f"[DRY-RUN] feishu skipped, len={len(text)}, attachment={attachment}")
+        safe_print(f"[DRY-RUN] feishu skipped, len={len(text)}, attachment={attachment}")
         return True
     openclaw_cmd = shutil.which("openclaw") or shutil.which("openclaw.cmd")
     if not openclaw_cmd:
@@ -1145,19 +1359,11 @@ def send_feishu(text, dry=False, attachment=None):
                 openclaw_cmd = p
                 break
     if not openclaw_cmd:
-        print("[feishu] ERROR: openclaw not found")
+        safe_print("[feishu] ERROR: openclaw not found")
         return False
     # stdout 被重定向到日志文件时, 代码页可能是 GBK, 打印 emoji 会抛
     # UnicodeEncodeError —— 那会让"其实已经发成功"看起来像"发送失败"。
-    # 所以这里统一用一个**不会因为编码问题炸掉**的打印函数。
-    def safe_print(msg):
-        try:
-            print(msg)
-        except UnicodeEncodeError:
-            try:
-                print(msg.encode("ascii", "replace").decode("ascii"))
-            except Exception:
-                pass
+    # 这里用**模块级** safe_print (统一一处, 避免各写各的漏改)。
 
     try:
         cmd = [openclaw_cmd, "message", "send",
@@ -1185,23 +1391,21 @@ def send_feishu(text, dry=False, attachment=None):
 
 
 # ---------- 主流程 ----------
-def _count_actual_requests(students_state):
-    """数实际 HTTP 请求数.
+def _count_actual_requests(students_state=None):
+    """数**真实** HTTP 请求数。
 
-    ★ 2026-10-21: CSDN 部分改用**真实计数器** CSDN_REQUESTS (由 csdn_get 累加),
-      不再用"1 列表 + 1 profile + N 篇"去估算 —— 估算在复用/放弃/限流重试
+    ★ 2026-10-21: CSDN 部分用**真实计数器** CSDN_REQUESTS (由 csdn_get 累加),
+      不用"1 列表 + 1 profile + N 篇"去估算 —— 估算在复用/放弃/限流重试
       这些情况下会算错, 而报告里要用它对比"增量 vs 全量"的请求数, 必须准。
-    Gitee 部分仍然是估算 (那边没有统一计数器)。
+
+    ★ 2026-10-22 (R1): Gitee 部分也改成**真实计数**。
+      以前是"按 source 估算" (api=3 / html=1 / **markdown=0**),
+      于是 gitee-only 那一跑 total_requests=0, 仪表盘健康度卡片显示
+      "尚未运行抓取任务" 整整 19 小时 (2026-10-22 05:30 那次就是它)。
+      d280330 已经加了 _gitee_count_request 的真实计数器, 这里直接接上,
+      **不再重复实现一套估算**。
     """
-    total = CSDN_REQUESTS
-    for s in students_state:
-        if s.get("gitee_url"):
-            g = s.get("gitee") or {}
-            if g.get("source") == "api":
-                total += 3  # repo + commit + commits_count (估算)
-            elif g.get("source") == "html":
-                total += 1
-    return total
+    return CSDN_REQUESTS + GITEE_REQUESTS
 
 
 def fetch_csdn_for_student(st):
@@ -1266,10 +1470,10 @@ def fetch_stats_for(rec, no_reuse=False):
             if has_stale_stats:
                 rec["posts"] = prev_posts
                 rec["csdn_err"] = f"stats_failed_posts_preserved: {str(e)[:80]}"
-                print(f"[stats-fallback-preserve] {rec.get('name')}: kept {len(prev_posts)} old posts with stats_updated_at")
+                safe_print(f"[stats-fallback-preserve] {rec.get('name')}: kept {len(prev_posts)} old posts with stats_updated_at")
             else:
                 rec["csdn_err"] = f"stats_failed: {str(e)[:80]}"
-            print(f"[stats-fallback] {rec.get('name')}: {e}")
+            safe_print(f"[stats-fallback] {rec.get('name')}: {e}")
     else:
         rec["stats"] = {
             "total_views": 0, "total_likes": 0, "total_comments": 0,
@@ -1399,10 +1603,10 @@ def apply_data_protection(students_state, prev_data, verbose=True):
                 f"总文章数 {new_total_posts_est} < 70% of 上次 {prev_total_posts}")
 
     if verbose and reasons:
-        print(f"[protect] 触发数据保护 ({len(reasons)} 条):")
+        safe_print(f"[protect] 触发数据保护 ({len(reasons)} 条):")
         for r in reasons:
-            print(f"[protect]   - {r}")
-        print("[protect] preserving previous posts/stats per student")
+            safe_print(f"[protect]   - {r}")
+        safe_print("[protect] preserving previous posts/stats per student")
 
     if not should_preserve:
         return False
@@ -1458,14 +1662,155 @@ def apply_data_protection(students_state, prev_data, verbose=True):
     return True
 
 
+def reuse_prev_csdn_stats(p):
+    """--gitee-only: 把上次 data.json 里的 CSDN stats 原样搬过来。
+
+    ★ R8: `views_source` **不能写死成 "reused"**。
+      上次这个人的阅读量到底是从哪来的 (profile / articles), 要如实带过来 ——
+      写死 "reused" 会把真实的 "profile" 覆盖掉, 前端就看不出数字的出处了。
+      上次压根没记这个字段 (老数据) 才退化成 "none"。
+    """
+    return {
+        "total_views": p.get("total_views", 0),
+        "total_likes": p.get("total_likes", 0),
+        "total_comments": p.get("total_comments", 0),
+        "total_collections": p.get("total_collections", 0),
+        "profile_views": p.get("profile_views"),
+        "article_views_sum": p.get("article_views_sum", 0),
+        "views_source": p.get("views_source", "none"),
+        "articles_scanned": p.get("articles_scanned", 0),
+        "fetched_at": p.get("stats_updated_at", ""),
+    }
+
+
+def build_fetch_meta(students_state, prev_meta, run_csdn=True, run_gitee=True,
+                     csdn_ms=0, gitee_ms=0, total_ms=0, no_reuse=False):
+    """构造 last_fetch_meta (2026-10-22 R1: **按模式分块**, 互不覆盖)。
+
+    根因回顾: 增量脚本和 v2 抢同一个 last_fetch_meta, 后写的赢 ——
+    v2 的 gitee-only 会把整个 last_fetch_meta 换成新字典, 增量那一跑的
+    438 个请求被彻底抹掉 (仪表盘健康度卡片显示"尚未运行抓取任务" 19 小时)。
+
+    现在的结构:
+        {
+          "fetched_at":  最近一次运行时间,
+          "incremental": {...CSDN 抓取那一路...},
+          "gitee":       {...Gitee 抓取那一路...},
+          "last_run":    {...本次运行的明细 (日报"抓取健康度"行读它)...},
+          "total_requests" / "success_count" / "fail_count": 两个分块之和,
+          "stages" / "method_breakdown" / ...: 旧字段 (旧版前端兼容),
+        }
+    每一块只由**自己那条链**写, 谁都不动别人的块。
+    """
+    csdn_ok = sum(1 for s in students_state
+                  if s.get("csdn_status") in ("ok", "skipped_reused"))
+    csdn_fail = sum(1 for s in students_state
+                    if s.get("csdn_status") not in ("ok", "skipped_reused", "no_csdn"))
+    gitee_ok = sum(1 for s in students_state if (s.get("gitee") or {}).get("ok"))
+    gitee_fail = sum(1 for s in students_state if not (s.get("gitee") or {}).get("ok"))
+    gitee_empty = sum(1 for s in students_state
+                      if (s.get("gitee") or {}).get("status") == "empty")
+    gitee_notfound = sum(1 for s in students_state
+                          if (s.get("gitee") or {}).get("status") == "notfound")
+    gitee_failed = max(0, gitee_fail - gitee_empty - gitee_notfound)
+    reused_students = sum(1 for s in students_state
+                           if s.get("csdn_status") == "skipped_reused")
+    new_posts_total = sum(len(s.get("new_posts", [])) for s in students_state)
+
+    meta = dict(prev_meta or {})
+    meta["fetched_at"] = NOW_ISO
+    meta["duration_ms"] = total_ms
+    meta["mode"] = ("both" if (run_csdn and run_gitee)
+                    else ("csdn" if run_csdn else "gitee"))
+
+    if run_csdn:
+        meta["incremental"] = {
+            "fetched_at": NOW_ISO,
+            "mode": "full" if no_reuse else "monitor",
+            "duration_ms": csdn_ms,
+            "total_requests": CSDN_REQUESTS,
+            "students_ok": csdn_ok,
+            "students_total": len(students_state),
+            "students_skipped": csdn_fail,
+            "new_posts": new_posts_total,
+            "class_total_views": sum((s.get("stats") or {}).get("total_views", 0) or 0
+                                     for s in students_state),
+        }
+    if run_gitee:
+        meta["gitee"] = {
+            "fetched_at": NOW_ISO,
+            "mode": "gitee",
+            "duration_ms": gitee_ms,
+            "total_requests": GITEE_REQUESTS,
+            "breakdown": dict(GITEE_REQUEST_BREAKDOWN),
+            "ok": gitee_ok,
+            "empty": gitee_empty,
+            "notfound": gitee_notfound,
+            "failed": gitee_failed,
+            "students_total": len(students_state),
+            "total_commits": sum((s.get("gitee") or {}).get("commit_count", 0) or 0
+                                 for s in students_state),
+            "total_stars": sum((s.get("gitee") or {}).get("stars", 0) or 0
+                               for s in students_state),
+            "total_forks": sum((s.get("gitee") or {}).get("forks", 0) or 0
+                               for s in students_state),
+        }
+
+    # 顶层汇总 = 两个分块之和 (仪表盘一次能看到"增量刷了"和"Gitee 刷了")
+    _inc = meta.get("incremental") or {}
+    _git = meta.get("gitee") or {}
+    meta["total_requests"] = ((_inc.get("total_requests") or 0)
+                              + (_git.get("total_requests") or 0))
+    meta["success_count"] = ((_inc.get("students_ok") or 0)
+                             + (_git.get("ok") or 0))
+    meta["fail_count"] = ((_inc.get("students_skipped") or 0)
+                          + (_git.get("failed") or 0))
+    # 本次运行的明细 (日报的"抓取健康度"行读它 —— 不能读分块,
+    # 因为分块是**累计**的, 会把上次跑的 CSDN 数据当成本次结果)
+    meta["last_run"] = {
+        "fetched_at": NOW_ISO,
+        "mode": meta["mode"],
+        "csdn_ran": bool(run_csdn),
+        "csdn_ms": csdn_ms if run_csdn else 0,
+        "gitee_ms": gitee_ms if run_gitee else 0,
+        "duration_ms": total_ms,
+        "total_requests": ((CSDN_REQUESTS if run_csdn else 0)
+                           + (GITEE_REQUESTS if run_gitee else 0)),
+        "students_ok": csdn_ok if run_csdn else reused_students,
+        "students_total": len(students_state),
+        "gitee_ok": gitee_ok,
+        "gitee_empty": gitee_empty,
+        "reused_students": reused_students,
+    }
+    meta["method_breakdown"] = {
+        "csdn_html": sum(1 for s in students_state if s.get("csdn_status") == "ok"),
+        "csdn_rss": 0,
+        "gitee_api": sum(1 for s in students_state
+                         if (s.get("gitee") or {}).get("source") == "api"),
+        "gitee_html": sum(1 for s in students_state
+                          if (s.get("gitee") or {}).get("source") == "html"),
+        "gitee_markdown": sum(1 for s in students_state
+                              if (s.get("gitee") or {}).get("source") == "markdown"),
+    }
+    meta["csdn_requests"] = CSDN_REQUESTS
+    meta["gitee_requests"] = GITEE_REQUESTS
+    meta["rate_limiter"] = CSDN_LIMITER.stats()
+    # 旧字段保留 (前端旧版 + 历史数据兼容)
+    meta["stages"] = {
+        "csdn": {"duration_ms": csdn_ms, "ok": csdn_ok, "fail": csdn_fail},
+        "gitee": {"duration_ms": gitee_ms, "ok": gitee_ok, "fail": gitee_fail},
+    }
+    return meta
+
+
 def run(args):
     wl = find_watchlist()
     if not wl:
         print(f"[FATAL] watchlist not found in any of: {[str(p) for p in WATCHLIST_PATHS]}", file=sys.stderr)
         sys.exit(1)
-    print(f"[watchlist] {wl}")
+    safe_print(f"[watchlist] {wl}")
     students = parse_watchlist(wl)
-    print(f"[watchlist] parsed {len(students)} students")
+    safe_print(f"[watchlist] parsed {len(students)} students")
     prev = load_snapshot()
     prev_students = prev.get("students", {})
 
@@ -1492,7 +1837,7 @@ def run(args):
         _index_posts(_pdata.get("posts"))
     _with_stats = sum(1 for _p in PREV_POSTS_BY_LINK.values()
                       if _p.get("stats_updated_at") is not None)
-    print(f"[prev-index] 载入 {len(PREV_POSTS_BY_LINK)} 篇历史 post "
+    safe_print(f"[prev-index] 载入 {len(PREV_POSTS_BY_LINK)} 篇历史 post "
           f"(其中 {_with_stats} 篇带 stats, 可复用)")
 
     run_csdn = not args.gitee_only
@@ -1538,17 +1883,7 @@ def run(args):
                 # --gitee-only: CSDN 的数据原样复用, 一个字段都不能丢
                 # (特别是 profile_views / article_views_sum / views_source,
                 #  丢了就没法看出阅读量的数据来源了)
-                rec["stats"] = {
-                    "total_views": p.get("total_views", 0),
-                    "total_likes": p.get("total_likes", 0),
-                    "total_comments": p.get("total_comments", 0),
-                    "total_collections": p.get("total_collections", 0),
-                    "profile_views": p.get("profile_views"),
-                    "article_views_sum": p.get("article_views_sum", 0),
-                    "views_source": p.get("views_source", "reused"),
-                    "articles_scanned": p.get("articles_scanned", 0),
-                    "fetched_at": p.get("stats_updated_at", ""),
-                }
+                rec["stats"] = reuse_prev_csdn_stats(p)
     csdn_ms = int((time.time() - csdn_t) * 1000)
 
     # --- Stage 2: Gitee ---
@@ -1570,34 +1905,16 @@ def run(args):
 
     missing_csdn = [s for s in students_state if s.get("csdn_status") == "no_csdn"]
 
-    # --- fetch_meta ---
-    csdn_ok = sum(1 for s in students_state if s.get("csdn_status") in ("ok", "skipped_reused"))
-    csdn_fail = sum(1 for s in students_state
-                    if s.get("csdn_status") not in ("ok", "skipped_reused", "no_csdn"))
-    gitee_ok = sum(1 for s in students_state if (s.get("gitee") or {}).get("ok"))
-    gitee_fail = sum(1 for s in students_state if not (s.get("gitee") or {}).get("ok"))
-    fetch_meta = {
-        "fetched_at": NOW_ISO,
-        "duration_ms": total_ms,
-        "method_breakdown": {
-            "csdn_html": sum(1 for s in students_state if s.get("csdn_status") == "ok"),
-            "csdn_rss": 0,
-            "gitee_api": sum(1 for s in students_state if (s.get("gitee") or {}).get("source") == "api"),
-            "gitee_html": sum(1 for s in students_state if (s.get("gitee") or {}).get("source") == "html"),
-        },
-        # P2 #7 修复: total_requests 用实际抓取数, 不再假报 = students*2
-        # 算法: 1 (CSDN 列表) + 1 (profile_views) + 实际 article_stats 抓取数
-        #      + ~4 (gitee: repo + commit + commits_count 翻页)
-        "total_requests": _count_actual_requests(students_state),
-        "csdn_requests": CSDN_REQUESTS,
-        "rate_limiter": CSDN_LIMITER.stats(),
-        "success_count": csdn_ok + gitee_ok,
-        "fail_count": csdn_fail + gitee_fail,
-        "stages": {
-            "csdn": {"duration_ms": csdn_ms, "ok": csdn_ok, "fail": csdn_fail},
-            "gitee": {"duration_ms": gitee_ms, "ok": gitee_ok, "fail": gitee_fail},
-        },
-    }
+    # --- fetch_meta (2026-10-22 R1: 按模式分块, 互不覆盖) ---
+    #  ★ 两个脚本各写各的块: 增量脚本写 incremental 块, v2 写 gitee 块,
+    #    谁都不覆盖谁 —— 以前是"后写的赢", 增量那一跑的 438 个请求会被
+    #    gitee-only 整个抹掉 (仪表盘 19 小时假告警的根因)。
+    prev_meta = (load_existing_data().get("last_fetch_meta") or {})
+    new_posts_total = sum(len(s.get("new_posts", [])) for s in students_state)
+    fetch_meta = build_fetch_meta(students_state, prev_meta,
+                                   run_csdn=run_csdn, run_gitee=run_gitee,
+                                   csdn_ms=csdn_ms, gitee_ms=gitee_ms,
+                                   total_ms=total_ms, no_reuse=args.no_reuse)
 
     # --- 班级统计 ---
 
@@ -1611,12 +1928,12 @@ def run(args):
 
     # --- 写 data.json ---
     data = write_data_json(students_state, fetch_meta, class_stats)
-    print(f"[data.json] written: {DATA_JSON} ({len(data['students'])} students, "
+    safe_print(f"[data.json] written: {DATA_JSON} ({len(data['students'])} students, "
           f"{data['total_posts']} posts)")
 
     # --- history snapshot ---
     write_history_snapshot(data)
-    print(f"[history] appended to {HISTORY_DIR / (TODAY + '.json')}")
+    safe_print(f"[history] appended to {HISTORY_DIR / (TODAY + '.json')}")
 
     # --- 更新 cache snapshot ---
     new_snap = {
@@ -1631,31 +1948,30 @@ def run(args):
         },
     }
     save_snapshot(new_snap)
-    print(f"[snapshot] saved -> {SNAPSHOT}")
+    safe_print(f"[snapshot] saved -> {SNAPSHOT}")
 
     # --- 报告 ---
     report = build_report(students_state, missing_csdn, fetch_meta, class_stats)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     rep_path = REPORT_DIR / f"csdn-report-{TODAY}.md"
     rep_path.write_text(report, encoding="utf-8")
-    print(f"[report] saved -> {rep_path}")
+    safe_print(f"[report] saved -> {rep_path}")
 
-    new_posts_total = sum(len(s.get("new_posts", [])) for s in students_state)
     summary = build_summary(students_state, new_posts_total, class_stats)
 
     # --- 推飞书 (除非 dry) ---
     if not args.dry_run:
         send_feishu(summary, dry=False, attachment=rep_path)
     else:
-        print("[dry-run] feishu skipped")
-        print("---SUMMARY---")
-        print(summary)
-        print("---REPORT (head)---")
-        print("\n".join(report.splitlines()[:50]))
+        safe_print("[dry-run] feishu skipped")
+        safe_print("---SUMMARY---")
+        safe_print(summary)
+        safe_print("---REPORT (head)---")
+        safe_print("\n".join(report.splitlines()[:50]))
 
     # --- token 用量回报 ---
-    print(f"[timing] total {total_ms}ms = CSDN {csdn_ms}ms + Gitee {gitee_ms}ms")
-    print(f"[stats] csdn_ok={csdn_ok}/{len(students_state)}, "
+    safe_print(f"[timing] total {total_ms}ms = CSDN {csdn_ms}ms + Gitee {gitee_ms}ms")
+    safe_print(f"[stats] csdn_ok={csdn_ok}/{len(students_state)}, "
           f"gitee_ok={gitee_ok}/{len(students_state)}, "
           f"new_posts={new_posts_total}")
     return 0
@@ -1679,14 +1995,14 @@ def main():
 
     # 时间窗
     if not args.force_now and not in_time_window():
-        print(f"[SKIP] 当前时间 {datetime.now().strftime('%H:%M')} 不在 "
+        safe_print(f"[SKIP] 当前时间 {datetime.now().strftime('%H:%M')} 不在 "
               f"{WINDOW_START:02d}:00-{WINDOW_END:02d}:00 窗口内. "
               f"用 --force-now 跳过.")
         return 0
 
     # token 预算
     if not args.skip_token_check and not token_budget_ok():
-        print("[SKIP] token 剩余不足 75%, 跳过.")
+        safe_print("[SKIP] token 剩余不足 75%, 跳过.")
         return 0
 
     return run(args)

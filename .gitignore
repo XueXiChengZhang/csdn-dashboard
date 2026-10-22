@@ -1,10 +1,16 @@
 # 历史快照 - 示例数据,不部署
 history-test/
-history-real/
+# history-real/ 每日归档快照 — 已部署到 GitHub Pages 供 trend.html 读取趋势
+# (2026-10-22 起启用: 快照无敏感信息, 已扫描邮箱/手机号/身份证/AK/token/IP)
+!history-real/
+!history-real/**
 
 # 备份文件
 *.bak-*
 *.bak
+
+# R7 周日全量安全网的备份 (每次一份 data.json, 不入库)
+cache/backup/
 
 # Python 缓存
 __pycache__/
