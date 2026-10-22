@@ -10,7 +10,9 @@ test_csdn_fixes.py — 2026-10-22 第二轮修复的回归测试
   [4] R2  模拟 521: 两次尝试间隔 >= 45 秒
   [5] R3  模拟 404: 文章被标记 _deleted_on_csdn 且不再重试
   [6] R4  列表抓取: no_posts (真没文章) vs fetch_failed (被风控)
-  [7] R7  周日全量: 总阅读腰斩时触发回滚
+  [7] R5  增量跑完重算 class_stats
+  [8] R7  周日全量安全网: 备份 / 校验 / 回滚 (总阅读腰斩 + 部分学生失败)
+  [9] R7  05:30 gitee-only 之后, 班级总阅读保持 00:00 增量算出的值
 
 跑法:
   python scripts/test_csdn_fixes.py            # 全部 (离线, 不打真网站)
@@ -543,6 +545,191 @@ def test_class_stats_refreshed():
           c["csdn"]["total_posts"] == 4, str(c["csdn"]["total_posts"]))
 
 
+# ---------- [8] R7: 周日全量安全网 (备份 / 校验 / 回滚) ----------
+def _make_class(n=34, views=1934, posts=11):
+    """造一份"好的"班级数据 (n 个学生, 每人 views 阅读 / posts 篇文章)。"""
+    return {
+        "total_students": n,
+        "total_posts": n * posts,
+        "class_stats": {"csdn": {"total_views": n * views, "total_posts": n * posts}},
+        "students": [
+            {
+                "sid": f"s{i}", "name": f"学生{i}", "total_views": views,
+                "post_count": posts,
+                "posts": [{"title": f"t{j}", "link": f"https://x/{i}/{j}"}
+                          for j in range(posts)],
+                "gitee": {"ok": True, "status": "ok"},
+            }
+            for i in range(n)
+        ],
+    }
+
+
+def test_weekly_guard_rollback():
+    print("\n[8] R7 — 周日全量安全网: 备份 / 校验 / 回滚")
+    import tempfile
+    import shutil
+    guard = load_module("guardmod", "weekly_guard.py")
+
+    good = _make_class()
+    total_good = 34 * 1934
+
+    # ---------- 场景 A: 总阅读腰斩 (只掉 40%, 保护逻辑的 C 臂挡不住) ----------
+    halved = _make_class(views=int(1934 * 0.6))   # 掉 40%
+    res_a = guard.evaluate(halved, good)
+    check("场景A 总阅读掉 40% -> 判不合格", res_a["ok"] is False,
+          str(res_a["reasons"]))
+    check("场景A 命中的是 R1 绝对下限 (60%)",
+          any(r.startswith("R1") for r in res_a["reasons"]), str(res_a["reasons"]))
+
+    # 掉 39% (刚好在 60% 门槛之上) -> 不该误杀
+    almost = _make_class(views=int(1934 * 0.62))
+    res_a2 = guard.evaluate(almost, good)
+    check("场景A 只掉 38% 不误杀", res_a2["ok"] is True, str(res_a2["reasons"]))
+
+    # ---------- 场景 B: 部分学生失败 (占比 > 20%) ----------
+    partial = _make_class()
+    for i in range(9):            # 9/34 = 26% > 20%
+        partial["students"][i]["total_views"] = 0
+    res_b = guard.evaluate(partial, good)
+    check("场景B 9/34 学生归零 -> 判不合格", res_b["ok"] is False,
+          str(res_b["reasons"]))
+    check("场景B 命中的是 R2 学生级 (>20%)",
+          any(r.startswith("R2") for r in res_b["reasons"]), str(res_b["reasons"]))
+    # 总阅读只掉 26% (还 > 60%) -> 证明 R2 是独立于 R1 的一层网
+    check("场景B 总阅读还剩 74% (R1 没触发, 是 R2 抓住的)",
+          res_b["stats"]["new_total_views"] > 0.6 * total_good,
+          f"{res_b['stats']['new_total_views']} / {total_good}")
+
+    # 5/34 = 15% -> 不该误杀
+    small = _make_class()
+    for i in range(5):
+        small["students"][i]["total_views"] = 0
+    res_b2 = guard.evaluate(small, good)
+    check("场景B 只挂 5/34 (15%) 不误杀", res_b2["ok"] is True, str(res_b2["reasons"]))
+
+    # ---------- 场景 C: 正常一周 (阅读量只涨) ----------
+    up = _make_class(views=2100)
+    res_c = guard.evaluate(up, good)
+    check("场景C 阅读量涨了 -> 通过", res_c["ok"] is True, str(res_c["reasons"]))
+
+    # ---------- 端到端: 备份 -> 写坏 -> 校验失败 -> 回滚 ----------
+    tmp = tempfile.mkdtemp(prefix="weekly_guard_test_")
+    try:
+        d = Path(tmp)
+        (d / "cache" / "csdn").mkdir(parents=True, exist_ok=True)
+        (d / "data.json").write_text(
+            json.dumps(good, ensure_ascii=False), encoding="utf-8")
+        (d / "cache" / "csdn" / "snapshot.json").write_text(
+            json.dumps({"last_run": "old"}, ensure_ascii=False), encoding="utf-8")
+
+        bdir = guard.backup(d, keep=8)
+        check("备份目录建出来了", bdir.exists(), str(bdir))
+        check("备份里有 data.json", (bdir / "data.json").exists(), str(bdir))
+        check("备份里有 snapshot.json",
+              (bdir / "cache" / "csdn" / "snapshot.json").exists(), str(bdir))
+        check("LATEST.txt 指向刚建的备份",
+              (guard.read_latest(d) or Path()).resolve() == bdir.resolve(),
+              str(guard.read_latest(d)))
+
+        # 模拟全量跑砸了: data.json 被覆盖成残缺数据
+        (d / "data.json").write_text(
+            json.dumps(halved, ensure_ascii=False), encoding="utf-8")
+        rc = guard.main(["--dir", str(d), "check", "--backup", str(bdir)])
+        check("check 对残缺数据返回非 0 (会让 .cmd 停下)", rc != 0, str(rc))
+
+        # 回滚
+        rc2 = guard.main(["--dir", str(d), "rollback", "--backup", str(bdir)])
+        check("rollback 返回 0", rc2 == 0, str(rc2))
+        restored = json.loads((d / "data.json").read_text(encoding="utf-8"))
+        check("回滚后 data.json 恢复到跑之前的值",
+              guard.class_reading(restored) == total_good,
+              f"{guard.class_reading(restored)} vs {total_good}")
+        check("回滚后 34 个学生都在",
+              len(restored.get("students", [])) == 34,
+              str(len(restored.get("students", []))))
+        rc3 = guard.main(["--dir", str(d), "check", "--backup", str(bdir)])
+        check("回滚后再 check 就通过了", rc3 == 0, str(rc3))
+
+        # 备份保留份数: 连存 10 份只留 8 份
+        for i in range(10):
+            guard.backup(d, keep=8, when=f"2026-01-01T00-00-{i:02d}")
+        dirs = [p for p in (d / "cache" / "backup").iterdir() if p.is_dir()]
+        check("备份只保留最近 8 份", len(dirs) == 8, str(len(dirs)))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+# ---------- [9] R7: 05:30 gitee-only 不能把班级总阅读打残 ----------
+def test_gitee_only_keeps_class_reading():
+    print("\n[9] R7 — 05:30 gitee-only 之后, 班级总阅读保持 00:00 增量算出的值")
+    v2 = load_v2()
+
+    # 00:00 增量跑完的好数据 (class 总阅读 65777)
+    prev_data = {
+        "total_students": 2, "total_posts": 4,
+        "students": [
+            {"sid": "s1", "name": "甲", "csdn_username": "a", "total_views": 7379,
+             "total_likes": 1, "total_comments": 1, "total_collections": 1,
+             "profile_views": 7379, "article_views_sum": 7337,
+             "views_source": "profile", "articles_scanned": 2,
+             "stats_updated_at": "2026-10-22T00:24:00",
+             "posts": [{"title": "a1", "link": "https://x/1",
+                        "views": 3000, "stats_updated_at": "2026-10-22T00:24:00"}],
+             "gitee": {"ok": True, "status": "ok"}},
+            {"sid": "s2", "name": "乙", "csdn_username": "b", "total_views": 1297,
+             "total_likes": 0, "total_comments": 0, "total_collections": 0,
+             "profile_views": 1297, "article_views_sum": 1297,
+             "views_source": "profile", "articles_scanned": 1,
+             "stats_updated_at": "2026-10-22T00:24:00",
+             "posts": [{"title": "b1", "link": "https://x/2",
+                        "views": 1297, "stats_updated_at": "2026-10-22T00:24:00"}],
+             "gitee": {"ok": False, "status": "empty"}},
+        ],
+    }
+    # 05:30 gitee-only: CSDN 一个字段都没抓, 原样复用
+    students_state = [
+        {"sid": "s1", "name": "甲", "csdn": "https://blog.csdn.net/a",
+         "gitee_url": "", "gitee": {}, "csdn_username": "", "csdn_status": "skipped",
+         "posts": [], "new_posts": [], "stats": {},
+         "csdn_err": "skipped (--gitee-only)"},
+        {"sid": "s2", "name": "乙", "csdn": "https://blog.csdn.net/b",
+         "gitee_url": "", "gitee": {}, "csdn_username": "", "csdn_status": "skipped",
+         "posts": [], "new_posts": [], "stats": {},
+         "csdn_err": "skipped (--gitee-only)"},
+    ]
+    prev_by_sid = {s["sid"]: s for s in prev_data["students"]}
+    for rec in students_state:
+        p = prev_by_sid.get(rec["sid"])
+        rec["posts"] = p.get("posts", [])
+        rec["csdn_username"] = p.get("csdn_username", "")
+        rec["csdn_status"] = "skipped_reused"
+        rec["stats"] = {
+            "total_views": p.get("total_views", 0),
+            "total_likes": p.get("total_likes", 0),
+            "total_comments": p.get("total_comments", 0),
+            "total_collections": p.get("total_collections", 0),
+            "profile_views": p.get("profile_views"),
+            "article_views_sum": p.get("article_views_sum", 0),
+            "views_source": p.get("views_source", "reused"),
+            "articles_scanned": p.get("articles_scanned", 0),
+            "fetched_at": p.get("stats_updated_at", ""),
+        }
+
+    class_stats = v2.compute_class_stats(students_state)
+    check("gitee-only 之后班级总阅读还是 8,676 (不是 1,297 那种残缺值)",
+          class_stats["csdn"]["total_views"] == 7379 + 1297,
+          str(class_stats["csdn"]["total_views"]))
+    check("gitee-only 之后总文章数不变", class_stats["csdn"]["total_posts"] == 2,
+          str(class_stats["csdn"]["total_posts"]))
+
+    # 保护逻辑在 gitee-only 下**不该**触发 (数据没坏, 只是没抓)
+    v2.apply_data_protection(students_state, prev_data, verbose=False)
+    check("gitee-only 不误触发数据保护",
+          students_state[0]["stats"]["total_views"] == 7379,
+          str(students_state[0]["stats"]["total_views"]))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="(本测试全是离线的)")
@@ -559,6 +746,8 @@ def main():
     test_404_marked_deleted()
     test_list_fetch_diagnosis()
     test_class_stats_refreshed()
+    test_weekly_guard_rollback()
+    test_gitee_only_keeps_class_reading()
 
     print("\n" + "=" * 70)
     print(f"通过 {PASS} / 失败 {FAIL}")
