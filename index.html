@@ -951,6 +951,11 @@
     }
 
     // v7: 渲染 fetch_meta (抓取健康度 + 折叠面板)
+    // ★ 2026-10-22 (R1): last_fetch_meta 改成**按模式分块**
+    //   incremental 块 = CSDN 抓取那一路 (csdn_incremental.py / v2)
+    //   gitee 块       = Gitee 抓取那一路 (v2 --gitee-only)
+    //   两个脚本各写各的块, 互不覆盖 —— 以前增量写的 438 个请求会被
+    //   gitee-only 整个抹掉, 仪表盘从此显示"尚未运行抓取任务" 19 小时。
     function renderFetchMeta(fm) {
     const card = document.getElementById('stat-health-card');
     const healthEl = document.getElementById('stat-health');
@@ -960,12 +965,22 @@
     const grid = document.getElementById('fetch-meta-grid');
     const summary = document.getElementById('fm-summary');
 
-    const total = Number(fm.total_requests || 0);
-    const ok = Number(fm.success_count || 0);
+    const inc = fm.incremental || {};
+    const git = fm.gitee || {};
+    const incReq = Number(inc.total_requests || 0);
+    const gitReq = Number(git.total_requests || 0);
+    const total = incReq + gitReq;                  // 两个分块的请求数之和
+    const incOk = Number(inc.students_ok || 0);
+    const incTot = Number(inc.students_total || 0);
+    const gitOk = Number(git.ok || 0);
+    const gitTot = Number(git.students_total || 0);
     const fail = Number(fm.fail_count || 0);
     const ts = fm.fetched_at || '';
     const ms = Number(fm.duration_ms || 0);
     const methods = fm.method_breakdown || {};
+    // 覆盖率口径统一成"人" (以前 ok 是学生数、total 是请求数, 单位都不一样)
+    const covOk = incTot ? incOk : gitOk;
+    const covTot = incTot || gitTot;
 
     // 健康度卡片
     card.classList.remove('health-good', 'health-warn', 'health-fail');
@@ -973,11 +988,18 @@
     healthEl.textContent = '—';
     healthMeta.textContent = '尚未运行抓取任务';
     } else {
-    const ratio = ok / total;
-    healthEl.textContent = `${ok} / ${total}`;
-    healthMeta.innerHTML =
-    `<span class="pill">失败 ${fail}</span>` +
-    `<span class="pill">今日 ${total} 次请求</span>`;
+    healthEl.textContent = covTot ? `${covOk} / ${covTot}` : String(total);
+    const pills = [];
+    if (incTot || incReq) {
+    pills.push(`<span class="pill">增量 ${incReq} 请求 · ${incOk}/${incTot} 人</span>`);
+    }
+    if (gitTot || gitReq) {
+    const gitExtra = Number(git.empty || 0) ? ` · ${git.empty} 空仓库` : '';
+    pills.push(`<span class="pill">Gitee ${gitReq} 请求 · ${gitOk}/${gitTot} 人${gitExtra}</span>`);
+    }
+    pills.push(`<span class="pill">失败 ${fail}</span>`);
+    healthMeta.innerHTML = pills.join('');
+    const ratio = covTot ? covOk / covTot : 1;
     if (ratio >= 0.9) {
     card.classList.add('health-good');
     } else if (ratio >= 0.7) {
@@ -1002,19 +1024,19 @@
     grid.innerHTML = '<div class="empty">尚未运行抓取任务 — 跑一次 csdn-monitor.py 会自动出现</div>';
     } else {
     summary.textContent =
-    `${ok}/${total} 成功 · ${ms}ms · ${Object.keys(methods).map(k => `${k}=${methods[k]}`).join(', ')}`;
-    const mReqs = methods.requests || 0;
-    const mPw = methods.playwright || 0;
-    const mNone = methods.none || methods.failed || 0;
+    `${covOk}/${covTot} 覆盖 · 增量 ${incReq} 请求 · Gitee ${gitReq} 请求 · ${ms}ms`;
     grid.innerHTML = `
     <div><span class="k">抓取时间</span><span class="v">${escapeHtml(ts.replace('T',' ').slice(0,19))}</span></div>
     <div><span class="k">总请求</span><span class="v">${total}</span></div>
-    <div><span class="k">成功</span><span class="v">${ok}</span></div>
+    <div><span class="k">增量(CSDN)请求</span><span class="v">${incReq}</span></div>
+    <div><span class="k">增量覆盖</span><span class="v">${incOk}/${incTot} 人</span></div>
+    <div><span class="k">增量新文章</span><span class="v">${Number(inc.new_posts || 0)}</span></div>
+    <div><span class="k">Gitee 请求</span><span class="v">${gitReq}</span></div>
+    <div><span class="k">Gitee 成功</span><span class="v">${gitOk}/${gitTot} 人</span></div>
+    <div><span class="k">Gitee 空仓库</span><span class="v">${Number(git.empty || 0)}</span></div>
+    <div><span class="k">Gitee commit</span><span class="v">${Number(git.total_commits || 0)}</span></div>
     <div><span class="k">失败</span><span class="v">${fail}</span></div>
     <div><span class="k">耗时</span><span class="v">${ms} ms</span></div>
-    <div><span class="k">requests</span><span class="v">${mReqs}</span></div>
-    <div><span class="k">playwright</span><span class="v">${mPw}</span></div>
-    <div><span class="k">失败/无方法</span><span class="v">${mNone}</span></div>
     `;
     }
     }

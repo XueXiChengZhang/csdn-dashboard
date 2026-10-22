@@ -117,6 +117,47 @@ if (withViewsFilter) {
   check('人均阅读 > 0', avg > 0, `人均 ${avg}`);
 }
 
+// ---------- 4. index.html fetch_meta 分块 (R1) ----------
+console.log("\n[4] index.html fetch_meta 分块 (增量 + Gitee 同时可见)");
+const renderFetchMetaSrc = extractFunction(indexHtml, 'renderFetchMeta');
+const escapeHtmlSrc = extractFunction(indexHtml, 'escapeHtml');
+const relativeTimeSrc = extractFunction(indexHtml, 'relativeTime');
+const els = {};
+const fakeDoc = {
+  getElementById(id) {
+    if (!els[id]) els[id] = { textContent: '', innerHTML: '', classList: { add() {}, remove() {} } };
+    return els[id];
+  }
+};
+const renderFetchMeta = new Function('document', 'escapeHtml', 'relativeTime',
+  `${escapeHtmlSrc}\n${relativeTimeSrc}\n${renderFetchMetaSrc}\nreturn renderFetchMeta;`
+)(fakeDoc, escapeHtml, (iso) => iso);
+
+// 模拟"增量跑完 (438 请求) 之后又刷了一次 Gitee (66 请求)"的 meta
+renderFetchMeta({
+  fetched_at: '2026-10-22T00:24:00',
+  duration_ms: 1313,
+  total_requests: 504,
+  success_count: 37,
+  fail_count: 1,
+  incremental: { fetched_at: '2026-10-22T00:24:00', total_requests: 438, students_ok: 33, students_total: 34, new_posts: 2 },
+  gitee: { fetched_at: '2026-10-22T05:30:00', total_requests: 66, ok: 4, empty: 29, students_total: 34, total_commits: 12 },
+});
+const healthMeta = els['stat-health-meta'].innerHTML;
+check('健康度卡片同时显示增量和 Gitee',
+  healthMeta.includes('增量 438') && healthMeta.includes('Gitee 66'),
+  healthMeta);
+check('健康度卡片不是"尚未运行抓取任务"',
+  !healthMeta.includes('尚未运行'), healthMeta);
+const fmGrid = els['fetch-meta-grid'].innerHTML;
+check('折叠面板列出两个分块的请求数',
+  fmGrid.includes('增量(CSDN)请求') && fmGrid.includes('Gitee 请求'), '');
+check('折叠面板显示 Gitee 空仓库数 29',
+  fmGrid.includes('Gitee 空仓库') && fmGrid.includes('29'), '');
+check('抓取时间取顶层 fetched_at (最近一次运行)',
+  els['stat-last-fetch-meta'].textContent.startsWith('2026-10-22'),
+  els['stat-last-fetch-meta'].textContent);
+
 console.log('\n' + '='.repeat(70));
 console.log(`通过 ${pass} / 失败 ${fail}`);
 console.log('='.repeat(70));

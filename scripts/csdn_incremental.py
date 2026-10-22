@@ -611,6 +611,67 @@ def write_history_snapshot(d):
     path.write_text(json.dumps(hist, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def build_incremental_meta(d, elapsed, agg, students_ok, students_total,
+                            full=False, recent=4, rotate=2):
+    """构造 last_fetch_meta 的**增量块** (2026-10-22 R1: 按模式分块)。
+
+    ★ 关键约定: 本函数**只写 incremental 块**, **绝不碰 gitee 块**。
+      gitee 块是 csdn-monitor-v2.py 写的 —— 以前两个脚本抢同一个
+      last_fetch_meta 整个字典, 后写的赢, 增量那一跑的 438 个请求
+      被 gitee-only 整个抹掉 (仪表盘 19 小时假告警的根因)。
+
+    顶层汇总字段 (total_requests / success_count / fail_count) =
+    两个分块之和, 这样仪表盘一次就能同时看到"增量刷了"和"Gitee 刷了"。
+    """
+    meta = d.get("last_fetch_meta") or {}
+    git_block = meta.get("gitee") or {}
+    now_iso = d.get("last_update") or datetime.now().isoformat(timespec="seconds")
+    duration_ms = int(elapsed * 1000)
+
+    meta["fetched_at"] = now_iso
+    meta["duration_ms"] = duration_ms
+    meta["mode"] = "full" if full else "incremental"
+    meta["incremental"] = {
+        "fetched_at": now_iso,
+        "mode": "full" if full else "incremental",
+        "duration_ms": duration_ms,
+        "total_requests": REQUESTS,
+        "recent_per_student": recent,
+        "rotate_per_student": rotate,
+        "students_ok": students_ok,
+        "students_total": students_total,
+        "students_skipped": agg.get("skipped", 0),
+        "new_posts": agg.get("new", 0),
+        "updated_recent": agg.get("updated", 0),
+        "updated_rotated": agg.get("rotated", 0),
+        "backfilled": agg.get("backfilled", 0),
+        "reused": agg.get("reused", 0),
+        "failed": agg.get("failed", 0),
+        "class_total_views": agg.get("class_total_views", 0),
+        "class_total_views_all": agg.get("class_total_views_all", 0),
+    }
+    # 顶层汇总 = 两个分块之和 (仪表盘一次能同时看到增量和 Gitee)
+    meta["total_requests"] = REQUESTS + (git_block.get("total_requests") or 0)
+    meta["success_count"] = students_ok + (git_block.get("ok") or 0)
+    meta["fail_count"] = agg.get("skipped", 0) + (git_block.get("failed") or 0)
+    # 本次运行的明细 (日报"抓取健康度"行读它)
+    meta["last_run"] = {
+        "fetched_at": now_iso,
+        "mode": meta["mode"],
+        "csdn_ran": True,
+        "csdn_ms": duration_ms,
+        "gitee_ms": 0,
+        "duration_ms": duration_ms,
+        "total_requests": REQUESTS,
+        "students_ok": students_ok,
+        "students_total": students_total,
+        "gitee_ok": 0,
+        "gitee_empty": 0,
+        "reused_students": agg.get("skipped", 0),
+    }
+    return meta
+
+
 def main():
     ap = argparse.ArgumentParser(description="CSDN 增量抓取 (Ma: 数据应该是增量的)")
     ap.add_argument("--all", action="store_true", help="所有学生")
@@ -709,23 +770,17 @@ def main():
 
     d["last_update"] = datetime.now().isoformat(timespec="seconds")
     d["total_posts"] = sum(len(s.get("posts", [])) for s in d.get("students", []))
-    meta = d.get("last_fetch_meta") or {}
-    meta["fetched_at"] = d["last_update"]
-    meta["mode"] = "full" if args.full else "incremental"
-    meta["duration_ms"] = int(elapsed * 1000)
-    meta["total_requests"] = REQUESTS
-    meta["incremental"] = {
-        "recent_per_student": args.recent,
-        "rotate_per_student": args.rotate,
-        "students_ok": students_ok,
-        "new_posts": agg["new"],
-        "updated_recent": agg["updated"],
-        "updated_rotated": agg["rotated"],
-        "backfilled": agg["backfilled"],
-        "reused": agg["reused"],
-        "failed": agg["failed"],
-        "class_total_views": total_views_sum,
-    }
+    # ★ 2026-10-22 (R1): last_fetch_meta 改成**按模式分块**
+    #   - incremental 块 = 本脚本写的 (CSDN 抓取这一路)
+    #   - gitee 块       = csdn-monitor-v2.py 写的 (Gitee 抓取那一路)
+    #   两个脚本各写各的那块, **互不覆盖** —— 以前本脚本写的 438 个请求
+    #   会被 v2 的 gitee-only 整个抹掉 (仪表盘 19 小时假告警的根因)。
+    agg["class_total_views"] = total_views_sum
+    agg["class_total_views_all"] = sum(s.get("total_views") or 0
+                                       for s in d.get("students", []))
+    meta = build_incremental_meta(d, elapsed, agg, students_ok, len(targets),
+                                  full=args.full, recent=args.recent,
+                                  rotate=args.rotate)
     d["last_fetch_meta"] = meta
 
     with open(DATA_PATH, "w", encoding="utf-8") as f:
