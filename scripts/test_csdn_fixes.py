@@ -291,6 +291,96 @@ def test_521_backoff():
           any(s >= 44.0 for s in slept), str([round(s, 1) for s in slept]))
 
 
+# ---------- [5] R3: 模拟 404, 文章被标记 _deleted_on_csdn 且不再重试 ----------
+def test_404_marked_deleted():
+    print("\n[5] R3 — 模拟 404: 文章标记 _deleted_on_csdn, 以后不再重抓")
+    inc = load_incremental()
+
+    # --- 单元 1: fetch_article_stats 遇到 404 返回 deleted ---
+    class _Resp404:
+        status_code = 404
+        text = ""
+
+    orig_get = inc.requests.get
+    orig_limiter = inc.LIMITER
+    try:
+        inc.requests.get = lambda *a, **k: _Resp404()
+        inc.LIMITER = type(inc.LIMITER)(min_interval=0, jitter=0)
+        s = inc.fetch_article_stats("164961487", "someuser")
+    finally:
+        inc.requests.get = orig_get
+        inc.LIMITER = orig_limiter
+    check("404 返回 deleted=True", bool(s) and s.get("deleted") is True, str(s))
+    check("404 的 views 是 None (不是 0)",
+          s.get("views") is None, str(s.get("views")))
+
+    # --- 单元 2: 整轮增量里, 404 文章被标记且不再重抓 ---
+    fetched = []
+
+    def fake_fetch_article_stats(aid, username):
+        fetched.append(aid)
+        if aid == "404001":
+            return {"deleted": True, "views": None, "likes": None,
+                    "comments": None, "collections": None}
+        return {"views": 123, "likes": 1, "comments": 0, "collections": 0}
+
+    def fake_fetch_blog_list(username, max_pages=20):
+        return [
+            {"article_id": "404001", "link": "https://blog.csdn.net/u/article/details/404001",
+             "title": "已删除的文章", "pub_raw": "2026-10-01"},
+            {"article_id": "100001", "link": "https://blog.csdn.net/u/article/details/100001",
+             "title": "正常文章", "pub_raw": "2026-10-02"},
+        ]
+
+    student = {
+        "sid": "s1", "name": "测试同学", "csdn_username": "u",
+        "posts": [
+            {"title": "已删除的文章", "link": "https://blog.csdn.net/u/article/details/404001",
+             "pubDate": "2026-10-01T00:00:00", "guid": "g1", "views": None},
+            {"title": "正常文章", "link": "https://blog.csdn.net/u/article/details/100001",
+             "pubDate": "2026-10-02T00:00:00", "guid": "g2", "views": 50},
+        ],
+    }
+    orig_fas = inc.fetch_article_stats
+    orig_fbl = inc.fetch_blog_list
+    orig_fpv = inc.fetch_profile_views
+    try:
+        inc.fetch_article_stats = fake_fetch_article_stats
+        inc.fetch_blog_list = fake_fetch_blog_list
+        inc.fetch_profile_views = lambda u: 1000
+        stats = inc.incremental_update_student(student, recent_n=4, rotate_m=2,
+                                               backfill_per_student=3)
+    finally:
+        inc.fetch_article_stats = orig_fas
+        inc.fetch_blog_list = orig_fbl
+        inc.fetch_profile_views = orig_fpv
+
+    posts = {p["link"].rsplit("/", 1)[-1]: p for p in student["posts"]}
+    check("404 文章被标记 _deleted_on_csdn",
+          posts["404001"].get("_deleted_on_csdn") is True,
+          str(posts["404001"].get("_deleted_on_csdn")))
+    check("404 文章的标记没被清理掉 (持久标记)",
+          "_deleted_on_csdn" in posts["404001"],
+          str(list(posts["404001"].keys())))
+    check("正常文章没被误标", not posts["100001"].get("_deleted_on_csdn"))
+    check("统计里记了删除数", stats.get("deleted", 0) >= 1, str(stats.get("deleted")))
+
+    # --- 单元 3: 第二轮跑的时候, 已删除的文章**不再进重抓队列** ---
+    fetched.clear()
+    try:
+        inc.fetch_article_stats = fake_fetch_article_stats
+        inc.fetch_blog_list = fake_fetch_blog_list
+        inc.fetch_profile_views = lambda u: 1000
+        inc.incremental_update_student(student, recent_n=4, rotate_m=2,
+                                       backfill_per_student=3)
+    finally:
+        inc.fetch_article_stats = orig_fas
+        inc.fetch_blog_list = orig_fbl
+        inc.fetch_profile_views = orig_fpv
+    check("第二轮不再抓已删除的文章", "404001" not in fetched, str(fetched))
+    check("第二轮仍然抓正常文章", "100001" in fetched, str(fetched))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="(本测试全是离线的)")
@@ -304,6 +394,7 @@ def main():
     test_report_health_line()
     test_gitee_empty_vs_ok()
     test_521_backoff()
+    test_404_marked_deleted()
 
     print("\n" + "=" * 70)
     print(f"通过 {PASS} / 失败 {FAIL}")

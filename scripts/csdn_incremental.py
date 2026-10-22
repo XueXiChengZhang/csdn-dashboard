@@ -291,6 +291,14 @@ def fetch_article_stats(article_id, username):
     """
     url = f"https://blog.csdn.net/{username}/article/details/{article_id}"
     r = csdn_get(url, timeout=15)
+    # ★ 2026-10-22 (R3): 详情页 404 = 文章已被作者从 CSDN 删除
+    #   (列表页还挂着, 但文章没了)。这不是"抓取失败", 重试多少次都是 404 ——
+    #   实测文章 164961487 (吕涵) 每次轮到它就白烧一个请求, 永远失败,
+    #   385 篇里就它一篇 views 恒为 None。
+    if r.status_code == 404:
+        log(f"    🗑️ {article_id} 详情页 404 (文章已从 CSDN 删除)")
+        return {"deleted": True, "views": None, "likes": None,
+                "comments": None, "collections": None}
     if r.status_code != 200 or not r.text or len(r.text) < 500:
         log(f"    ⚠️ 抓 {article_id} 失败 (HTTP {r.status_code}, len={len(r.text or '')})")
         return None
@@ -341,6 +349,7 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     stats = {
         "new": 0, "new_posts": 0, "updated": 0, "rotated": 0, "reused": 0,
         "missing": 0, "fetched": 0, "failed": 0, "skipped": None,
+        "deleted": 0,
     }
 
     # --- A. 列表抓取 ---
@@ -380,14 +389,21 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     old_posts = [p for aid, p in existing_by_id.items() if aid in csdn_ids]
     old_posts.sort(key=_post_sort_key, reverse=True)
 
+    # ★ 2026-10-22 (R3): 已删除的文章 (详情页 404) **不再进任何"要重抓"的队列**
+    #   —— 否则它每天都会被"最近 N 篇"或轮转池捞到, 白烧一个请求, 永远失败。
+    #   _deleted_on_csdn 是**持久标记** (写进 data.json), 以后的每天都会跳过它。
+    deleted_old = [p for p in old_posts if p.get("_deleted_on_csdn")]
+    live_old = [p for p in old_posts if not p.get("_deleted_on_csdn")]
+    stats["deleted"] = len(deleted_old)
+
     if full:
-        # 全量: 所有老文章都重抓
-        recent_set = {id(p) for p in old_posts}
+        # 全量: 所有老文章都重抓 (已删除的除外)
+        recent_set = {id(p) for p in live_old}
         rotate_set = set()
     else:
-        recent_set = {id(p) for p in old_posts[:recent_n]}
-        # 轮转池 = 除去最近 N 篇的老文章
-        pool = old_posts[recent_n:]
+        recent_set = {id(p) for p in live_old[:recent_n]}
+        # 轮转池 = 除去最近 N 篇的老文章 (已删除的不进池)
+        pool = live_old[recent_n:]
         if pool and rotate_m > 0:
             offset = (datetime.now().toordinal() * rotate_m) % len(pool)
             picked = pool[offset:offset + rotate_m]
@@ -414,7 +430,7 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
         elif id(p) in rotate_set:
             to_fetch.append((p, "rotate"))
     backfill_posts = [
-        p for p in old_posts
+        p for p in live_old
         if id(p) not in recent_set and id(p) not in rotate_set
         and not isinstance(p.get("views"), int)
     ]
@@ -428,7 +444,8 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     for p in backfill_posts:
         to_fetch.append((p, "backfill"))
 
-    stats["reused"] = len(old_posts) - len(recent_set) - len(rotate_set) - len(backfill_posts)
+    stats["reused"] = (len(live_old) - len(recent_set) - len(rotate_set)
+                       - len(backfill_posts))
     stats["backfill"] = len(backfill_posts)
 
     # --- 抓 stats (带限流 + 连续失败放弃 + 全局时间预算) ---
@@ -450,6 +467,16 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
         if not aid:
             continue
         s = fetch_article_stats(aid, username)
+        if s and s.get("deleted"):
+            # ★ 2026-10-22 (R3): 文章在 CSDN 上已被删除 —— 打标记, **不再重试**,
+            #   也不计入"失败" (失败会触发连续失败放弃, 把后面的文章也搭进去)。
+            #   数据保留 (不删文章), 只是标记出来, 避免误伤。
+            p["_deleted_on_csdn"] = True
+            p["_deleted_at"] = now_iso
+            stats["deleted"] = stats.get("deleted", 0) + 1
+            consecutive_failures = 0
+            log(f"    🗑️ {aid} 已从 CSDN 删除 (404), 标记 _deleted_on_csdn, 以后不再重抓")
+            continue
         if s:
             consecutive_failures = 0
             old_views = p.get("views")
@@ -488,6 +515,9 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     for p in all_posts:
         p.pop("_needs_stats_update", None)
         p.pop("_missing_on_csdn", None)
+        # ★ _deleted_on_csdn **不能** pop 掉 —— 它是"这篇文章在 CSDN 上没了"
+        #   的持久标记, 留着才能让以后每天的"最近 N 篇"/轮转池/补历史都跳过它
+        #   (否则它又会被捞到, 白烧一个请求, 永远失败)。
     # 标记 CSDN 上已经删掉的 (不删数据, 只标记, 避免误伤)
     for p in existing_posts:
         aid = article_id_from_link(p.get("link"))
@@ -665,6 +695,7 @@ def build_incremental_meta(d, elapsed, agg, students_ok, students_total,
         "backfilled": agg.get("backfilled", 0),
         "reused": agg.get("reused", 0),
         "failed": agg.get("failed", 0),
+        "deleted": agg.get("deleted", 0),
         "class_total_views": agg.get("class_total_views", 0),
         "class_total_views_all": agg.get("class_total_views_all", 0),
     }
@@ -735,7 +766,7 @@ def main():
     deadline = (t0 + args.max_minutes * 60) if args.max_minutes else None
     agg = {"new": 0, "new_posts": 0, "updated": 0, "rotated": 0, "reused": 0,
            "fetched": 0, "failed": 0, "skipped": 0, "backfill": 0, "backfilled": 0,
-           "budget_exhausted": 0}
+           "budget_exhausted": 0, "deleted": 0}
     total_views_sum = 0
     students_ok = 0
 
@@ -762,7 +793,8 @@ def main():
         total_views_sum += r.get("total_views", 0) or 0
         log(f"  🆕新{r['new']} 全抓{r['new_posts']} | ↻最近更新{r['updated']} "
             f"轮转{r['rotated']} | 🧹补历史{r.get('backfilled', 0)} | "
-            f"♻️复用{r['reused']} | 失败{r['failed']}")
+            f"♻️复用{r['reused']} | 失败{r['failed']}"
+            + (f" | 🗑️已删除{r.get('deleted', 0)}" if r.get("deleted") else ""))
         log(f"  👁️ total_views={r['total_views']} (来源 {r['views_source']}, "
             f"profile={r['profile_views']}, 文章累加={r['article_views_sum']})")
 
@@ -777,6 +809,8 @@ def main():
         f"补历史 {agg['backfilled']} = {agg['fetched']} 篇")
     log(f"♻️  复用旧值 {agg['reused']} 篇 (未重抓, 会按天轮转刷新)")
     log(f"❌ 失败 {agg['failed']} 篇")
+    if agg.get("deleted"):
+        log(f"🗑️ 已从 CSDN 删除 {agg['deleted']} 篇 (标记 _deleted_on_csdn, 以后不再重抓)")
     if agg.get("budget_exhausted"):
         log(f"⏱️  时间预算用尽, {agg['budget_exhausted']} 篇'补历史'留到下次 "
             f"(它们的 views 还是 None, 明天会继续补)")
