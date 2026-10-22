@@ -649,29 +649,84 @@ GITEE_HEADERS = {
     "Accept-Language": "zh-CN,zh;q=0.9",
 }
 
+# Gitee 的真实请求计数 (2026-10-22 修: 以前 _count_actual_requests 只认
+# source=="api"/"html", markdown 源一次都不算 -> gitee-only 那一跑
+# total_requests=0, 仪表盘健康度卡片显示"尚未运行抓取任务" 19 小时)。
+GITEE_REQUESTS = 0
+GITEE_REQUESTS_LOCK = threading.Lock()
+GITEE_REQUEST_BREAKDOWN = {"api": 0, "html": 0, "markdown": 0}
+
+
+def _gitee_count_request(kind):
+    """记录一次 Gitee 请求 (真实计数, 不再估算)"""
+    global GITEE_REQUESTS
+    with GITEE_REQUESTS_LOCK:
+        GITEE_REQUESTS += 1
+        GITEE_REQUEST_BREAKDOWN[kind] = GITEE_REQUEST_BREAKDOWN.get(kind, 0) + 1
+
+
+def _gitee_is_empty_response(r):
+    """Gitee 对**空仓库**的 commits API 返回 HTTP 404 + {"message":"Repository is empty"}。
+
+    ★ 这是 2026-10-22 实测出来的关键事实: 空仓库不是"抓取失败",
+      而是"学生建了仓库但没提交任何代码"。两者必须区分, 否则:
+        - 空仓库 -> 被报成 ok=True (假成功)
+        - 有 commit 的仓库 -> 因为上层分不清 404 和 200, 计数器归零
+    """
+    try:
+        body = (getattr(r, "text", "") or "")[:300].lower()
+    except Exception:
+        body = ""
+    return "is empty" in body or '"empty"' in body or "repository is empty" in body
+
 
 def fetch_gitee_repo_api(owner, repo):
-    """API 抓仓库基本信息: stars, forks, language, 默认分支"""
+    """API 抓仓库基本信息: stars, forks, language, 默认分支
+
+    ★ 2026-10-22: 非 200 时**必须打日志** —— 以前直接 return None,
+      一行日志都没有, 永远查不出为什么失败。
+    """
     url = f"https://gitee.com/api/v5/repos/{owner}/{repo}"
     try:
         r = http_get(url, timeout=10, headers=GITEE_HEADERS, retries=1)
+        _gitee_count_request("api")
         if r.status_code != 200:
+            safe_print(f"[gitee] repo API 失败 {url} HTTP {r.status_code}")
             return None
         return r.json()
-    except Exception:
+    except Exception as e:
+        safe_print(f"[gitee] repo API 异常 {url} {type(e).__name__}: {str(e)[:60]}")
         return None
 
 
 def fetch_gitee_last_commit_api(owner, repo):
-    """API 抓最后 commit"""
+    """API 抓最后 commit。
+
+    返回:
+      dict              正常的 commit 信息 (author/date/msg/sha)
+      {"empty": True}   空仓库 (HTTP 404 + "Repository is empty") —— **不是失败**
+      {"notfound": True} 仓库不存在 (HTTP 404 + 别的 message)
+      None              其它失败 (网络/限流/500)
+    """
     url = f"https://gitee.com/api/v5/repos/{owner}/{repo}/commits?per_page=1"
     try:
         r = http_get(url, timeout=10, headers=GITEE_HEADERS, retries=1)
+        _gitee_count_request("api")
         if r.status_code != 200:
+            if r.status_code == 404:
+                if _gitee_is_empty_response(r):
+                    safe_print(f"[gitee] {owner}/{repo} 是空仓库 (Repository is empty)")
+                    return {"empty": True}
+                safe_print(f"[gitee] {owner}/{repo} 仓库不存在 (HTTP 404)")
+                return {"notfound": True}
+            safe_print(f"[gitee] last-commit API 失败 {url} HTTP {r.status_code}")
             return None
         data = r.json()
-        if not isinstance(data, list) or not data:
+        if not isinstance(data, list):
             return None
+        if not data:
+            # 200 但列表是空的 -> 也是空仓库
+            return {"empty": True}
         head = data[0]
         commit = head.get("commit", {}) or {}
         author = (commit.get("author") or {}).get("name", "?")
@@ -679,25 +734,40 @@ def fetch_gitee_last_commit_api(owner, repo):
         msg = (commit.get("message") or "").splitlines()[0][:80]
         sha = head.get("sha", "")[:7]
         return {"author": author, "date": date, "msg": msg, "sha": sha}
-    except Exception:
+    except Exception as e:
+        safe_print(f"[gitee] last-commit API 异常 {url} {type(e).__name__}: {str(e)[:60]}")
         return None
 
 
 def fetch_gitee_commits_count_api(owner, repo):
     """通过 commits 列表分页估算总数 (per_page=100, 取最后一页 + 之前累加)
     Gitee API 默认返回最新 commits, 我们最多取 5 页 = 500 commits 估算
-    P2 #8 修复: 返回 (total, truncated) 让前端知道是否被截断
+
+    ★ 2026-10-22: 返回 (total, truncated, empty)。
+      empty=True 表示"空仓库" (404 + Repository is empty), **不是失败**。
+      以前对非 200 直接 return (total, truncated), 分不清"空仓库"和"抓取失败"。
     """
     total = 0
     truncated = False
+    empty = False
     try:
         for page in range(1, 6):
             url = f"https://gitee.com/api/v5/repos/{owner}/{repo}/commits?per_page=100&page={page}"
             r = http_get(url, timeout=8, headers=GITEE_HEADERS, retries=0)
+            _gitee_count_request("api")
             if r.status_code != 200:
-                return (total, truncated)
+                if r.status_code == 404:
+                    empty = _gitee_is_empty_response(r)
+                    if not empty:
+                        safe_print(f"[gitee] {owner}/{repo} commits API 404 (仓库不存在)")
+                else:
+                    safe_print(f"[gitee] commits API 失败 {url} HTTP {r.status_code}")
+                return (total, truncated, empty)
             data = r.json()
-            if not isinstance(data, list) or not data:
+            if not isinstance(data, list):
+                return (total, truncated, empty)
+            if not data:
+                empty = True
                 break
             total += len(data)
             if len(data) < 100:
@@ -705,9 +775,10 @@ def fetch_gitee_commits_count_api(owner, repo):
         # 跑完 5 页都没看到 < 100, 说明 > 500 被截断
         if total >= 500:
             truncated = True
-        return (total, truncated)
-    except Exception:
-        return (total, truncated)
+        return (total, truncated, empty)
+    except Exception as e:
+        safe_print(f"[gitee] commits API 异常 {type(e).__name__}: {str(e)[:60]}")
+        return (total, truncated, empty)
 
 
 
@@ -715,6 +786,11 @@ def fetch_gitee_markdown(owner, repo):
     """Gitee 在 /owner/repo.md 这个 URL 下对未登录请求返回 markdown。
     /owner/repo 主页面是 HTML (不能直接当 markdown 解析)。
     解析 markdown 拿 stars/forks/created/last_updated。
+
+    ★ 2026-10-22 实测: Gitee 现在的 markdown 格式是 "- **Stars**: 0"
+      (行首 "- " 前缀 + 冒号后有空格)。旧正则 ``\\*\\*Stars\\*\\*\\s*:?\\s*(\\d+)``
+      依然能匹配 (\\s* 吃掉 ": "), 所以数字解析本身是好的。
+      但**匹配不上时必须打日志** —— 以前静默留 0, 分不清"真的是 0"和"解析失败"。
     """
     url = f"https://gitee.com/{owner}/{repo}.md"
     try:
@@ -723,21 +799,28 @@ def fetch_gitee_markdown(owner, repo):
             "Accept": "text/markdown,text/plain,*/*",
             "Accept-Language": "zh-CN,zh;q=0.9",
         }, retries=1)
+        _gitee_count_request("markdown")
         if r.status_code != 200 or not r.text:
+            safe_print(f"[gitee] markdown 抓取失败 {url} HTTP {r.status_code}")
             return None
         text = r.text
         # 必须是 markdown 格式 (gitee 锁定页面)
         if "# " not in text or "**Stars**" not in text:
+            safe_print(f"[gitee] markdown 格式不对 {owner}/{repo} (len={len(text)})")
             return None
         info = {"source": "markdown"}
         # Stars
         m = re.search(r"\*\*Stars\*\*\s*:?\s*(\d+)", text)
         if m:
             info["stars"] = int(m.group(1))
+        else:
+            safe_print(f"[gitee] markdown 解析失败 {owner}/{repo}: 找不到 Stars 数字")
         # Forks
         m = re.search(r"\*\*Forks\*\*\s*:?\s*(\d+)", text)
         if m:
             info["forks"] = int(m.group(1))
+        else:
+            safe_print(f"[gitee] markdown 解析失败 {owner}/{repo}: 找不到 Forks 数字")
         # Last Updated (用来替代 commit date)
         m = re.search(r"\*\*Last Updated\*\*\s*:?\s*([\d-]+)", text)
         if m:
@@ -762,7 +845,9 @@ def fetch_gitee_html_fallback(owner, repo):
             "Accept": "text/html,*/*",
             "Accept-Language": "zh-CN,zh;q=0.9",
         }, retries=1)
+        _gitee_count_request("html")
         if r.status_code != 200 or not r.text:
+            safe_print(f"[gitee] HTML fallback 抓取失败 {url} HTTP {r.status_code}")
             return None
         html = r.text
         info = {"source": "html"}
@@ -792,11 +877,25 @@ def fetch_gitee_html_fallback(owner, repo):
 
 
 def fetch_gitee_all(owner, repo):
-    """统一入口: API 优先, HTML fallback
-    返回: {ok, url, stars, forks, commit_count, sha, date, msg, source, err}
+    """统一入口: API 优先, markdown/HTML fallback
+
+    返回: {ok, url, stars, forks, commit_count, sha, date, msg, source, err,
+           status, empty}
+
+    ★ 2026-10-22 的核心修复 —— **如实区分三种结局**, 不再一律报 ok=True:
+      status="ok"       真的抓到数据了 (有 sha / commit_count / stars / forks)
+      status="empty"    空仓库: 学生建了仓库但**没提交任何代码**
+                        (Gitee commits API 返回 404 + "Repository is empty")
+      status="notfound" 仓库不存在 (404)
+      status="failed"   其它失败 (限流/网络/格式变了)
+
+    以前 ok 的判定是 ``... or out["source"]`` —— 只要 source 字段非空就算成功,
+    于是 29 个空仓库全部报 "抓取成功", 仪表盘显示成 "⭐0 🍴0 📦commit 0"。
     """
     if not owner or not repo:
-        return {"ok": False, "err": "bad gitee url"}
+        return {"ok": False, "err": "bad gitee url", "status": "failed",
+                "empty": False, "source": "", "stars": 0, "forks": 0,
+                "commit_count": 0, "sha": "", "date": "", "msg": ""}
     out = {
         "ok": False,
         "url": f"https://gitee.com/{owner}/{repo}",
@@ -810,8 +909,12 @@ def fetch_gitee_all(owner, repo):
         "msg": "",
         "source": "",
         "err": "",
+        "status": "failed",
+        "empty": False,
     }
-    # 1) API repo info
+    empty = False
+    notfound = False
+    # 1) API repo info (200 = 仓库存在; 404 = 仓库不存在)
     api_repo = fetch_gitee_repo_api(owner, repo)
     if api_repo:
         out["stars"] = int(api_repo.get("stargazers_count", 0) or 0)
@@ -820,18 +923,28 @@ def fetch_gitee_all(owner, repo):
     # 2) API last commit
     api_commit = fetch_gitee_last_commit_api(owner, repo)
     if api_commit:
-        out.update(api_commit)
-        out["source"] = "api"
+        if api_commit.get("empty"):
+            empty = True
+        elif api_commit.get("notfound"):
+            notfound = True
+        else:
+            out.update(api_commit)
+            out["source"] = "api"
     # 3) commits count (仅 API)
-    if api_repo:
-        cnt, truncated = fetch_gitee_commits_count_api(owner, repo)
+    if api_repo and not empty and not notfound:
+        cnt, truncated, c_empty = fetch_gitee_commits_count_api(owner, repo)
+        if c_empty:
+            empty = True
         if cnt:
             out["commit_count"] = cnt
         if truncated:
             out["commit_count_truncated"] = True
             out["commit_count_note"] = "500+ (估算被截断)"
     # 4) Markdown fallback (gitee 当前未登录访问返回 markdown)
-    if not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
+    #    ★ 空仓库/不存在的仓库**不走 fallback**: markdown 里只有创建日期,
+    #      当成 "最后提交时间" 是误导, 而且白白多花两个请求。
+    if not empty and not notfound \
+            and not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
         md = fetch_gitee_markdown(owner, repo)
         if md:
             out["stars"] = md.get("stars", out["stars"])
@@ -840,7 +953,8 @@ def fetch_gitee_all(owner, repo):
                 out["date"] = md["date"]
             out["source"] = out["source"] or "markdown"
     # 5) HTML fallback (legacy)
-    if not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
+    if not empty and not notfound \
+            and not out.get("sha") and not out.get("stars") and not out.get("commit_count"):
         html = fetch_gitee_html_fallback(owner, repo)
         if html:
             out["stars"] = html.get("stars", out["stars"])
@@ -849,9 +963,21 @@ def fetch_gitee_all(owner, repo):
             if html.get("date") and not out.get("date"):
                 out["date"] = html["date"]
             out["source"] = out["source"] or "html"
-    # 判定 ok — markdown fallback 也可以成功
-    out["ok"] = bool(out.get("sha") or out.get("date") or out.get("commit_count") > 0 or out.get("stars") > 0 or out.get("forks") > 0 or out["source"])
-    if not out["ok"]:
+    # ★ ok 判定改成**数据驱动**: 有任何一个真实数字才算成功。
+    #   (去掉以前的 `or out["source"]` —— 那让空仓库也报成功)
+    out["ok"] = bool(out.get("sha") or out.get("commit_count")
+                     or out.get("stars") or out.get("forks"))
+    if empty:
+        out["status"] = "empty"
+        out["empty"] = True
+        out["err"] = "仓库为空 (未提交任何代码)"
+    elif notfound:
+        out["status"] = "notfound"
+        out["err"] = "仓库不存在 (HTTP 404)"
+    elif out["ok"]:
+        out["status"] = "ok"
+    else:
+        out["status"] = "failed"
         out["err"] = out["err"] or "all sources failed (likely 403/rate-limited)"
     return out
 
@@ -927,6 +1053,9 @@ def write_data_json(students_state, fetch_meta, class_stats=None):
                 "msg": g.get("msg", ""),
                 "source": g.get("source", ""),
                 "err": g.get("err", ""),
+                # ★ 2026-10-22: 如实区分空仓库 / 不存在 / 抓取失败
+                "status": g.get("status", ""),
+                "empty": bool(g.get("empty", False)),
                 "fetched_at": g.get("fetched_at", ""),
             },
         })
