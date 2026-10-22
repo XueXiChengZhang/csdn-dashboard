@@ -236,6 +236,61 @@ def test_gitee_empty_vs_ok():
     check("有 commit 的仓库不算 empty", out2["empty"] is False)
 
 
+# ---------- [4] R2: 模拟 521, 两次尝试间隔 >= 45 秒 ----------
+def test_521_backoff():
+    print("\n[4] R2 — 模拟 521: 重试前冷却 >= 45 秒")
+    inc = load_incremental()
+    from csdn_stats import RateLimiter
+
+    check("默认冷却常量是 45 秒",
+          abs(inc.CSDN_521_COOLDOWN - 45.0) < 1e-6,
+          str(inc.CSDN_521_COOLDOWN))
+
+    slept = []
+    orig_sleep = time.sleep
+
+    def fake_sleep(sec):
+        slept.append(sec)
+
+    class _R:
+        status_code = 521
+        text = ""
+
+    calls = []
+
+    def fake_get(*a, **k):
+        calls.append(a[0] if a else "")
+        return _R()
+
+    orig_get = inc.requests.get
+    orig_limiter = inc.LIMITER
+    orig_requests = inc.REQUESTS
+    try:
+        time.sleep = fake_sleep
+        inc.requests.get = fake_get
+        # 基准间隔设 0, 这样记录到的 sleep 就只有"冷却"那部分
+        inc.LIMITER = RateLimiter(min_interval=0, jitter=0)
+        inc.REQUESTS = 0
+        r = inc.csdn_get("https://blog.csdn.net/x/article/details/1", retries=1)
+        n_requests = inc.REQUESTS
+    finally:
+        time.sleep = orig_sleep
+        inc.requests.get = orig_get
+        inc.LIMITER = orig_limiter
+        inc.REQUESTS = orig_requests
+
+    check("返回的是 521 响应", getattr(r, "status_code", None) == 521,
+          str(getattr(r, "status_code", None)))
+    check("重试了 1 次 (共 2 次请求)", n_requests == 2, str(n_requests))
+    max_sleep = max(slept) if slept else 0
+    # 45 秒是 penalize 的目标值, 实际 sleep 会比它少几毫秒 (两次调用之间
+    # 过去了点时间), 所以按 44 秒起判。
+    check("两次尝试之间冷却 >= 45 秒 (容差 1s)", max_sleep >= 44.0,
+          f"最长 sleep={max_sleep:.2f}s")
+    check("冷却确实来自 penalize (不是基准间隔)",
+          any(s >= 44.0 for s in slept), str([round(s, 1) for s in slept]))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="(本测试全是离线的)")
@@ -248,6 +303,7 @@ def main():
     test_fetch_meta_blocks()
     test_report_health_line()
     test_gitee_empty_vs_ok()
+    test_521_backoff()
 
     print("\n" + "=" * 70)
     print(f"通过 {PASS} / 失败 {FAIL}")

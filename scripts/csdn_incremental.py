@@ -140,6 +140,11 @@ CSDN_MIN_INTERVAL = float(os.environ.get("CSDN_MIN_INTERVAL", "2.2"))
 CSDN_JITTER = float(os.environ.get("CSDN_JITTER", "0.6"))
 LIMITER = RateLimiter(min_interval=CSDN_MIN_INTERVAL, jitter=CSDN_JITTER)
 
+# ★ 521 (CSDN 风控) 命中后的冷却秒数。
+#   521 是 IP 级封禁, 持续分钟级 —— 5~6 秒的冷却等于没冷却
+#   (实测 6/7 篇两次尝试全挂)。默认 45 秒。
+CSDN_521_COOLDOWN = float(os.environ.get("CSDN_521_COOLDOWN", "45"))
+
 REQUESTS = 0
 
 # 连续失败多少次就放弃这个学生的 stats (交给保护逻辑兜底, 别死磕)
@@ -157,7 +162,16 @@ def log(msg):
 
 
 def csdn_get(url, timeout=15, retries=1):
-    """带全局限流 + 计数的 GET。521 = CSDN 风控, 会触发全局冷却。"""
+    """带全局限流 + 计数的 GET。521 = CSDN 风控, 会触发全局冷却。
+
+    ★ 2026-10-22 (R2): 521 的冷却从 5~6 秒改成 **45 秒**。
+      原因: CSDN 的 521 是 **IP 级风控, 封禁持续分钟级**, 不是"下个请求
+      就恢复"的软限流。实测 (2026-10-22): 只冷却 5~6 秒时, 6/7 篇文章
+      两次尝试**全挂** —— 封禁根本没解除就重试, 当然还是 521, 等于白烧
+      请求。45 秒是分钟级封禁的量级, 冷却完再试才有意义。
+      副作用: 45 秒 × 6 次 ≈ 多花 4.5 分钟, 整轮 24→29 分钟,
+      任务上限 2 小时, 没有问题。
+    """
     global REQUESTS
     last_err = None
     for attempt in range(retries + 1):
@@ -166,13 +180,17 @@ def csdn_get(url, timeout=15, retries=1):
         try:
             r = requests.get(url, timeout=timeout, headers=CSDN_HEADERS)
             if r.status_code in (521, 403, 429):
-                # 撞风控: 冷却 + 拉长基准间隔 (自适应退避)
+                # 撞风控: 拉长基准间隔 (自适应退避) + 按封禁时长冷却
                 LIMITER.escalate(1.5)
-                LIMITER.penalize(5.0 + attempt * 5)
                 last_err = f"HTTP {r.status_code}"
-                log(f"    ⚠️ {last_err} (风控) url={url[:70]}")
                 if attempt < retries:
+                    LIMITER.penalize(CSDN_521_COOLDOWN)
+                    log(f"    ⚠️ {last_err} (风控), {CSDN_521_COOLDOWN:.0f}s 冷却后重试 "
+                        f"url={url[:70]}")
                     continue
+                # 最后一次尝试: 短一点冷却, 免得白拖慢后面的学生
+                LIMITER.penalize(10.0)
+                log(f"    ⚠️ {last_err} (风控), 放弃本篇 url={url[:70]}")
             else:
                 LIMITER.decay()
             return r
