@@ -941,6 +941,100 @@ def test_r9_article_base_hook():
           " → ".join(feed_asked[:2]))
 
 
+# ---------- [12] R10: data.json / snapshot.json 紧凑化 ----------
+def test_r10_compact_json():
+    print("\n[12] R10 — data.json / snapshot.json 紧凑化")
+    import tempfile
+    v2 = load_v2()
+    inc = load_incremental()
+
+    def is_compact(text):
+        """紧凑 = 顶层对象里没有换行 + 缩进 (json.dumps 默认带 ", " / ": ")"""
+        if "\n" in text:
+            return False
+        return '": ' not in text and '", "' not in text
+
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+
+        # --- 1. v2 save_snapshot 写紧凑 ---
+        orig_snap, orig_cache = v2.SNAPSHOT, v2.CACHE_DIR
+        try:
+            v2.CACHE_DIR = tmp / "cache" / "csdn"
+            v2.SNAPSHOT = v2.CACHE_DIR / "snapshot.json"
+            v2.save_snapshot({"hello": "世界", "n": [1, 2]})
+            txt = v2.SNAPSHOT.read_text(encoding="utf-8")
+        finally:
+            v2.SNAPSHOT, v2.CACHE_DIR = orig_snap, orig_cache
+        check("v2 save_snapshot 写的是紧凑格式", is_compact(txt), txt[:60])
+        check("紧凑格式内容仍然正确 (roundtrip)",
+              json.loads(txt) == {"hello": "世界", "n": [1, 2]}, "")
+
+        # --- 2. v2 write_data_json 写紧凑 ---
+        orig_dj = v2.DATA_JSON
+        try:
+            v2.DATA_JSON = tmp / "data.json"
+            v2.write_data_json([], {"fetched_at": "2026-10-22T00:00:00"})
+            txt = v2.DATA_JSON.read_text(encoding="utf-8")
+        finally:
+            v2.DATA_JSON = orig_dj
+        check("v2 write_data_json 写的是紧凑格式", is_compact(txt), txt[:60])
+
+        # --- 3. 增量脚本 write_snapshot 也必须紧凑 (否则每天被改回缩进) ---
+        orig_dd = inc.DASHBOARD_DIR
+        try:
+            inc.DASHBOARD_DIR = tmp / "inc"
+            inc.write_snapshot({"last_update": "2026-10-22",
+                                "students": [{"sid": "s1", "name": "甲"}]})
+            txt = (tmp / "inc" / "cache" / "csdn" / "snapshot.json").read_text(
+                encoding="utf-8")
+        finally:
+            inc.DASHBOARD_DIR = orig_dd
+        check("增量脚本 write_snapshot 写的是紧凑格式", is_compact(txt), txt[:60])
+
+        # --- 4. history-real 归档**保持缩进** (要人可读, 供分析用) ---
+        orig_hist = v2.HISTORY_DIR
+        try:
+            v2.HISTORY_DIR = tmp / "history-real"
+            v2.write_history_snapshot({
+                "total_students": 1, "total_posts": 2, "class_stats": {},
+                "students": [{"sid": "s1", "name": "甲", "post_count": 2,
+                              "total_views": 10,
+                              "gitee": {"ok": True, "commit_count": 1,
+                                        "sha": "abc", "date": "2026-10-22"}}],
+            })
+            hist_files = list((tmp / "history-real").glob("*.json"))
+            htxt = hist_files[0].read_text(encoding="utf-8") if hist_files else ""
+        finally:
+            v2.HISTORY_DIR = orig_hist
+        check("history-real 归档仍是缩进格式 (人可读)",
+              bool(htxt) and "\n" in htxt and '": ' in htxt, htxt[:40].replace("\n", "⏎"))
+
+    # --- 5. 真实 data.json: 紧凑 + 能读 + 内容没变 ---
+    real = DASHBOARD_DIR / "data.json"
+    raw = real.read_text(encoding="utf-8")
+    check("仓库里的 data.json 已是紧凑格式", is_compact(raw), raw[:60])
+    try:
+        parsed = json.loads(raw)
+        check("紧凑 data.json 能正常 json.load", isinstance(parsed, dict), "")
+        check("紧凑 data.json 内容没丢 (students 都在)",
+              isinstance(parsed.get("students"), list)
+              and len(parsed["students"]) > 30, str(len(parsed.get("students", []))))
+    except Exception as e:
+        check("紧凑 data.json 能正常 json.load", False, str(e))
+
+    # --- 6. 现有 history-real 文件仍然是缩进形态 ---
+    hist_files = sorted((DASHBOARD_DIR / "history-real").glob("*.json"))
+    indented = 0
+    for hp in hist_files:
+        t = hp.read_text(encoding="utf-8", errors="replace")
+        if "\n" in t and '": ' in t:
+            indented += 1
+    check("仓库里的 history-real/*.json 全是缩进形态",
+          hist_files and indented == len(hist_files),
+          f"{indented}/{len(hist_files)}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="(本测试全是离线的)")
@@ -961,6 +1055,7 @@ def main():
     test_gitee_only_keeps_class_reading()
     test_r8_truthful_counting()
     test_r9_article_base_hook()
+    test_r10_compact_json()
 
     print("\n" + "=" * 70)
     print(f"通过 {PASS} / 失败 {FAIL}")

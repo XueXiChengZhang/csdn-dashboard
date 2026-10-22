@@ -1004,7 +1004,10 @@ def load_snapshot():
 
 def save_snapshot(snap):
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    SNAPSHOT.write_text(json.dumps(snap, ensure_ascii=False, indent=2),
+    # R10: 紧凑格式 —— 前端全部用 r.json() 解析, 缩进无关;
+    #      体积 -32% (传输/下载都快一截)
+    SNAPSHOT.write_text(json.dumps(snap, ensure_ascii=False,
+                                   separators=(",", ":")),
                         encoding="utf-8")
 
 
@@ -1081,7 +1084,10 @@ def write_data_json(students_state, fetch_meta, class_stats=None):
     }
     if class_stats:
         data["class_stats"] = class_stats
-    DATA_JSON.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+    # R10: 紧凑格式 —— 前端全部用 r.json() 解析, 缩进无关;
+    #      体积 -32% (传输/下载都快一截)
+    DATA_JSON.write_text(json.dumps(data, ensure_ascii=False,
+                                    separators=(",", ":")),
                         encoding="utf-8")
     return data
 

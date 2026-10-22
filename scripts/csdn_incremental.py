@@ -662,7 +662,10 @@ def write_snapshot(d):
         },
     }
     (snap_dir / "snapshot.json").write_text(
-        json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+        # R10: 紧凑格式 (和 v2 的 save_snapshot 保持一致 ——
+        #     否则每天 00:00 增量跑完会把它改回缩进形态, 紧凑化白做)
+        json.dumps(snap, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8")
 
 
 def write_history_snapshot(d):
@@ -975,7 +978,9 @@ def main():
     d["last_fetch_meta"] = meta
 
     with open(DATA_PATH, "w", encoding="utf-8") as f:
-        json.dump(d, f, ensure_ascii=False, indent=2)
+        # R10: 紧凑格式 —— 前端全部用 r.json() 解析, 缩进无关;
+        #      体积 -32% (传输/下载都快一截)
+        json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
 
     for _fn, _label in ((write_snapshot, "cache/csdn/snapshot.json"),
                         (write_history_snapshot, "history-real 快照")):
