@@ -158,6 +158,68 @@ check('抓取时间取顶层 fetched_at (最近一次运行)',
   els['stat-last-fetch-meta'].textContent.startsWith('2026-10-22'),
   els['stat-last-fetch-meta'].textContent);
 
+// ---------- 5. R6 口径透明化 ----------
+console.log("\n[5] R6 — 前端口径: 总访问量 / 文章累加 / 平均阅读");
+check('student.html 有「总访问量」标签', studentHtml.includes('总访问量'), '');
+check('student.html 有「文章阅读合计」标签', studentHtml.includes('文章阅读合计'), '');
+// 从 student.html 原样抠出「平均阅读/篇」的表达式, 真的跑一遍
+const avgMatch = studentHtml.match(
+  /<div class="head-stat"[^>]*><strong>\$\{(.+?)\}<\/strong>平均阅读\/篇<\/div>/);
+check('能从 student.html 抠到「平均阅读/篇」的表达式', !!avgMatch,
+  avgMatch ? avgMatch[1].trim() : '没找到');
+if (avgMatch) {
+  const avgOf = new Function('stu', 'fmt', `return (${avgMatch[1]});`);
+  const fake = { post_count: 10, total_views: 9999, article_views_sum: 500 };
+  const v = avgOf(fake, fmtNum);
+  check('平均阅读/篇 = article_views_sum ÷ post_count (500/10=50)',
+    v === '50', String(v));
+  check('平均阅读/篇 没有再用 total_views (9999/10=1000 不应出现)',
+    v !== '1,000', String(v));
+}
+// 总访问量那格必须还是 stu.total_views
+const tvMatch = studentHtml.match(
+  /<div class="head-stat"[^>]*><strong>\$\{(.+?)\}<\/strong>总访问量<\/div>/);
+check('能从 student.html 抠到「总访问量」的表达式', !!tvMatch,
+  tvMatch ? tvMatch[1].trim() : '没找到');
+if (tvMatch) {
+  const tvOf = new Function('stu', 'fmt', `return (${tvMatch[1]});`);
+  check('总访问量 = stu.total_views', tvOf({ total_views: 7379 }, fmtNum) === '7,379',
+    String(tvOf({ total_views: 7379 }, fmtNum)));
+}
+// 文章阅读合计那格必须用 article_views_sum
+const avsMatch = studentHtml.match(
+  /<div class="head-stat"[^>]*><strong>\$\{(.+?)\}<\/strong>文章阅读合计<\/div>/);
+if (avsMatch) {
+  const avsOf = new Function('stu', 'fmt', `return (${avsMatch[1]});`);
+  check('文章阅读合计 = stu.article_views_sum',
+    avsOf({ article_views_sum: 7337 }, fmtNum) === '7,337',
+    String(avsOf({ article_views_sum: 7337 }, fmtNum)));
+} else {
+  check('文章阅读合计那格用 article_views_sum', false, '没找到表达式');
+}
+// index.html 卡片: 标签 + tooltip
+const card = renderStatsRow({ csdn_url: 'https://blog.csdn.net/x', total_views: 7379, article_views_sum: 7337 });
+check('index.html 卡片显示「总访问量」', card.includes('总访问量'), card);
+check('index.html 卡片 tooltip 带「文章累加」和文章累加数字',
+  card.includes('文章累加') && card.includes('7,337'), card);
+check('index.html 卡片主数字仍是 total_views (7,379)',
+  card.includes('7,379'), card);
+// analytics.html
+check('analytics.html TOP10 提示改成「按总访问量降序」',
+  analyticsHtml.includes('按总访问量降序'), '');
+check('analytics.html 表头改成「总访问量」', analyticsHtml.includes('总访问量'), '');
+const aAvgMatch = analyticsHtml.match(
+  /const avSum = ([^;]+);\s*const avg = s\.post_count \? Math\.round\(([^)]+)\) : 0;/);
+check('能从 analytics.html 抠到 TOP10 平均阅读的表达式', !!aAvgMatch,
+  aAvgMatch ? aAvgMatch[2].trim() : '没找到');
+if (aAvgMatch) {
+  const aAvg = new Function('s',
+    `const avSum = ${aAvgMatch[1]}; return Math.round(${aAvgMatch[2]});`);
+  check('analytics TOP10 平均阅读/篇 用 article_views_sum (500/10=50)',
+    aAvg({ post_count: 10, article_views_sum: 500, total_views: 9999 }) === 50,
+    String(aAvg({ post_count: 10, article_views_sum: 500, total_views: 9999 })));
+}
+
 console.log('\n' + '='.repeat(70));
 console.log(`通过 ${pass} / 失败 ${fail}`);
 console.log('='.repeat(70));

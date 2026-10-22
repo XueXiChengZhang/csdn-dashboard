@@ -1390,8 +1390,8 @@
         <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>暂无数据</span></span>
         </div>`;
         }
-    return `<div class="stats-row">
-    <span class="stats-item"><span class="ico">👁</span><span class="num">${fmtNum(tv)}</span><span>阅读</span></span>
+    return `<div class="stats-row" title="总访问量 = CSDN 个人主页口径; 文章累加 = 每篇文章阅读数相加 (${fmtNum(s.article_views_sum || 0)})">
+    <span class="stats-item"><span class="ico">👁</span><span class="num">${fmtNum(tv)}</span><span>总访问量</span></span>
     </div>`;
     }
 
@@ -1441,7 +1441,7 @@
     }
 
     // v18: 导出 CSV — Ma 给班主任备份用
-    // 列: 姓名, CSDN用户名, 文章数, 总阅读, Gitee仓库, Gitee commits, Gitee stars, 最新文章日期, 最新文章标题
+    // 列: 姓名, CSDN用户名, 文章数, 总访问量, 文章累加, Gitee仓库, Gitee commits, Gitee stars, 最新文章日期, 最新文章标题
     function csvEscape(v) {
     if (v == null) return '';
     const s = String(v);
@@ -1467,12 +1467,13 @@
     else if (sort === 'posts-asc') list.sort((a, b) => a.post_count - b.post_count);
     else if (sort === 'name-asc') list.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
     // 其他排序模式导出时用默认顺序即可
-    const headers = ['姓名', 'CSDN用户名', '文章数', '总阅读', 'Gitee仓库', 'Gitee commits', 'Gitee stars', '最新文章日期', '最新文章标题'];
+    const headers = ['姓名', 'CSDN用户名', '文章数', '总访问量', '文章累加', 'Gitee仓库', 'Gitee commits', 'Gitee stars', '最新文章日期', '最新文章标题'];
     const rows = list.map(s => [
       s.name,
       s.csdn_username || '',
       s.post_count || 0,
       s.total_views || 0,
+      s.article_views_sum || 0,
       s.gitee ? `${s.gitee.owner}/${s.gitee.repo}` : '',
       s.gitee ? (s.gitee.commit_count || 0) : '',
       s.gitee ? (s.gitee.stars || 0) : '',

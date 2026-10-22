@@ -539,9 +539,10 @@ function render(stu, history, lastUpdate) {
         <div class="meta-line">最近抓取 · ${escapeHtml(lastUpdate || '—')}</div>
         <div class="head-stats">
           <div class="head-stat"><strong>${fmt(stu.post_count || 0)}</strong>文章数</div>
-          <div class="head-stat"><strong>${fmt(stu.total_views || 0)}</strong>总阅读</div>
+          <div class="head-stat" title="CSDN 个人主页上的「总访问量」(含主页/搜索等来源, 与 CSDN 站显示一致)"><strong>${fmt(stu.total_views || 0)}</strong>总访问量</div>
+          <div class="head-stat" title="把这个人每一篇文章的阅读数加起来 (文章累加, 与主页口径不同)"><strong>${fmt(stu.article_views_sum || 0)}</strong>文章阅读合计</div>
           <div class="head-stat"><strong>${fmt((stu.total_likes || 0) + (stu.total_comments || 0) + (stu.total_collections || 0))}</strong>互动</div>
-          <div class="head-stat"><strong>${stu.post_count ? fmt(Math.round((stu.total_views || 0) / stu.post_count)) : '—'}</strong>平均阅读/篇</div>
+          <div class="head-stat" title="文章阅读合计 ÷ 文章数 (分子分母同一口径)"><strong>${stu.post_count ? fmt(Math.round((stu.article_views_sum || 0) / stu.post_count)) : '—'}</strong>平均阅读/篇</div>
         </div>
       </div>
       <div class="head-cta">
