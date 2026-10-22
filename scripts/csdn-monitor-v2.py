@@ -164,6 +164,13 @@ CSDN_MIN_INTERVAL = float(os.environ.get("CSDN_MIN_INTERVAL", "2.5"))
 # 用来端到端验证数据保护逻辑 (见 scripts/test_csdn_stats.py)。
 # 生产环境不设这个变量, 行为完全不变。
 CSDN_BASE = os.environ.get("CSDN_BASE_URL", "https://blog.csdn.net").rstrip("/")
+# 文章详情的基址可以**单独**换 —— 用来模拟 "列表正常但文章详情全挂" 这种
+# 真实发生过的情况 (2026-10-21 05:30 那次就是它: 列表 34/34 全成功,
+# 只是详情页被 521 风控拦了, 于是保护逻辑的列表臂不触发, 好数据被覆盖成 0)。
+# 有了这个钩子就能端到端跑一遍那种场景, 而不用真的去打 CSDN。
+# 生产环境不设这个变量, 行为完全不变 (文章基址 = 列表基址)。
+CSDN_ARTICLE_BASE = os.environ.get(
+    "CSDN_ARTICLE_BASE_URL", CSDN_BASE).rstrip("/")
 CSDN_LIMITER = RateLimiter(min_interval=CSDN_MIN_INTERVAL, jitter=0.8)
 CSDN_REQUESTS = 0
 CSDN_REQUESTS_LOCK = threading.Lock()
@@ -419,9 +426,12 @@ def fetch_csdn_html(username, limit=50):
 
 def fetch_csdn_rss(username, limit=50):
     items = []
+    # 顺序很重要: **先试 CSDN 官方 RSS, 再试 rsshub 镜像**。
+    # rsshub.app 是公共镜像, 又慢又不稳 (实测经常几十秒超时),
+    # 把它放前面会让整个列表抓取慢一大截, 还会先撞上它的限流。
     feeds = [
+        f"{CSDN_BASE}/{username}/rss/list",
         f"https://rsshub.app/csdn/blog/{username}",
-        f"https://blog.csdn.net/{username}/rss/list",
     ]
     for feed_url in feeds:
         try:
@@ -484,8 +494,8 @@ def fetch_user_total_views(username):
 def fetch_article_stats(article_id, username=""):
     if not article_id:
         return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
-    url = f"{CSDN_BASE}/{username}/article/details/{article_id}" if username \
-        else f"{CSDN_BASE}/article/details/{article_id}"
+    url = f"{CSDN_ARTICLE_BASE}/{username}/article/details/{article_id}" if username \
+        else f"{CSDN_ARTICLE_BASE}/article/details/{article_id}"
     try:
         r = csdn_get(url, timeout=12, headers=CSDN_HEADERS, retries=1)
         # P0-2: 区分 "HTTP 错误" 与 "200 但空文 (软反爬)" — 都打印并返回失败

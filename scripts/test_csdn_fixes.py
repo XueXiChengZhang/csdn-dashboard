@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -843,6 +844,103 @@ def test_r8_truthful_counting():
     check("飞书摘要里有'空仓库: 1 个'", "空仓库: 1 个" in summary, "")
 
 
+# ---------- [11] R9: CSDN_ARTICLE_BASE 测试钩子 + RSS feed 顺序 ----------
+def test_r9_article_base_hook():
+    print("\n[11] R9 — CSDN_ARTICLE_BASE 测试钩子 / RSS 顺序")
+    v2 = load_v2()
+
+    # --- 1. 默认 (不设环境变量) 文章基址 = 列表基址, 行为完全不变 ---
+    check("默认 CSDN_ARTICLE_BASE == CSDN_BASE (生产行为不变)",
+          v2.CSDN_ARTICLE_BASE == v2.CSDN_BASE,
+          f"{v2.CSDN_ARTICLE_BASE} / {v2.CSDN_BASE}")
+
+    # --- 2. 设了 CSDN_ARTICLE_BASE_URL 就单独换文章基址 ---
+    os.environ["CSDN_ARTICLE_BASE_URL"] = "https://csdn-articles.example.invalid"
+    try:
+        v2b = load_module("v2mod_article_hook", "csdn-monitor-v2.py")
+    finally:
+        os.environ.pop("CSDN_ARTICLE_BASE_URL", None)
+    check("CSDN_ARTICLE_BASE_URL 钩子生效",
+          v2b.CSDN_ARTICLE_BASE == "https://csdn-articles.example.invalid",
+          v2b.CSDN_ARTICLE_BASE)
+    check("列表基址不受影响 (CSDN_BASE 不变)",
+          v2b.CSDN_BASE == v2.CSDN_BASE, v2b.CSDN_BASE)
+
+    # --- 3. fetch_article_stats 打的 URL 用的是**文章基址** ---
+    asked = []
+
+    def fake_get(url, *a, **k):
+        asked.append(url)
+        return FakeResp(200, "<html>" + "x" * 600 + "</html>")
+
+    orig_get = v2b.csdn_get
+    try:
+        v2b.csdn_get = fake_get
+        v2b.fetch_article_stats("123456", "zhangsan")
+    finally:
+        v2b.csdn_get = orig_get
+    check("详情页 URL 走的是文章基址",
+          asked and asked[0].startswith("https://csdn-articles.example.invalid/"),
+          asked[0] if asked else "(没发请求)")
+    check("详情页 URL 结构没变 (.../{user}/article/details/{id})",
+          asked and asked[0].endswith("/zhangsan/article/details/123456"),
+          asked[0] if asked else "")
+
+    # --- 4. 列表页仍走列表基址 → "列表正常但详情页全挂" 可以端到端模拟 ---
+    list_asked = []
+
+    def fake_list_get(url, *a, **k):
+        list_asked.append(url)
+        return FakeResp(200, "<html>没有 blog-list-box</html>")
+
+    orig_get = v2b.csdn_get
+    try:
+        v2b.csdn_get = fake_list_get
+        v2b.fetch_csdn_html("zhangsan", limit=5)
+    finally:
+        v2b.csdn_get = orig_get
+    check("列表页仍走 CSDN_BASE (跟文章基址分开)",
+          list_asked and all(u.startswith(v2b.CSDN_BASE) for u in list_asked),
+          list_asked[0] if list_asked else "")
+
+    # --- 5. 详情页全挂 (521) 时 fetch_article_stats 明确返回失败 ---
+    def fake_521(url, *a, **k):
+        return FakeResp(521, "")
+
+    orig_get = v2b.csdn_get
+    try:
+        v2b.csdn_get = fake_521
+        st = v2b.fetch_article_stats("123456", "zhangsan")
+    finally:
+        v2b.csdn_get = orig_get
+    check("详情页 521 时返回 ok=False (不会静默当成 0 阅读量)",
+          st.get("ok") is False, str(st))
+
+    # --- 6. RSS feed 顺序: 官方在前, rsshub 兜底 ---
+    feed_asked = []
+
+    def fake_http_get(url, *a, **k):
+        feed_asked.append(url)
+        return FakeResp(200, "")
+
+    orig_http = v2.http_get
+    try:
+        v2.http_get = fake_http_get
+        v2.fetch_csdn_rss("zhangsan")
+    finally:
+        v2.http_get = orig_http
+    check("RSS 先试 CSDN 官方 feed",
+          len(feed_asked) >= 1 and feed_asked[0].endswith("/zhangsan/rss/list")
+          and feed_asked[0].startswith(v2.CSDN_BASE),
+          feed_asked[0] if feed_asked else "")
+    check("RSS 第二个是 rsshub 兜底",
+          len(feed_asked) >= 2 and "rsshub.app" in feed_asked[1],
+          feed_asked[1] if len(feed_asked) > 1 else "")
+    check("RSS 顺序是 官方 → rsshub (不是反过来)",
+          len(feed_asked) >= 2 and "rsshub.app" not in feed_asked[0],
+          " → ".join(feed_asked[:2]))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="(本测试全是离线的)")
@@ -862,6 +960,7 @@ def main():
     test_weekly_guard_rollback()
     test_gitee_only_keeps_class_reading()
     test_r8_truthful_counting()
+    test_r9_article_base_hook()
 
     print("\n" + "=" * 70)
     print(f"通过 {PASS} / 失败 {FAIL}")
