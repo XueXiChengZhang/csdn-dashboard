@@ -1646,6 +1646,27 @@ def apply_data_protection(students_state, prev_data, verbose=True):
     return True
 
 
+def reuse_prev_csdn_stats(p):
+    """--gitee-only: 把上次 data.json 里的 CSDN stats 原样搬过来。
+
+    ★ R8: `views_source` **不能写死成 "reused"**。
+      上次这个人的阅读量到底是从哪来的 (profile / articles), 要如实带过来 ——
+      写死 "reused" 会把真实的 "profile" 覆盖掉, 前端就看不出数字的出处了。
+      上次压根没记这个字段 (老数据) 才退化成 "none"。
+    """
+    return {
+        "total_views": p.get("total_views", 0),
+        "total_likes": p.get("total_likes", 0),
+        "total_comments": p.get("total_comments", 0),
+        "total_collections": p.get("total_collections", 0),
+        "profile_views": p.get("profile_views"),
+        "article_views_sum": p.get("article_views_sum", 0),
+        "views_source": p.get("views_source", "none"),
+        "articles_scanned": p.get("articles_scanned", 0),
+        "fetched_at": p.get("stats_updated_at", ""),
+    }
+
+
 def build_fetch_meta(students_state, prev_meta, run_csdn=True, run_gitee=True,
                      csdn_ms=0, gitee_ms=0, total_ms=0, no_reuse=False):
     """构造 last_fetch_meta (2026-10-22 R1: **按模式分块**, 互不覆盖)。
@@ -1846,17 +1867,7 @@ def run(args):
                 # --gitee-only: CSDN 的数据原样复用, 一个字段都不能丢
                 # (特别是 profile_views / article_views_sum / views_source,
                 #  丢了就没法看出阅读量的数据来源了)
-                rec["stats"] = {
-                    "total_views": p.get("total_views", 0),
-                    "total_likes": p.get("total_likes", 0),
-                    "total_comments": p.get("total_comments", 0),
-                    "total_collections": p.get("total_collections", 0),
-                    "profile_views": p.get("profile_views"),
-                    "article_views_sum": p.get("article_views_sum", 0),
-                    "views_source": p.get("views_source", "reused"),
-                    "articles_scanned": p.get("articles_scanned", 0),
-                    "fetched_at": p.get("stats_updated_at", ""),
-                }
+                rec["stats"] = reuse_prev_csdn_stats(p)
     csdn_ms = int((time.time() - csdn_t) * 1000)
 
     # --- Stage 2: Gitee ---

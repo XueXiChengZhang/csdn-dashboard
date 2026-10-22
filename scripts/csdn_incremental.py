@@ -390,7 +390,7 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     stats = {
         "new": 0, "new_posts": 0, "updated": 0, "rotated": 0, "reused": 0,
         "missing": 0, "fetched": 0, "failed": 0, "skipped": None,
-        "deleted": 0,
+        "deleted": 0, "backfill": 0, "backfilled": 0, "backfill_deferred": 0,
     }
 
     # --- A. 列表抓取 ---
@@ -476,7 +476,7 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
             to_fetch.append((p, "recent"))
         elif id(p) in rotate_set:
             to_fetch.append((p, "rotate"))
-    backfill_posts = [
+    backfill_candidates = [
         p for p in live_old
         if id(p) not in recent_set and id(p) not in rotate_set
         and not isinstance(p.get("views"), int)
@@ -487,17 +487,26 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     #   整个跑批会超时。限成每人 3 篇 -> 34 × 3 = 102 个请求 ≈ 4.3 分钟,
     #   剩下的分摊到后面几天补完 (它们的 views 还是 None, 所以一直在队列里)。
     if backfill_per_student > 0:
-        backfill_posts = backfill_posts[:backfill_per_student]
+        backfill_posts = backfill_candidates[:backfill_per_student]
+    else:
+        backfill_posts = backfill_candidates
     for p in backfill_posts:
         to_fetch.append((p, "backfill"))
 
-    stats["reused"] = (len(live_old) - len(recent_set) - len(rotate_set)
-                       - len(backfill_posts))
     stats["backfill"] = len(backfill_posts)
+    # ★ R8: 被 backfill 截断顺延的那几篇今天不补 (明天继续), 但它们本轮
+    #   确实**没有重抓**, 用的还是上次的值 —— 单独记一笔, 别混进"补历史"。
+    stats["backfill_deferred"] = len(backfill_candidates) - len(backfill_posts)
 
     # --- 抓 stats (带限流 + 连续失败放弃 + 全局时间预算) ---
     consecutive_failures = 0
     abandoned = False
+    # ★ R8: 记下本轮**真的发起过请求**的老文章。"复用" 的准确定义是
+    #   "本轮没重抓、值还是上次的" —— 计划内却因时间预算/连续失败放弃/
+    #   没有 article_id 而没抓成的, 以及被 backfill 截断顺延的, 都算复用。
+    #   以前用 len(live_old) - recent - rotate - backfill 去算, 这些漏掉的
+    #   情况会让复用数被低估。
+    attempted = set()
     now_iso = datetime.now().isoformat(timespec="seconds")
     for i, (p, kind) in enumerate(to_fetch, 1):
         if abandoned:
@@ -513,6 +522,7 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
         aid = article_id_from_link(p.get("link"))
         if not aid:
             continue
+        attempted.add(id(p))
         s = fetch_article_stats(aid, username)
         if s and s.get("deleted"):
             # ★ 2026-10-22 (R3): 文章在 CSDN 上已被删除 —— 打标记, **不再重试**,
@@ -555,6 +565,8 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     # --- E. 复用: 其余老文章原样保留 (views 不变) ---
     #     这里不做任何修改 —— 这正是 Bug A 的错误做法;
     #     区别在于: 上面的 recent/rotate 已经把"会增长"的部分重抓了。
+    # ★ R8: "复用" = 本轮**真的没重抓**的老文章 (值还是上次的)。
+    stats["reused"] = len(live_old) - sum(1 for p in live_old if id(p) in attempted)
 
     # --- 组装最终 posts ---
     all_posts = new_posts_list + existing_posts
@@ -824,6 +836,17 @@ def build_incremental_meta(d, elapsed, agg, students_ok, students_total,
     return meta
 
 
+def class_total_line(covered, total, covered_sum, skipped, class_all):
+    """★ R8: 班级阅读合计那一行。
+
+    以前只打一个数 (本轮覆盖到的人的合计), 但仪表盘显示的是**全班**的数 ——
+    两个数不等 (63,112 vs 65,777), 日志不说清楚就像"少了几千阅读"。
+    现在明确说: 本次覆盖 N/M 人, 合计 X (K 人沿用上次数据, 全班 Y)。
+    """
+    return (f"👁️  本次覆盖 {covered}/{total} 人, 合计 {covered_sum:,} "
+            f"({skipped} 人沿用上次数据, 全班 {class_all:,})")
+
+
 def main():
     ap = argparse.ArgumentParser(description="CSDN 增量抓取 (Ma: 数据应该是增量的)")
     ap.add_argument("--all", action="store_true", help="所有学生")
@@ -869,7 +892,7 @@ def main():
     deadline = (t0 + args.max_minutes * 60) if args.max_minutes else None
     agg = {"new": 0, "new_posts": 0, "updated": 0, "rotated": 0, "reused": 0,
            "fetched": 0, "failed": 0, "skipped": 0, "backfill": 0, "backfilled": 0,
-           "budget_exhausted": 0, "deleted": 0}
+           "budget_exhausted": 0, "deleted": 0, "backfill_deferred": 0}
     total_views_sum = 0
     students_ok = 0
 
@@ -897,6 +920,7 @@ def main():
         log(f"  🆕新{r['new']} 全抓{r['new_posts']} | ↻最近更新{r['updated']} "
             f"轮转{r['rotated']} | 🧹补历史{r.get('backfilled', 0)} | "
             f"♻️复用{r['reused']} | 失败{r['failed']}"
+            + (f" | ⏳顺延{r.get('backfill_deferred', 0)}" if r.get("backfill_deferred") else "")
             + (f" | 🗑️已删除{r.get('deleted', 0)}" if r.get("deleted") else ""))
         log(f"  👁️ total_views={r['total_views']} (来源 {r['views_source']}, "
             f"profile={r['profile_views']}, 文章累加={r['article_views_sum']})")
@@ -910,14 +934,23 @@ def main():
     log(f"🆕 新文章 {agg['new']} (抓到 stats 的 {agg['new_posts']})")
     log(f"🔄 重抓 stats: 最近 {agg['updated']} + 轮转 {agg['rotated']} + "
         f"补历史 {agg['backfilled']} = {agg['fetched']} 篇")
-    log(f"♻️  复用旧值 {agg['reused']} 篇 (未重抓, 会按天轮转刷新)")
+    log(f"♻️  复用旧值 {agg['reused']} 篇 (本轮没重抓: 老文章按天轮转, "
+        f"没抓到 stats 的排队补历史)")
+    if agg.get("backfill_deferred"):
+        log(f"⏳  其中 {agg['backfill_deferred']} 篇是'补历史'顺延的 "
+            f"(backfill 每人有上限, 明天继续补)")
     log(f"❌ 失败 {agg['failed']} 篇")
     if agg.get("deleted"):
         log(f"🗑️ 已从 CSDN 删除 {agg['deleted']} 篇 (标记 _deleted_on_csdn, 以后不再重抓)")
     if agg.get("budget_exhausted"):
         log(f"⏱️  时间预算用尽, {agg['budget_exhausted']} 篇'补历史'留到下次 "
             f"(它们的 views 还是 None, 明天会继续补)")
-    log(f"👁️  班级 total_views 合计 = {total_views_sum}")
+    # ★ R8: 这个数只是**本轮覆盖到的人**的合计, 跳过的学生 (列表抓取失败)
+    #   沿用上次的数据。仪表盘显示的是**全班** (34 人) 的数, 两个数不等,
+    #   日志不说清楚就会看着像"少了几千阅读" —— 其实是口径不同。
+    class_all = sum(s.get("total_views") or 0 for s in d.get("students", []))
+    log(class_total_line(students_ok, len(targets), total_views_sum,
+                          agg['skipped'], class_all))
 
     if args.dry_run:
         log("🧪 --dry-run: 没有写 data.json")

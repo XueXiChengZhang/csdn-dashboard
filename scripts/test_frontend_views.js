@@ -142,6 +142,7 @@ renderFetchMeta({
   fail_count: 1,
   incremental: { fetched_at: '2026-10-22T00:24:00', total_requests: 438, students_ok: 33, students_total: 34, new_posts: 2 },
   gitee: { fetched_at: '2026-10-22T05:30:00', total_requests: 66, ok: 4, empty: 29, students_total: 34, total_commits: 12 },
+  method_breakdown: { csdn_html: 33, csdn_rss: 0, gitee_api: 30, gitee_html: 2, gitee_markdown: 0 },
 });
 const healthMeta = els['stat-health-meta'].innerHTML;
 check('健康度卡片同时显示增量和 Gitee',
@@ -157,6 +158,22 @@ check('折叠面板显示 Gitee 空仓库数 29',
 check('抓取时间取顶层 fetched_at (最近一次运行)',
   els['stat-last-fetch-meta'].textContent.startsWith('2026-10-22'),
   els['stat-last-fetch-meta'].textContent);
+
+// ---------- 4b. R8: 抓取方式读**真实 key** ----------
+console.log("\n[4b] R8 — fetch_meta 面板的抓取方式读真实 key");
+check('面板列出 CSDN 列表 / CSDN RSS / Gitee API / Gitee HTML',
+  fmGrid.includes('抓取方式·CSDN 列表') && fmGrid.includes('抓取方式·CSDN RSS')
+  && fmGrid.includes('抓取方式·Gitee API') && fmGrid.includes('抓取方式·Gitee HTML'),
+  '');
+check('CSDN 列表数显示真实值 33',
+  fmGrid.includes('抓取方式·CSDN 列表</span><span class="v">33</span>'), '');
+check('Gitee API 数显示真实值 30',
+  fmGrid.includes('抓取方式·Gitee API</span><span class="v">30</span>'), '');
+check('Gitee HTML 数显示真实值 2',
+  fmGrid.includes('抓取方式·Gitee HTML</span><span class="v">2</span>'), '');
+check('不再读那些根本不存在的 key (requests/playwright/none)',
+  !indexHtml.includes('methods.requests') && !indexHtml.includes('methods.playwright')
+  && !indexHtml.includes('methods.none'), '');
 
 // ---------- 5. R6 口径透明化 ----------
 console.log("\n[5] R6 — 前端口径: 总访问量 / 文章累加 / 平均阅读");

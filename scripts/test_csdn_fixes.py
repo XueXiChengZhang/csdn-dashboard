@@ -730,6 +730,119 @@ def test_gitee_only_keeps_class_reading():
           str(students_state[0]["stats"]["total_views"]))
 
 
+# ---------- [10] R8: 口径如实显示 ----------
+def test_r8_truthful_counting():
+    print("\n[10] R8 — 口径如实显示 (views_source / 复用计数 / 覆盖人数)")
+    v2 = load_v2()
+    inc = load_incremental()
+
+    # --- 1. gitee-only 复用: views_source 用真实值, 不被写死成 "reused" ---
+    st = v2.reuse_prev_csdn_stats({
+        "total_views": 7379, "total_likes": 3, "total_comments": 1,
+        "total_collections": 2, "profile_views": 7379,
+        "article_views_sum": 7337, "views_source": "profile",
+        "articles_scanned": 11, "stats_updated_at": "2026-10-22T00:24:00"})
+    check("gitee-only 复用保留真实 views_source (profile)",
+          st["views_source"] == "profile", st["views_source"])
+    check("gitee-only 复用保留 profile_views / article_views_sum",
+          st["profile_views"] == 7379 and st["article_views_sum"] == 7337,
+          f"{st['profile_views']}/{st['article_views_sum']}")
+    st_old = v2.reuse_prev_csdn_stats({"total_views": 100})
+    check("老数据没有 views_source 时退化成 none (不是 reused)",
+          st_old["views_source"] == "none", st_old["views_source"])
+
+    # --- 2. 增量脚本的"复用"计数: 本轮真没重抓的都算复用 ---
+    def make_student():
+        posts = []
+        for i in range(10):
+            posts.append({
+                "title": f"文章{i}", "link": f"https://blog.csdn.net/u/article/details/{i}",
+                "pubDate": f"2026-10-{i + 1:02d}T00:00:00", "guid": f"g{i}",
+                # 前 4 篇 (最新) 有 stats, 后 6 篇从没抓到过 (views=None)
+                "views": 100 if i >= 6 else None,
+            })
+        return {"sid": "s1", "name": "甲", "csdn_username": "u", "posts": posts}
+
+    orig_fas = inc.fetch_article_stats
+    orig_fbl = inc.fetch_blog_list
+    orig_fpv = inc.fetch_profile_views
+    tried = []
+
+    def fake_fetch_article_stats(aid, username):
+        tried.append(aid)
+        return {"views": 123, "likes": 1, "comments": 0, "collections": 0}
+
+    def fake_fetch_blog_list(username, max_pages=20):
+        arts = [{"article_id": str(i),
+                 "link": f"https://blog.csdn.net/u/article/details/{i}",
+                 "title": f"文章{i}", "pub_raw": "2026-10-01"}
+                for i in range(10)]
+        return arts, "ok"
+
+    try:
+        inc.fetch_article_stats = fake_fetch_article_stats
+        inc.fetch_blog_list = fake_fetch_blog_list
+        inc.fetch_profile_views = lambda u: 1000
+
+        # --- 2a. 正常跑 (backfill 每人最多 3 篇) ---
+        s = make_student()
+        r = inc.incremental_update_student(s, recent_n=4, rotate_m=0,
+                                          backfill_per_student=3)
+        check("backfill 截断时顺延的篇数被单独记下来",
+              r.get("backfill_deferred") == 3, str(r.get("backfill_deferred")))
+        check("复用数 = 本轮真没重抓的 (10 篇 - 抓了 7 篇)",
+              r.get("reused") == 3, str(r.get("reused")))
+
+        # --- 2b. 时间预算用尽: backfill 一篇都没抓成 ---
+        tried.clear()
+        s2 = make_student()
+        r2 = inc.incremental_update_student(
+            s2, recent_n=4, rotate_m=0, backfill_per_student=3,
+            deadline=time.time() - 1)      # 预算早就用光了
+        check("时间预算用尽时只抓了最近 4 篇", len(tried) == 4, str(tried))
+        check("预算用尽时复用数 = 6 (不是旧算法的 3)",
+              r2.get("reused") == 6, str(r2.get("reused")))
+        check("预算用尽的篇数记在 budget_exhausted 上",
+              r2.get("budget_exhausted") == 3, str(r2.get("budget_exhausted")))
+    finally:
+        inc.fetch_article_stats = orig_fas
+        inc.fetch_blog_list = orig_fbl
+        inc.fetch_profile_views = orig_fpv
+
+    # --- 3. 班级合计那一行要说清覆盖人数 ---
+    line = inc.class_total_line(33, 34, 63112, 1, 65777)
+    check("班级合计行说明覆盖人数 (33/34)",
+          "33/34" in line, line)
+    check("班级合计行说明沿用上次数据的人数 (1 人)",
+          "1 人沿用上次数据" in line, line)
+    check("班级合计行给出本轮合计与全班两个数",
+          "63,112" in line and "65,777" in line, line)
+
+    # --- 4. 日报/摘要里的"空仓库 N 个" (d280330 做的, 这里确认没回退) ---
+    students = [
+        {"sid": "s1", "name": "甲", "csdn_status": "ok", "csdn_username": "a",
+         "posts": [{"title": "t", "guid": "g"}], "new_posts": [],
+         "stats": {"total_views": 100, "articles_scanned": 1},
+         "gitee": {"ok": True, "status": "ok", "stars": 1, "forks": 0,
+                   "commit_count": 2, "sha": "abc", "date": "2026-10-22",
+                   "msg": "m", "source": "api"}},
+        {"sid": "s2", "name": "乙", "csdn_status": "skipped_reused",
+         "csdn_username": "b", "posts": [], "new_posts": [],
+         "stats": {"total_views": 50, "articles_scanned": 0},
+         "gitee": {"ok": False, "status": "empty", "stars": 0, "forks": 0,
+                   "commit_count": 0, "sha": "", "date": "", "msg": "",
+                   "source": "api", "err": "仓库为空"}},
+    ]
+    stats = v2.compute_class_stats(students)
+    v2.GITEE_REQUESTS = 66
+    meta = v2.build_fetch_meta(students, {}, run_csdn=False, run_gitee=True,
+                              csdn_ms=0, gitee_ms=79, total_ms=79)
+    report = v2.build_report(students, [], meta, stats)
+    summary = v2.build_summary(students, 0, stats)
+    check("日报里有'空仓库 1 个'", "空仓库 1 个" in report, "")
+    check("飞书摘要里有'空仓库: 1 个'", "空仓库: 1 个" in summary, "")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="(本测试全是离线的)")
@@ -748,6 +861,7 @@ def main():
     test_class_stats_refreshed()
     test_weekly_guard_rollback()
     test_gitee_only_keeps_class_reading()
+    test_r8_truthful_counting()
 
     print("\n" + "=" * 70)
     print(f"通过 {PASS} / 失败 {FAIL}")

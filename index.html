@@ -978,6 +978,9 @@
     const fail = Number(fm.fail_count || 0);
     const ts = fm.fetched_at || '';
     const ms = Number(fm.duration_ms || 0);
+    // ★ R8: method_breakdown 的**真实 key** 是 csdn_html / csdn_rss /
+    //   gitee_api / gitee_html / gitee_markdown (见 csdn-monitor-v2.py
+    //   build_fetch_meta)。以前这里读的是别的 key, 格子永远是 0。
     const methods = fm.method_breakdown || {};
     // 覆盖率口径统一成"人" (以前 ok 是学生数、total 是请求数, 单位都不一样)
     const covOk = incTot ? incOk : gitOk;
@@ -1036,6 +1039,11 @@
     <div><span class="k">Gitee 成功</span><span class="v">${gitOk}/${gitTot} 人</span></div>
     <div><span class="k">Gitee 空仓库</span><span class="v">${Number(git.empty || 0)}</span></div>
     <div><span class="k">Gitee commit</span><span class="v">${Number(git.total_commits || 0)}</span></div>
+    <div><span class="k">抓取方式·CSDN 列表</span><span class="v">${Number(methods.csdn_html || 0)}</span></div>
+    <div><span class="k">抓取方式·CSDN RSS</span><span class="v">${Number(methods.csdn_rss || 0)}</span></div>
+    <div><span class="k">抓取方式·Gitee API</span><span class="v">${Number(methods.gitee_api || 0)}</span></div>
+    <div><span class="k">抓取方式·Gitee HTML</span><span class="v">${Number(methods.gitee_html || 0)}</span></div>
+    <div><span class="k">抓取方式·Gitee Markdown</span><span class="v">${Number(methods.gitee_markdown || 0)}</span></div>
     <div><span class="k">失败</span><span class="v">${fail}</span></div>
     <div><span class="k">耗时</span><span class="v">${ms} ms</span></div>
     `;
