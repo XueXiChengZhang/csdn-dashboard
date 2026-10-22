@@ -53,6 +53,32 @@ from csdn_stats import (  # noqa: E402
     parse_profile_views,
 )
 
+# ---------- stdout 编码兜底 (必须在 import 之后, 且在任何 print 之前) ----------
+# 计划任务 / 手动运行时 stdout 可能是 GBK(936), 非 ASCII 会抛 UnicodeEncodeError。
+# ★ 为什么这不只是"打印崩了": 在 fetch_user_total_views / fetch_article_stats 里
+#   那个异常会被 except 吞掉 → **静默丢数据** (profile_views 变 None /
+#   整篇 stats 被判失败, views 冻结在旧值)。静默丢数据比崩掉更糟。
+def safe_print(msg, **kwargs):
+    """打印任何内容都不会因为编码问题炸掉。
+
+    stdout 是 GBK 时, 中文/emoji 会被替换成 ASCII 占位符而不是抛异常;
+    stdout 能装下时就原样打印。
+    """
+    try:
+        print(msg, **kwargs)
+    except UnicodeEncodeError:
+        try:
+            print(msg.encode("ascii", "replace").decode("ascii"), **kwargs)
+        except Exception:
+            pass
+
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 # ---------- 路径 ----------
 SCRIPT_DIR = Path(__file__).resolve().parent
 DASHBOARD = SCRIPT_DIR.parent  # .../csdn-dashboard
@@ -440,17 +466,17 @@ def fetch_user_total_views(username):
         try:
             r = csdn_get(url, timeout=12, headers=CSDN_HEADERS, retries=1)
             if r.status_code != 200 or not r.text:
-                print(f"[profile] {username} HTTP {r.status_code} url={url[:70]}")
+                safe_print(f"[profile] {username} HTTP {r.status_code} url={url[:70]}")
                 continue
             if len(r.text) < 2000:
-                print(f"[profile] {username} 响应过短 len={len(r.text)} (疑似风控)")
+                safe_print(f"[profile] {username} 响应过短 len={len(r.text)} (疑似风控)")
                 continue
             val = parse_profile_views(r.text)
             if val is not None:
                 return val
-            print(f"[profile] {username} 页面里找不到'总访问量' (len={len(r.text)})")
+            safe_print(f"[profile] {username} 页面里找不到'总访问量' (len={len(r.text)})")
         except Exception as e:
-            print(f"[profile] {username} 异常 {type(e).__name__}: {str(e)[:60]}")
+            safe_print(f"[profile] {username} 异常 {type(e).__name__}: {str(e)[:60]}")
             continue
     return None
 
@@ -464,11 +490,11 @@ def fetch_article_stats(article_id, username=""):
         r = csdn_get(url, timeout=12, headers=CSDN_HEADERS, retries=1)
         # P0-2: 区分 "HTTP 错误" 与 "200 但空文 (软反爬)" — 都打印并返回失败
         if r.status_code != 200:
-            print(f"[stats] HTTP {r.status_code} aid={article_id} url={url[:80]}")
+            safe_print(f"[stats] HTTP {r.status_code} aid={article_id} url={url[:80]}")
             return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
         if not r.text or len(r.text) < 500:
             # CSDN 偶发 200 + 空 HTML (软反爬/地域重定向)
-            print(f"[stats] HTTP 200 but empty/short aid={article_id} len={len(r.text or '')} url={url[:80]}")
+            safe_print(f"[stats] HTTP 200 but empty/short aid={article_id} len={len(r.text or '')} url={url[:80]}")
             return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
         html = r.text
         # 解析全部交给公共模块 (增量脚本共用同一套正则, 不会再各坏各的)
@@ -482,12 +508,12 @@ def fetch_article_stats(article_id, username=""):
         }
         # 抓到了页面但一个数都没解析出来 → 页面结构变了, 打印出来便于诊断
         if not any(stats[k] for k in ("views", "comments", "collections", "likes")):
-            print(f"[stats] all zeros aid={article_id} len(html)={len(html)} "
+            safe_print(f"[stats] all zeros aid={article_id} len(html)={len(html)} "
                   f"meta_desc={'文章浏览阅读' in html} view_count_format={'viewCountFormat' in html}")
-            print(f"[stats] html_head={html[:300]!r}")
+            safe_print(f"[stats] html_head={html[:300]!r}")
         return stats
     except Exception as e:
-        print(f"[stats] exception aid={article_id} err={type(e).__name__}: {str(e)[:80]}")
+        safe_print(f"[stats] exception aid={article_id} err={type(e).__name__}: {str(e)[:80]}")
         return {"ok": False, "views": 0, "comments": 0, "collections": 0, "likes": 0}
 
 
@@ -579,7 +605,7 @@ def aggregate_user_stats(username, posts, no_reuse=False):
                 }
                 if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
                     abandoned = True
-                    print(f"[stats] {username}: 连续 {consecutive_failures} 次失败, "
+                    safe_print(f"[stats] {username}: 连续 {consecutive_failures} 次失败, "
                           f"放弃该学生剩余文章的抓取 (交给保护逻辑兜底)")
 
         for k in article_stats:
@@ -1135,7 +1161,7 @@ def build_summary(students_state, new_posts_total, class_stats):
 
 def send_feishu(text, dry=False, attachment=None):
     if dry:
-        print(f"[DRY-RUN] feishu skipped, len={len(text)}, attachment={attachment}")
+        safe_print(f"[DRY-RUN] feishu skipped, len={len(text)}, attachment={attachment}")
         return True
     openclaw_cmd = shutil.which("openclaw") or shutil.which("openclaw.cmd")
     if not openclaw_cmd:
@@ -1145,19 +1171,11 @@ def send_feishu(text, dry=False, attachment=None):
                 openclaw_cmd = p
                 break
     if not openclaw_cmd:
-        print("[feishu] ERROR: openclaw not found")
+        safe_print("[feishu] ERROR: openclaw not found")
         return False
     # stdout 被重定向到日志文件时, 代码页可能是 GBK, 打印 emoji 会抛
     # UnicodeEncodeError —— 那会让"其实已经发成功"看起来像"发送失败"。
-    # 所以这里统一用一个**不会因为编码问题炸掉**的打印函数。
-    def safe_print(msg):
-        try:
-            print(msg)
-        except UnicodeEncodeError:
-            try:
-                print(msg.encode("ascii", "replace").decode("ascii"))
-            except Exception:
-                pass
+    # 这里用**模块级** safe_print (统一一处, 避免各写各的漏改)。
 
     try:
         cmd = [openclaw_cmd, "message", "send",
@@ -1266,10 +1284,10 @@ def fetch_stats_for(rec, no_reuse=False):
             if has_stale_stats:
                 rec["posts"] = prev_posts
                 rec["csdn_err"] = f"stats_failed_posts_preserved: {str(e)[:80]}"
-                print(f"[stats-fallback-preserve] {rec.get('name')}: kept {len(prev_posts)} old posts with stats_updated_at")
+                safe_print(f"[stats-fallback-preserve] {rec.get('name')}: kept {len(prev_posts)} old posts with stats_updated_at")
             else:
                 rec["csdn_err"] = f"stats_failed: {str(e)[:80]}"
-            print(f"[stats-fallback] {rec.get('name')}: {e}")
+            safe_print(f"[stats-fallback] {rec.get('name')}: {e}")
     else:
         rec["stats"] = {
             "total_views": 0, "total_likes": 0, "total_comments": 0,
@@ -1399,10 +1417,10 @@ def apply_data_protection(students_state, prev_data, verbose=True):
                 f"总文章数 {new_total_posts_est} < 70% of 上次 {prev_total_posts}")
 
     if verbose and reasons:
-        print(f"[protect] 触发数据保护 ({len(reasons)} 条):")
+        safe_print(f"[protect] 触发数据保护 ({len(reasons)} 条):")
         for r in reasons:
-            print(f"[protect]   - {r}")
-        print("[protect] preserving previous posts/stats per student")
+            safe_print(f"[protect]   - {r}")
+        safe_print("[protect] preserving previous posts/stats per student")
 
     if not should_preserve:
         return False
@@ -1463,9 +1481,9 @@ def run(args):
     if not wl:
         print(f"[FATAL] watchlist not found in any of: {[str(p) for p in WATCHLIST_PATHS]}", file=sys.stderr)
         sys.exit(1)
-    print(f"[watchlist] {wl}")
+    safe_print(f"[watchlist] {wl}")
     students = parse_watchlist(wl)
-    print(f"[watchlist] parsed {len(students)} students")
+    safe_print(f"[watchlist] parsed {len(students)} students")
     prev = load_snapshot()
     prev_students = prev.get("students", {})
 
@@ -1492,7 +1510,7 @@ def run(args):
         _index_posts(_pdata.get("posts"))
     _with_stats = sum(1 for _p in PREV_POSTS_BY_LINK.values()
                       if _p.get("stats_updated_at") is not None)
-    print(f"[prev-index] 载入 {len(PREV_POSTS_BY_LINK)} 篇历史 post "
+    safe_print(f"[prev-index] 载入 {len(PREV_POSTS_BY_LINK)} 篇历史 post "
           f"(其中 {_with_stats} 篇带 stats, 可复用)")
 
     run_csdn = not args.gitee_only
@@ -1611,12 +1629,12 @@ def run(args):
 
     # --- 写 data.json ---
     data = write_data_json(students_state, fetch_meta, class_stats)
-    print(f"[data.json] written: {DATA_JSON} ({len(data['students'])} students, "
+    safe_print(f"[data.json] written: {DATA_JSON} ({len(data['students'])} students, "
           f"{data['total_posts']} posts)")
 
     # --- history snapshot ---
     write_history_snapshot(data)
-    print(f"[history] appended to {HISTORY_DIR / (TODAY + '.json')}")
+    safe_print(f"[history] appended to {HISTORY_DIR / (TODAY + '.json')}")
 
     # --- 更新 cache snapshot ---
     new_snap = {
@@ -1631,14 +1649,14 @@ def run(args):
         },
     }
     save_snapshot(new_snap)
-    print(f"[snapshot] saved -> {SNAPSHOT}")
+    safe_print(f"[snapshot] saved -> {SNAPSHOT}")
 
     # --- 报告 ---
     report = build_report(students_state, missing_csdn, fetch_meta, class_stats)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     rep_path = REPORT_DIR / f"csdn-report-{TODAY}.md"
     rep_path.write_text(report, encoding="utf-8")
-    print(f"[report] saved -> {rep_path}")
+    safe_print(f"[report] saved -> {rep_path}")
 
     new_posts_total = sum(len(s.get("new_posts", [])) for s in students_state)
     summary = build_summary(students_state, new_posts_total, class_stats)
@@ -1647,15 +1665,15 @@ def run(args):
     if not args.dry_run:
         send_feishu(summary, dry=False, attachment=rep_path)
     else:
-        print("[dry-run] feishu skipped")
-        print("---SUMMARY---")
-        print(summary)
-        print("---REPORT (head)---")
-        print("\n".join(report.splitlines()[:50]))
+        safe_print("[dry-run] feishu skipped")
+        safe_print("---SUMMARY---")
+        safe_print(summary)
+        safe_print("---REPORT (head)---")
+        safe_print("\n".join(report.splitlines()[:50]))
 
     # --- token 用量回报 ---
-    print(f"[timing] total {total_ms}ms = CSDN {csdn_ms}ms + Gitee {gitee_ms}ms")
-    print(f"[stats] csdn_ok={csdn_ok}/{len(students_state)}, "
+    safe_print(f"[timing] total {total_ms}ms = CSDN {csdn_ms}ms + Gitee {gitee_ms}ms")
+    safe_print(f"[stats] csdn_ok={csdn_ok}/{len(students_state)}, "
           f"gitee_ok={gitee_ok}/{len(students_state)}, "
           f"new_posts={new_posts_total}")
     return 0
@@ -1679,14 +1697,14 @@ def main():
 
     # 时间窗
     if not args.force_now and not in_time_window():
-        print(f"[SKIP] 当前时间 {datetime.now().strftime('%H:%M')} 不在 "
+        safe_print(f"[SKIP] 当前时间 {datetime.now().strftime('%H:%M')} 不在 "
               f"{WINDOW_START:02d}:00-{WINDOW_END:02d}:00 窗口内. "
               f"用 --force-now 跳过.")
         return 0
 
     # token 预算
     if not args.skip_token_check and not token_budget_ok():
-        print("[SKIP] token 剩余不足 75%, 跳过.")
+        safe_print("[SKIP] token 剩余不足 75%, 跳过.")
         return 0
 
     return run(args)

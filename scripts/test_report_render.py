@@ -19,7 +19,7 @@ import re
 import sys
 import types
 
-D = r"D:\WebArchives\csdn-dashboard"
+D = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(D, "scripts"))
 
 

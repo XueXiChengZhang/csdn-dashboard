@@ -98,6 +98,27 @@ from csdn_stats import (  # noqa: E402
 
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+# ---------- stdout 编码兜底 (必须在 import 之后, 且在任何 print 之前) ----------
+# 计划任务 / 手动运行时 stdout 可能是 GBK(936), 非 ASCII 会抛 UnicodeEncodeError。
+# ★ 本脚本的 log() 里全是 emoji (⚠️👁️🆕♻️), 在 GBK 下会直接崩在抓取中途。
+#   更糟的是崩之前的那几行 print 会被上层 except 吞掉 -> 静默丢数据。
+def safe_print(msg, **kwargs):
+    """打印任何内容都不会因为编码问题炸掉。"""
+    try:
+        print(msg, **kwargs)
+    except UnicodeEncodeError:
+        try:
+            print(msg.encode("ascii", "replace").decode("ascii"), **kwargs)
+        except Exception:
+            pass
+
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0")
 CSDN_HEADERS = {
@@ -127,7 +148,7 @@ MAX_CONSECUTIVE_FAILURES = 5
 
 def log(msg):
     line = f"[{datetime.now().strftime('%H:%M:%S')}] {msg}"
-    print(line, flush=True)
+    safe_print(line, flush=True)
     try:
         with open(LOG_PATH, "a", encoding="utf-8") as f:
             f.write(line + "\n")
