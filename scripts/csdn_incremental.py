@@ -207,14 +207,33 @@ def csdn_get(url, timeout=15, retries=1):
 
 
 # ---------- 列表抓取 ----------
+# CSDN 空博客页会显示这些字样 —— 用来区分"这个学生真没文章"和"被软反爬"
+EMPTY_BLOG_MARKERS = ("暂无博客", "暂无文章", "还没有发布", "暂无技术博客",
+                      "您还未发布", "无文章")
+
+
 def fetch_blog_list(username, max_pages=20):
-    """翻 CSDN 列表, 拿到所有可见文章 (增量模式用)"""
+    """翻 CSDN 列表, 拿到所有可见文章 (增量模式用)。
+
+    返回 (articles, reason):
+      reason = "ok"           正常抓到文章
+              "no_posts"     这个博客**真的没有文章** (HTTP 200 + 空状态标志)
+              "fetch_failed" 抓取失败 (HTTP 非 200 / 响应过短 / 没解析到文章块)
+
+    ★ 为什么要区分 (2026-10-22, R4):
+      以前这两种都走 `if not articles: skipped = "fetch_failed"`,
+      冯雪娇那次 fetch_failed **连一行日志都没有** —— 响应是 200,
+      但一个 blog-list-box 块都没解析到, `if not blocks: break` 静默返回空。
+      根本分不清"这个学生没发文章"和"我们被软反爬了"。
+    """
     all_articles = []
+    reason = "ok"
     for page in range(1, max_pages + 1):
         url = f"https://blog.csdn.net/{username}?type=blog&page={page}"
         r = csdn_get(url, timeout=15)
         if r.status_code != 200 or not r.text:
             log(f"  ⚠️ 抓列表 page {page} 失败 (HTTP {r.status_code})")
+            reason = "fetch_failed"
             break
         html = r.text
 
@@ -223,6 +242,23 @@ def fetch_blog_list(username, max_pages=20):
             html, re.DOTALL,
         )
         if not blocks:
+            # ★ 兜底 (同 v2 的做法): CSDN 偶尔改版, class 不再是 blog-list-box,
+            #   但 <article> 标签还在。
+            blocks = re.findall(r'<article[^>]*>(.*?)</article>', html, re.DOTALL)
+        if not blocks:
+            # 一个文章块都没解析到 —— 必须分清"真没文章"和"被软反爬"
+            if len(html) < 800:
+                log(f"  ⚠️ 抓列表 page {page} 异常: HTTP 200 但响应过短 "
+                    f"(len={len(html)}), 疑似软反爬")
+                reason = "fetch_failed"
+            elif any(m in html for m in EMPTY_BLOG_MARKERS):
+                log(f"  ℹ️ 抓列表 page {page}: HTTP 200 且页面显示'暂无文章' "
+                    f"(len={len(html)}) -> 该博客确实没有文章")
+                reason = "no_posts"
+            else:
+                log(f"  ⚠️ 抓列表 page {page} 异常: HTTP 200 但没解析到文章块 "
+                    f"(len={len(html)}), 疑似软反爬")
+                reason = "fetch_failed"
             break
 
         for block in blocks:
@@ -233,6 +269,11 @@ def fetch_blog_list(username, max_pages=20):
             if not m:
                 continue
             link, article_id = m.group(1), m.group(2)
+            # ★ 安全过滤: 只认**本人**的文章链接。
+            #   兜底用的通用 <article> 正则会连"相关推荐"里的**别人**的文章
+            #   一起捞进来, 那些会被当成"新文章"写进这个学生的数据里 —— 脏数据。
+            if f"/{username}/article/details/" not in link:
+                continue
 
             m_t = re.search(r'<h[34][^>]*>(.*?)</h[34]>', block, re.DOTALL)
             title = re.sub(r"<[^>]+>", "", m_t.group(1)).strip() if m_t else ""
@@ -254,7 +295,7 @@ def fetch_blog_list(username, max_pages=20):
         if len(blocks) < 15:
             break
 
-    return all_articles
+    return all_articles, reason
 
 
 def parse_relative_date(raw):
@@ -353,9 +394,15 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
     }
 
     # --- A. 列表抓取 ---
-    articles = fetch_blog_list(username, max_pages=max_pages)
+    articles, list_reason = fetch_blog_list(username, max_pages=max_pages)
     if not articles:
-        stats["skipped"] = "fetch_failed"
+        # ★ 区分"确实没文章"和"被风控/软反爬" (R4) —— 以前两种都叫
+        #   fetch_failed, 日志里连一行都没有, 根本查不出原因。
+        stats["skipped"] = list_reason or "fetch_failed"
+        if stats["skipped"] == "no_posts":
+            log(f"  ℹ️ {username} 的 CSDN 博客没有文章 (不是抓取失败)")
+        else:
+            log(f"  ⚠️ {username} 列表抓取失败 (疑似风控/软反爬), 本轮跳过")
         return stats
     csdn_by_id = {a["article_id"]: a for a in articles}
     csdn_ids = set(csdn_by_id.keys())

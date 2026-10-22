@@ -325,12 +325,12 @@ def test_404_marked_deleted():
         return {"views": 123, "likes": 1, "comments": 0, "collections": 0}
 
     def fake_fetch_blog_list(username, max_pages=20):
-        return [
+        return ([
             {"article_id": "404001", "link": "https://blog.csdn.net/u/article/details/404001",
              "title": "已删除的文章", "pub_raw": "2026-10-01"},
             {"article_id": "100001", "link": "https://blog.csdn.net/u/article/details/100001",
              "title": "正常文章", "pub_raw": "2026-10-02"},
-        ]
+        ], "ok")
 
     student = {
         "sid": "s1", "name": "测试同学", "csdn_username": "u",
@@ -381,6 +381,78 @@ def test_404_marked_deleted():
     check("第二轮仍然抓正常文章", "100001" in fetched, str(fetched))
 
 
+# ---------- [6] R4: 列表抓取 no_posts vs fetch_failed ----------
+def _resp(status, text):
+    class _R:
+        pass
+    r = _R()
+    r.status_code = status
+    r.text = text
+    return r
+
+
+def test_list_fetch_diagnosis():
+    print("\n[6] R4 — 列表抓取: '真的没文章' vs '被风控/软反爬'")
+    inc = load_incremental()
+    orig = inc.csdn_get
+
+    def call_with(html, status=200):
+        try:
+            inc.csdn_get = lambda *a, **k: _resp(status, html)
+            return inc.fetch_blog_list("u")
+        finally:
+            inc.csdn_get = orig
+
+    # --- A: HTTP 200 但一个文章块都没解析到 (软反爬) ---
+    arts, reason = call_with("<html><body>" + "x" * 3000 + "</body></html>")
+    check("200 但没解析到文章块 -> fetch_failed", reason == "fetch_failed", reason)
+    check("这种情况不返回文章", arts == [], str(arts))
+
+    # --- B: 空博客页 (页面写着"暂无文章") -> no_posts ---
+    arts, reason = call_with(
+        "<html><body>您还没有发布任何博客" + "y" * 2000 + "</body></html>")
+    check("页面写着'暂无文章' -> no_posts", reason == "no_posts", reason)
+
+    # --- C: 响应过短 (软反爬的典型特征) ---
+    arts, reason = call_with("<html>blocked</html>")
+    check("响应过短 -> fetch_failed", reason == "fetch_failed", reason)
+
+    # --- D: <article> 兜底 (class 不再是 blog-list-box) ---
+    html = ('<html><body><article class="new-style">'
+            '<h3>标题</h3>'
+            '<a href="https://blog.csdn.net/u/article/details/123456">看文章</a>'
+            '<div class="view-time-box">博文更新于 2026.10.01</div>'
+            '</article></body></html>')
+    arts, reason = call_with(html)
+    check("<article> 兜底能解析出文章", len(arts) == 1, str(len(arts)))
+    check("兜底解析出的 article_id 正确",
+          arts and arts[0]["article_id"] == "123456",
+          str(arts[0]["article_id"]) if arts else "")
+
+    # --- E: 别人的文章链接被过滤 (不能当成"新文章"写进这个学生) ---
+    html2 = ('<html><body><article>'
+             '<a href="https://blog.csdn.net/otheruser/article/details/999">推荐</a>'
+             '</article></body></html>')
+    arts2, reason2 = call_with(html2)
+    check("别人的文章链接被过滤掉", arts2 == [], str(arts2))
+
+    # --- F: 上层能拿到不同的 skipped 原因 ---
+    orig_fbl = inc.fetch_blog_list
+    try:
+        inc.fetch_blog_list = lambda *a, **k: ([], "no_posts")
+        s1 = inc.incremental_update_student(
+            {"sid": "s1", "name": "甲", "csdn_username": "u", "posts": []})
+        inc.fetch_blog_list = lambda *a, **k: ([], "fetch_failed")
+        s2 = inc.incremental_update_student(
+            {"sid": "s2", "name": "乙", "csdn_username": "u", "posts": []})
+    finally:
+        inc.fetch_blog_list = orig_fbl
+    check("没文章的学生 skipped=no_posts",
+          s1.get("skipped") == "no_posts", str(s1.get("skipped")))
+    check("被风控的学生 skipped=fetch_failed",
+          s2.get("skipped") == "fetch_failed", str(s2.get("skipped")))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="(本测试全是离线的)")
@@ -395,6 +467,7 @@ def main():
     test_gitee_empty_vs_ok()
     test_521_backoff()
     test_404_marked_deleted()
+    test_list_fetch_diagnosis()
 
     print("\n" + "=" * 70)
     print(f"通过 {PASS} / 失败 {FAIL}")
