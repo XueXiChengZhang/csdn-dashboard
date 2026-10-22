@@ -706,6 +706,62 @@ def write_history_snapshot(d):
     path.write_text(json.dumps(hist, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def compute_class_stats(d):
+    """按 v2 (csdn-monitor-v2.py: compute_class_stats) **同样的结构**重算班级统计。
+
+    ★ 2026-10-22 (R5): 以前增量脚本写 data.json 时**完全不碰 class_stats**
+      —— 班级统计永远是上一次全量跑的那份数字, 增量抓到的阅读量增长
+      一条都没进 class_stats。结果: 仪表盘/日报上的"班级总阅读""人均阅读"
+      常年停在全量那天的数字, 增量抓了个寂寞。
+
+    注意: v2 的 compute_class_stats 吃的是**内存态** students_state
+    (字段在 s["stats"] 里), 而本脚本拿到的是 **data.json 落盘态**
+    (字段已经摊平在 s 顶层)。这里按落盘态读, 但**输出的 key 完全一致**,
+    前端/报告读 class_stats 的地方不用改。
+    """
+    students = d.get("students", []) or []
+    total = len(students)
+    has_csdn = sum(1 for s in students if s.get("csdn_username"))
+    active = sum(1 for s in students if len(s.get("posts", []) or []) > 0)
+    total_posts = sum(len(s.get("posts", []) or []) for s in students)
+    total_views = sum(s.get("total_views") or 0 for s in students)
+    total_likes = sum(s.get("total_likes") or 0 for s in students)
+    total_comments = sum(s.get("total_comments") or 0 for s in students)
+    total_collections = sum(s.get("total_collections") or 0 for s in students)
+
+    g_ok = sum(1 for s in students if (s.get("gitee") or {}).get("ok"))
+    g_total_commits = sum((s.get("gitee") or {}).get("commit_count", 0) or 0
+                           for s in students)
+    g_total_stars = sum((s.get("gitee") or {}).get("stars", 0) or 0
+                         for s in students)
+    g_total_forks = sum((s.get("gitee") or {}).get("forks", 0) or 0
+                         for s in students)
+
+    return {
+        "computed_at": d.get("last_update") or datetime.now().isoformat(timespec="seconds"),
+        "students_total": total,
+        "students_with_csdn": has_csdn,
+        "students_active": active,
+        "students_inactive": total - active,
+        "csdn": {
+            "total_posts": total_posts,
+            "total_views": total_views,
+            "total_likes": total_likes,
+            "total_comments": total_comments,
+            "total_collections": total_collections,
+            "avg_posts_per_active": round(total_posts / active, 2) if active else 0,
+            "avg_views_per_student": round(total_views / total, 1) if total else 0,
+        },
+        "gitee": {
+            "students_with_repo": g_ok,
+            "total_commits": g_total_commits,
+            "total_stars": g_total_stars,
+            "total_forks": g_total_forks,
+            "avg_commits_per_student": round(g_total_commits / g_ok, 1) if g_ok else 0,
+        },
+    }
+
+
 def build_incremental_meta(d, elapsed, agg, students_ok, students_total,
                             full=False, recent=4, rotate=2):
     """构造 last_fetch_meta 的**增量块** (2026-10-22 R1: 按模式分块)。
@@ -869,6 +925,9 @@ def main():
 
     d["last_update"] = datetime.now().isoformat(timespec="seconds")
     d["total_posts"] = sum(len(s.get("posts", [])) for s in d.get("students", []))
+    # ★ 2026-10-22 (R5): 增量跑完**重算 class_stats** —— 否则班级总阅读/
+    #   人均阅读永远停在上一次全量跑的数字上, 增量抓到的增长体现不出来。
+    d["class_stats"] = compute_class_stats(d)
     # ★ 2026-10-22 (R1): last_fetch_meta 改成**按模式分块**
     #   - incremental 块 = 本脚本写的 (CSDN 抓取这一路)
     #   - gitee 块       = csdn-monitor-v2.py 写的 (Gitee 抓取那一路)

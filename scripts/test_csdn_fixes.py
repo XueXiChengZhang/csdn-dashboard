@@ -453,6 +453,96 @@ def test_list_fetch_diagnosis():
           s2.get("skipped") == "fetch_failed", str(s2.get("skipped")))
 
 
+# ---------- [7] R5: 增量脚本重算 class_stats (结构与 v2 完全一致) ----------
+def test_class_stats_refreshed():
+    print("\n[7] R5 — 增量跑完重算 class_stats (结构与 v2 一致)")
+    v2 = load_v2()
+    inc = load_incremental()
+
+    # v2 内存态: stats 在 s["stats"] 里
+    state = [
+        {
+            "sid": "s1", "name": "甲", "csdn_username": "jia",
+            "posts": [{"views": 10}, {"views": 20}],
+            "stats": {"total_views": 300, "total_likes": 5, "total_comments": 2,
+                      "total_collections": 1, "articles_scanned": 2},
+            "gitee": {"ok": True, "commit_count": 4, "stars": 2, "forks": 1},
+        },
+        {
+            "sid": "s2", "name": "乙", "csdn_username": "yi",
+            "posts": [{"views": 7}],
+            "stats": {"total_views": 100, "total_likes": 1, "total_comments": 0,
+                      "total_collections": 0, "articles_scanned": 1},
+            "gitee": {"ok": False, "commit_count": 0, "stars": 0, "forks": 0},
+        },
+        {
+            "sid": "s3", "name": "丙", "csdn_username": "",
+            "posts": [],
+            "stats": {"total_views": 0, "total_likes": 0, "total_comments": 0,
+                      "total_collections": 0, "articles_scanned": 0},
+            "gitee": {"ok": False},
+        },
+    ]
+    # data.json 落盘态: 字段摊平在 s 顶层
+    flat = [
+        {
+            "sid": "s1", "name": "甲", "csdn_username": "jia",
+            "posts": [{"views": 10}, {"views": 20}],
+            "total_views": 300, "total_likes": 5, "total_comments": 2,
+            "total_collections": 1, "articles_scanned": 2,
+            "gitee": {"ok": True, "commit_count": 4, "stars": 2, "forks": 1},
+        },
+        {
+            "sid": "s2", "name": "乙", "csdn_username": "yi",
+            "posts": [{"views": 7}],
+            "total_views": 100, "total_likes": 1, "total_comments": 0,
+            "total_collections": 0, "articles_scanned": 1,
+            "gitee": {"ok": False, "commit_count": 0, "stars": 0, "forks": 0},
+        },
+        {
+            "sid": "s3", "name": "丙", "csdn_username": "",
+            "posts": [],
+            "total_views": 0, "total_likes": 0, "total_comments": 0,
+            "total_collections": 0, "articles_scanned": 0,
+            "gitee": {"ok": False},
+        },
+    ]
+
+    a = v2.compute_class_stats(state)
+    b = inc.compute_class_stats({"students": flat, "last_update": "2026-10-22T01:00:00"})
+
+    check("class_stats 顶层 key 集合与 v2 一致",
+          set(a.keys()) == set(b.keys()),
+          f"v2={sorted(a.keys())} inc={sorted(b.keys())}")
+    check("class_stats.csdn key 集合与 v2 一致",
+          set(a["csdn"].keys()) == set(b["csdn"].keys()),
+          f"v2={sorted(a['csdn'].keys())} inc={sorted(b['csdn'].keys())}")
+    check("class_stats.gitee key 集合与 v2 一致",
+          set(a["gitee"].keys()) == set(b["gitee"].keys()),
+          f"v2={sorted(a['gitee'].keys())} inc={sorted(b['gitee'].keys())}")
+    for k in ("students_total", "students_with_csdn", "students_active",
+              "students_inactive"):
+        check(f"class_stats.{k} 与 v2 一致 ({a[k]})", a[k] == b[k], str(b[k]))
+    for k in ("total_posts", "total_views", "total_likes", "total_comments",
+              "total_collections", "avg_posts_per_active", "avg_views_per_student"):
+        check(f"class_stats.csdn.{k} 与 v2 一致 ({a['csdn'][k]})",
+              a["csdn"][k] == b["csdn"][k], str(b["csdn"][k]))
+    for k in ("students_with_repo", "total_commits", "total_stars",
+              "total_forks", "avg_commits_per_student"):
+        check(f"class_stats.gitee.{k} 与 v2 一致 ({a['gitee'][k]})",
+              a["gitee"][k] == b["gitee"][k], str(b["gitee"][k]))
+
+    # 增量跑完之后 class_stats 必须跟着涨 (不是停在旧值)
+    flat2 = json.loads(json.dumps(flat))
+    flat2[0]["total_views"] = 999
+    flat2[0]["posts"].append({"views": 5})
+    c = inc.compute_class_stats({"students": flat2})
+    check("增量后班级总阅读被刷新 (400 -> 1099 = 999+100+0)",
+          c["csdn"]["total_views"] == 1099, str(c["csdn"]["total_views"]))
+    check("增量后总文章数被刷新 (3 -> 4)",
+          c["csdn"]["total_posts"] == 4, str(c["csdn"]["total_posts"]))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="(本测试全是离线的)")
@@ -468,6 +558,7 @@ def main():
     test_521_backoff()
     test_404_marked_deleted()
     test_list_fetch_diagnosis()
+    test_class_stats_refreshed()
 
     print("\n" + "=" * 70)
     print(f"通过 {PASS} / 失败 {FAIL}")
