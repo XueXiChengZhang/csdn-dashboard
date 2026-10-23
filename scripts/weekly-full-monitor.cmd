@@ -45,7 +45,7 @@ chcp 65001 >nul
 REM ★ 必须设 UTF-8 模式: 计划任务跑的时候没有 PYTHONIOENCODING/PYTHONUTF8,
 REM   Python 的 stdout 会退到系统 ANSI 代码页 (GBK/936)。日志是重定向到文件的,
 REM   于是 print() 遇到 openclaw 输出里的 emoji (U+2705) 就会抛
-REM   UnicodeEncodeError: 'gbk' codec can't encode character '✅'
+REM   UnicodeEncodeError: 'gbk' codec can't encode character 'U+2705'
 REM   —— 实测 2026-10-21: 飞书其实**已经发成功了**, 只是打印日志那一步炸了,
 REM   看起来像发送失败。PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 一起解决。
 set PYTHONIOENCODING=utf-8
@@ -107,13 +107,15 @@ if errorlevel 1 (
     git -c pack.window=0 -c pack.depth=0 push origin main
     if errorlevel 1 (
         echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
-        git remote set-url origin git@github.com:XueXiChengZhang/csdn-dashboard.git
+        git remote set-url origin ssh://git@ssh.github.com:443/XueXiChengZhang/csdn-dashboard.git
         git -c pack.window=0 -c pack.depth=0 push origin main
         git remote set-url origin https://github.com:XueXiChengZhang/csdn-dashboard.git
     )
 )
 
-git fetch origin main >nul 2>&1
+REM NOTE: fetch needs a timeout - without one a network hiccup hangs the whole scheduled task
+set "FETCHCMD=$p = Start-Process git -ArgumentList 'fetch','origin','main' -NoNewWindow -PassThru; if (-not $p.WaitForExit(60000)) { $p.Kill(); exit 1 } else { exit $p.ExitCode }"
+powershell -NoProfile -Command "%FETCHCMD%" >nul 2>&1
 for /f "tokens=*" %%i in ('git rev-parse HEAD') do set LOCAL=%%i
 for /f "tokens=*" %%i in ('git rev-parse origin/main') do set REMOTE=%%i
 if not "%LOCAL%"=="%REMOTE%" (
