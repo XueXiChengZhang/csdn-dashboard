@@ -29,6 +29,8 @@ SCRIPTS = [
     "gitee-monitor.cmd",
     "weekly-full-monitor.cmd",
     "daily-monitor-and-push.cmd",
+    # 创建全部计划任务的脚本 —— 它的正确性最关键, 同样要修
+    "setup-schedule-tasks.cmd",
 ]
 
 REPL = {

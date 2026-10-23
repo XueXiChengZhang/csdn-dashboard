@@ -14,7 +14,7 @@ REM   00:00        -> incremental-monitor.cmd    增量抓 CSDN (阅读量每天
 REM   05:30        -> gitee-monitor.cmd          只刷 Gitee, 不碰 CSDN
 REM   周日 03:00   -> weekly-full-monitor.cmd    全量兜底 (--no-reuse 强制全刷)
 REM
-REM ⚠ schtasks 的坑 (来自 memory): /tr 路径含空格或特殊字符时,
+REM ! schtasks 的坑 (来自 memory): /tr 路径含空格或特殊字符时,
 REM   直接传 python 路径会报 "无效参数"。所以这里一律用 .cmd 包装文件,
 REM   .cmd 里面再写绝对路径的 python.exe。
 REM ============================================================================
