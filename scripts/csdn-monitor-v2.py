@@ -659,6 +659,67 @@ GITEE_HEADERS = {
     "Accept-Language": "zh-CN,zh;q=0.9",
 }
 
+# ★ Gitee API 出口 IP 封禁的绕行方案 (2026-10-23)
+#
+# 现象: 本机出口 IP 被 Gitee API 限流封了 —— HTML 页面 200 正常, 但
+#       https://gitee.com/api/v5/... 一律 HTTP 403。
+#       根因: 2026-10-22 调试时打了大量 Gitee API 请求, 把自己 IP 封了。
+#       (ECS 出口 IP 测同一批仓库全是 200 —— 所以不是账号/仓库问题, 是 IP 问题。)
+#
+# 解法: Gitee API 请求转发到 ECS 执行 (ECS IP 没被封)。
+#       走 SSH (ssh aliyun-fuyeboke), 不依赖任何本地代理端口。
+#
+# 环境变量 GITEE_PROXY_HOST 开启; 不设 = 行为完全不变 (直连)。
+GITEE_PROXY_HOST = os.environ.get("GITEE_PROXY_HOST", "").strip()
+GITEE_PROXY_TIMEOUT = int(os.environ.get("GITEE_PROXY_TIMEOUT", "25"))
+
+
+def gitee_api_get(url, timeout=10, headers=None, retries=1):
+    """抓 Gitee API。IP 被封时自动改走 ECS 转发。
+
+    返回 requests.Response 的等价物 (需支持 .status_code / .text / .json())。
+    转发失败时返回 status_code=-1 的伪对象, 由调用方按失败处理。
+    """
+    if not GITEE_PROXY_HOST:
+        return http_get(url, timeout=timeout, headers=headers, retries=retries)
+
+    # 经 ECS 转发: 把 URL 作为参数传过去, ECS 用 curl 取回
+    cmd = [
+        "ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
+        GITEE_PROXY_HOST,
+        "curl -s -m %d -A '%s' -H 'Accept: application/json' "
+        "-w '\\n__HTTP__%%{http_code}' '%s'" % (
+            timeout + 5, UA.replace("'", ""), url),
+    ]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True,
+                           timeout=timeout + 12)
+    except Exception as e:
+        safe_print(f"[gitee] 转发异常 {url} {type(e).__name__}: {str(e)[:60]}")
+        return _FakeResponse(-1, f"proxy error: {e}")
+    out = r.stdout or ""
+    if "__HTTP__" not in out:
+        err = (r.stderr or "").strip()[:120]
+        safe_print(f"[gitee] 转发无响应 {url} rc={r.returncode} {err}")
+        return _FakeResponse(-1, out[:200] or err or "no response")
+    body, _, code = out.rpartition("__HTTP__")
+    try:
+        status = int(code.strip())
+    except ValueError:
+        status = -1
+    return _FakeResponse(status, body)
+
+
+class _FakeResponse:
+    """最小 requests.Response 替身 (只需要 status_code / text / json)。"""
+
+    def __init__(self, status_code, text=""):
+        self.status_code = status_code
+        self.text = text or ""
+
+    def json(self):
+        return json.loads(self.text)
+
 # Gitee 的真实请求计数 (2026-10-22 修: 以前 _count_actual_requests 只认
 # source=="api"/"html", markdown 源一次都不算 -> gitee-only 那一跑
 # total_requests=0, 仪表盘健康度卡片显示"尚未运行抓取任务" 19 小时)。
@@ -698,7 +759,7 @@ def fetch_gitee_repo_api(owner, repo):
     """
     url = f"https://gitee.com/api/v5/repos/{owner}/{repo}"
     try:
-        r = http_get(url, timeout=10, headers=GITEE_HEADERS, retries=1)
+        r = gitee_api_get(url, timeout=10, headers=GITEE_HEADERS, retries=1)
         _gitee_count_request("api")
         if r.status_code != 200:
             safe_print(f"[gitee] repo API 失败 {url} HTTP {r.status_code}")
@@ -720,7 +781,7 @@ def fetch_gitee_last_commit_api(owner, repo):
     """
     url = f"https://gitee.com/api/v5/repos/{owner}/{repo}/commits?per_page=1"
     try:
-        r = http_get(url, timeout=10, headers=GITEE_HEADERS, retries=1)
+        r = gitee_api_get(url, timeout=10, headers=GITEE_HEADERS, retries=1)
         _gitee_count_request("api")
         if r.status_code != 200:
             if r.status_code == 404:
@@ -763,7 +824,7 @@ def fetch_gitee_commits_count_api(owner, repo):
     try:
         for page in range(1, 6):
             url = f"https://gitee.com/api/v5/repos/{owner}/{repo}/commits?per_page=100&page={page}"
-            r = http_get(url, timeout=8, headers=GITEE_HEADERS, retries=0)
+            r = gitee_api_get(url, timeout=8, headers=GITEE_HEADERS, retries=0)
             _gitee_count_request("api")
             if r.status_code != 200:
                 if r.status_code == 404:
@@ -1070,6 +1131,10 @@ def write_data_json(students_state, fetch_meta, class_stats=None):
                 "status": g.get("status", ""),
                 "empty": bool(g.get("empty", False)),
                 "fetched_at": g.get("fetched_at", ""),
+                # ★ 2026-10-23: 数据来自 ECS 采集器时标出来, 便于追溯
+                #   (本机 IP 被 Gitee API 限流, 走 ECS 的 .md + git clone 通道)
+                "ecs_collected": bool(g.get("ecs_collected", False)),
+                "subject": g.get("subject", ""),
             },
         })
 
@@ -1491,6 +1556,66 @@ def fetch_gitee_for(rec):
     return rec
 
 
+# ★ ECS 采集器结果 (2026-10-23)
+#
+# 背景: 本机出口 IP 被 Gitee API 限流封了 (403 Rate Limit Exceeded),
+#       HTML 页面虽 200 但是 JS 渲染, 抓不到 commit 数据。
+#       绕行方案 = 在 ECS 上跑 gitee_collector.py, 走两条不受限流的通道:
+#         - https://gitee.com/<owner>/<repo>.md   -> stars / forks / Last Updated
+#         - git clone --bare                      -> sha / date / subject / commit_count
+#
+# 采集器在 ECS 上跑完写 /root/gitee_result.json, 本机通过 ssh 取回来合并。
+# 结果缓存在本机, 避免同一轮里重复 ssh。
+GITEE_ECS_CACHE: dict = {}
+
+
+def load_gitee_from_ecs(host="aliyun-fuyeboke", remote_json="/root/gitee_result.json"):
+    """从 ECS 取 Gitee 采集结果 (取不到就返回空 dict, 不阻断主流程)。"""
+    if GITEE_ECS_CACHE:
+        return GITEE_ECS_CACHE
+    try:
+        r = subprocess.run(
+            ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host,
+             f"cat {remote_json}"],
+            capture_output=True, text=True, timeout=60)
+        if r.returncode != 0 or not (r.stdout or "").strip():
+            safe_print(f"[gitee-ecs] 取结果失败 rc={r.returncode}")
+            return {}
+        data = json.loads(r.stdout)
+        GITEE_ECS_CACHE.update(data)
+        safe_print(f"[gitee-ecs] 取到 {len(data)} 个仓库结果")
+    except Exception as e:
+        safe_print(f"[gitee-ecs] 异常 {type(e).__name__}: {str(e)[:80]}")
+    return GITEE_ECS_CACHE
+
+
+def merge_ecs_gitee(rec, ecs_map):
+    """把 ECS 采集结果并入 rec["gitee"], 返回是否成功合并。"""
+    owner, repo = parse_gitee_repo(rec.get("gitee_url", ""))
+    if not owner or not repo:
+        return False
+    key = f"{owner}/{repo}"
+    e = ecs_map.get(key)
+    if not e:
+        return False
+    g = rec.get("gitee") or {}
+    # ECS 数据优先 (它拿到的是 git 协议的真实 commit 数)
+    for k in ("sha", "date", "subject", "commit_count", "stars", "forks"):
+        if e.get(k) not in (None, "", 0) or k in ("commit_count",):
+            g[k] = e.get(k, g.get(k))
+    if e.get("status"):
+        g["status"] = e.get("status")
+    if e.get("err"):
+        g["err"] = e.get("err")
+    if e.get("source"):
+        g["source"] = e.get("source")
+    g["ok"] = bool(e.get("ok")) or bool(g.get("sha")) or bool(g.get("commit_count"))
+    g["ecs_collected"] = True
+    rec["gitee"] = g
+    rec["gitee_status"] = "ok" if g["ok"] else "failed"
+    return True
+
+
 STATS_KEYS = ("views", "likes", "comments", "collections", "stats_updated_at")
 
 
@@ -1889,10 +2014,24 @@ def run(args):
     # --- Stage 2: Gitee ---
     gitee_t = time.time()
     if run_gitee:
-        with ThreadPoolExecutor(max_workers=4) as ex:
-            futs = {ex.submit(fetch_gitee_for, rec): rec for rec in students_state}
-            for fut in as_completed(futs):
-                fut.result()
+        # ★ 优先用 ECS 采集结果 (本机 IP 被 Gitee API 限流封了)。
+        #   ECS 走 .md + git clone 通道, 不受 API 限流影响。
+        ecs_map = load_gitee_from_ecs()
+        if ecs_map:
+            merged = 0
+            for rec in students_state:
+                if merge_ecs_gitee(rec, ecs_map):
+                    merged += 1
+            safe_print(f"[gitee-ecs] 合并 {merged}/{len(students_state)} 个学生")
+        # ECS 没覆盖到的再走本机直连 (HTML/markdown fallback)
+        need_local = [r for r in students_state
+                      if not (r.get("gitee") or {}).get("ecs_collected")]
+        if need_local:
+            safe_print(f"[gitee-local] 本机补抓 {len(need_local)} 个")
+            with ThreadPoolExecutor(max_workers=4) as ex:
+                futs = {ex.submit(fetch_gitee_for, rec): rec for rec in need_local}
+                for fut in as_completed(futs):
+                    fut.result()
     gitee_ms = int((time.time() - gitee_t) * 1000)
 
     total_ms = int((time.time() - t_start) * 1000)
@@ -1971,9 +2110,14 @@ def run(args):
 
     # --- token 用量回报 ---
     safe_print(f"[timing] total {total_ms}ms = CSDN {csdn_ms}ms + Gitee {gitee_ms}ms")
-    safe_print(f"[stats] csdn_ok={csdn_ok}/{len(students_state)}, "
-          f"gitee_ok={gitee_ok}/{len(students_state)}, "
-          f"new_posts={new_posts_total}")
+    # csdn_ok / gitee_ok 只在 build_fetch_meta() 内部定义, 这里必须自己算一份
+    # (否则 gitee-only 模式下会 NameError, 退出码 1, 掩盖"实际已成功"的状态)
+    _csdn_ok = sum(1 for s in students_state
+                   if s.get("csdn_status") in ("ok", "skipped_reused"))
+    _gitee_ok = sum(1 for s in students_state if (s.get("gitee") or {}).get("ok"))
+    safe_print(f"[stats] csdn_ok={_csdn_ok}/{len(students_state)}, "
+               f"gitee_ok={_gitee_ok}/{len(students_state)}, "
+               f"new_posts={new_posts_total}")
     return 0
 
 
