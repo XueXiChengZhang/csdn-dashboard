@@ -1,53 +1,53 @@
 @echo off
-REM ============================================================================
-REM weekly-full-monitor.cmd — 每周日 03:00 的**全量兜底**
-REM
-REM 增量抓取的取舍: 为了不撞 CSDN 的 521 风控, 平时每天只重抓
-REM   最近 4 篇 + 轮转 2 篇 + 个人主页, 其余文章复用上次值。
-REM   好处: 请求数与文章总数无关, 每天 280 个请求就够。
-REM   代价: 老文章的数据会慢慢变旧 (轮转一圈大概 4-6 天), 偶尔会有
-REM         漏掉的新文章。
-REM 所以每周日跑一次全量, 用来:
-REM   - 修数据漂移 (把轮转漏掉的都刷一遍)
-REM   - 补漏 (发现增量期间漏掉的新文章 / 已删除的文章)
-REM   - 校准 (把全部 385 篇的 views/likes/comments/collections 重刷一遍)
-REM
-REM --no-reuse: 忽略 24h 复用, 强制**每篇都重抓**。没有这个开关的话,
-REM   周日全量会把周日增量刚抓过的那几篇当成"24h 内已抓过"而跳过,
-REM   全量就名存实亡了。
-REM
-REM ★★★ R7 安全网 (2026-10-22) ★★★
-REM   这个任务**从未跑过一次** (上次运行 1999/11/30), 下次 2026/10/25 03:00。
-REM   而 --no-reuse 关掉的正是 24h 复用保护 —— 那是 2026-10-21 把
-REM   阅读量从 7,604 打成 1,297 的那个动作。同一条写入路径的故障已经
-REM   发生 7 次 (09-22 -67% / 09-30 -67% / 10-01 -39% / 10-02 -33% /
-REM   10-12 -100% / 10-19 -100% / 10-21 -83%), 10-16 那次 00:00 算出
-REM   50,686 被覆盖成 9,609, 仪表盘少了 81%。
-REM   它还用的是 `git add -A` —— 任何残缺结果都会被直接 commit + push。
-REM
-REM   所以本文件加了三道闸 (全部在 push 之前):
-REM     0) 备份   —— 跑之前把 data.json / snapshot.json / 当日归档存一份
-REM                  (带时间戳, 留最近 8 份, 在 cache/backup/)
-REM     1) 校验   —— 总阅读 < 上次 60% / 失败学生占比 > 20% /
-REM                  总文章 < 上次 70%  -> 任一成立就判不合格
-REM                  (比 apply_data_protection 的 C 臂严: C 臂只挡
-REM                   "总阅读 < 30%", 掉 40% 它挡不住)
-REM     2) 回滚   —— 校验不过 (或抓取直接报错) 就把备份原样恢复,
-REM                  **并且不 commit、不 push**
-REM
-REM   为什么**保留** --no-reuse 全量 (而不是改成限范围 --recent 8 --rotate 4):
-REM     全量能修复长期滞后的文章数据 (增量只碰最近 4 篇 + 轮转 2 篇,
-REM     老文章的 views 可能停在几周前), 限范围只是回避问题 —— 真出事了
-REM     数据还是错的, 而且错得没人知道。全量 + 严格的回滚校验 =
-REM     "敢跑全量, 但跑坏了自动退回去", 这才是根治。
-REM ============================================================================
 chcp 65001 >nul
-REM ★ 必须设 UTF-8 模式: 计划任务跑的时候没有 PYTHONIOENCODING/PYTHONUTF8,
-REM   Python 的 stdout 会退到系统 ANSI 代码页 (GBK/936)。日志是重定向到文件的,
-REM   于是 print() 遇到 openclaw 输出里的 emoji (U+2705) 就会抛
+REM ============================================================================
+REM weekly-full-monitor.cmd �� ÿ���� 03:00 ��**ȫ������**
+REM
+REM ����ץȡ��ȡ��: Ϊ�˲�ײ CSDN �� 521 ���, ƽʱÿ��ֻ��ץ
+REM   ��� 4 ƪ + ��ת 2 ƪ + ������ҳ, �������¸����ϴ�ֵ��
+REM   �ô�: �����������������޹�, ÿ�� 280 ������͹���
+REM   ����: �����µ����ݻ�������� (��תһȦ��� 4-6 ��), ż������
+REM         ©���������¡�
+REM ����ÿ������һ��ȫ��, ����:
+REM   - ������Ư�� (����ת©���Ķ�ˢһ��)
+REM   - ��© (���������ڼ�©���������� / ��ɾ��������)
+REM   - У׼ (��ȫ�� 385 ƪ�� views/likes/comments/collections ��ˢһ��)
+REM
+REM --no-reuse: ���� 24h ����, ǿ��**ÿƪ����ץ**��û��������صĻ�,
+REM   ����ȫ���������������ץ�����Ǽ�ƪ����"24h ����ץ��"������,
+REM   ȫ��������ʵ���ˡ�
+REM
+REM ���� R7 ��ȫ�� (2026-10-22) ����
+REM   �������**��δ�ܹ�һ��** (�ϴ����� 1999/11/30), �´� 2026/10/25 03:00��
+REM   �� --no-reuse �ص������� 24h ���ñ��� ���� ���� 2026-10-21 ��
+REM   �Ķ����� 7,604 ��� 1,297 ���Ǹ�������ͬһ��д��·���Ĺ����Ѿ�
+REM   ���� 7 �� (09-22 -67% / 09-30 -67% / 10-01 -39% / 10-02 -33% /
+REM   10-12 -100% / 10-19 -100% / 10-21 -83%), 10-16 �Ǵ� 00:00 ���
+REM   50,686 �����ǳ� 9,609, �Ǳ������� 81%��
+REM   �����õ��� `git add -A` ���� �κβ�ȱ������ᱻֱ�� commit + push��
+REM
+REM   ���Ա��ļ���������բ (ȫ���� push ֮ǰ):
+REM     0) ����   ���� ��֮ǰ�� data.json / snapshot.json / ���չ鵵��һ��
+REM                  (��ʱ���, ����� 8 ��, �� cache/backup/)
+REM     1) У��   ���� ���Ķ� < �ϴ� 60% / ʧ��ѧ��ռ�� > 20% /
+REM                  ������ < �ϴ� 70%  -> ��һ�������в��ϸ�
+REM                  (�� apply_data_protection �� C ����: C ��ֻ��
+REM                   "���Ķ� < 30%", �� 40% ������ס)
+REM     2) �ع�   ���� У�鲻�� (��ץȡֱ�ӱ���) �Ͱѱ���ԭ���ָ�,
+REM                  **���Ҳ� commit���� push**
+REM
+REM   Ϊʲô**����** --no-reuse ȫ�� (�����Ǹĳ��޷�Χ --recent 8 --rotate 4):
+REM     ȫ�����޸������ͺ���������� (����ֻ����� 4 ƪ + ��ת 2 ƪ,
+REM     �����µ� views ����ͣ�ڼ���ǰ), �޷�Χֻ�ǻر����� ���� �������
+REM     ���ݻ��Ǵ���, ���Ҵ���û��֪����ȫ�� + �ϸ�Ļع�У�� =
+REM     "����ȫ��, ���ܻ����Զ��˻�ȥ", ����Ǹ��Ρ�
+REM ============================================================================
+REM �� ������ UTF-8 ģʽ: �ƻ������ܵ�ʱ��û�� PYTHONIOENCODING/PYTHONUTF8,
+REM   Python �� stdout ���˵�ϵͳ ANSI ����ҳ (GBK/936)����־���ض����ļ���,
+REM   ���� print() ���� openclaw ������ emoji (U+2705) �ͻ���
 REM   UnicodeEncodeError: 'gbk' codec can't encode character 'U+2705'
-REM   —— 实测 2026-10-21: 飞书其实**已经发成功了**, 只是打印日志那一步炸了,
-REM   看起来像发送失败。PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 一起解决。
+REM   ���� ʵ�� 2026-10-21: ������ʵ**�Ѿ����ɹ���**, ֻ�Ǵ�ӡ��־��һ��ը��,
+REM   ����������ʧ�ܡ�PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 һ������
 set PYTHONIOENCODING=utf-8
 set PYTHONUTF8=1
 setlocal enabledelayedexpansion
@@ -66,9 +66,6 @@ set "LOCKPYEXE=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\py
 "%LOCKPYEXE%" "%LOCKPY%" acquire "%LOCKFILE%" 120
 if errorlevel 1 (
     echo [%date% %time%] LOCK BUSY, another monitor task is running, exit
-REM release lock
-"%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
-
     endlocal
     exit /b 0
 )
@@ -84,55 +81,62 @@ if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 cd /d "%DASHBOARD_DIR%"
 
 REM ---------------------------------------------------------------------------
-REM 0. R7 安全网 —— 备份 (没有备份就不敢跑)
+REM 0. R7 ��ȫ�� ���� ���� (û�б��ݾͲ�����)
 REM ---------------------------------------------------------------------------
 if exist "%DASHBOARD_DIR%\cache\backup\LATEST.txt" del /q "%DASHBOARD_DIR%\cache\backup\LATEST.txt"
 "%PYTHON%" "%SCRIPT_DIR%weekly_guard.py" --dir "%DASHBOARD_DIR%" backup --keep 8 >> "%GUARDLOG%" 2>&1
 if errorlevel 1 (
-    echo [%date% %time%] WEEKLY BACKUP FAILED - ABORT (没有备份就不跑全量)
+    echo [%date% %time%] WEEKLY BACKUP FAILED - ABORT "(û�б��ݾͲ���ȫ��)"
+    "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
     exit /b 1
 )
 set BACKUP_DIR=
 if exist "%DASHBOARD_DIR%\cache\backup\LATEST.txt" set /p BACKUP_DIR=<"%DASHBOARD_DIR%\cache\backup\LATEST.txt"
 if not defined BACKUP_DIR (
     echo [%date% %time%] WEEKLY BACKUP PATH UNKNOWN - ABORT
+    "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
     exit /b 1
 )
 echo [%date% %time%] weekly backup: %BACKUP_DIR%
 
 REM ---------------------------------------------------------------------------
-REM 1. 全量抓取 (含 Gitee), --no-reuse 强制每篇重抓
+REM 1. ȫ��ץȡ (�� Gitee), --no-reuse ǿ��ÿƪ��ץ
 REM ---------------------------------------------------------------------------
 "%PYTHON%" "%SCRIPT_DIR%csdn-monitor-v2.py" --force-now --no-reuse >> "%LOGDIR%\weekly-full-cron.log" 2>&1
 if errorlevel 1 (
-    echo [%date% %time%] WEEKLY FULL FAILED - 回滚到备份
+    echo [%date% %time%] WEEKLY FULL FAILED - �ع�������
     "%PYTHON%" "%SCRIPT_DIR%weekly_guard.py" --dir "%DASHBOARD_DIR%" rollback --backup "%BACKUP_DIR%" >> "%GUARDLOG%" 2>&1
+    "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
     exit /b 1
 )
 
 REM ---------------------------------------------------------------------------
-REM 2. R7 安全网 —— 校验 (必须在 push 之前!)
+REM 2. R7 ��ȫ�� ���� У�� (������ push ֮ǰ!)
 REM ---------------------------------------------------------------------------
 "%PYTHON%" "%SCRIPT_DIR%weekly_guard.py" --dir "%DASHBOARD_DIR%" check --backup "%BACKUP_DIR%" >> "%GUARDLOG%" 2>&1
 if errorlevel 1 (
-    echo [%date% %time%] WEEKLY VALIDATION FAILED - 回滚到备份, 不 commit 不 push
+    echo [%date% %time%] WEEKLY VALIDATION FAILED - �ع�������, �� commit �� push
     "%PYTHON%" "%SCRIPT_DIR%weekly_guard.py" --dir "%DASHBOARD_DIR%" rollback --backup "%BACKUP_DIR%" >> "%GUARDLOG%" 2>&1
+    "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
     exit /b 1
 )
 
 REM ---------------------------------------------------------------------------
-REM 3. 提交 + push (过了校验才轮到这一步)
+REM 3. �ύ + push (����У����ֵ���һ��)
 REM ---------------------------------------------------------------------------
-git add -A
+REM NOTE: add the 4 data files explicitly, NOT "git add -A".
+REM   "git add -A" sweeps in stray files (0-byte junk left by a crashed
+REM   cmd.exe parse, editor backups, .pyc) and pushes them to the repo.
+git add data.json cache/csdn/snapshot.json history-real reports
 git diff --cached --quiet
 if errorlevel 1 (
-    git commit -m "data: %date:~0,10% 周全量兜底"
+    git commit -m "data: %date:~0,10% weekly full scrape"
     git -c pack.window=0 -c pack.depth=0 push origin main
     if errorlevel 1 (
-        echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
+        echo [%date% %time%] PUSH FAILED, retrying via ssh.github.com:443...
+        REM keep ssh.github.com:443 - both github.com:443 and :22 are unreachable from this host
         git remote set-url origin ssh://git@ssh.github.com:443/XueXiChengZhang/csdn-dashboard.git
         git -c pack.window=0 -c pack.depth=0 push origin main
-        git remote set-url origin https://github.com:XueXiChengZhang/csdn-dashboard.git
     )
 )
 
@@ -146,7 +150,7 @@ if not "%LOCAL%"=="%REMOTE%" (
 ) else (
     echo [%date% %time%] In sync OK
 )
+
 REM release lock
 "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
-
 endlocal

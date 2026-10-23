@@ -175,11 +175,22 @@ def add_lock(path, dry=False):
                  + LOCK_BLOCK.replace("\n", "\r\n").split("\r\n")
                  + lines[ins:])
 
+    # 解锁语句只插在**顶层**的 endlocal 之前。
+    # 陷阱: 脚本里还有若干缩进的 endlocal (在 if 块内部), 一律跳过,
+    # 否则解锁会被插进 if 块里 —— 那样正常路径永远不释放锁,
+    # 而 LOCK BUSY 分支反而会抢别人的锁释放掉。
     out = []
+    depth = 0
     for l in new_lines:
-        if l.strip().lower() == "endlocal":
+        s = l.strip()
+        is_endlocal = s.lower() == "endlocal"
+        if is_endlocal and depth == 0:
             out.extend(UNLOCK_BLOCK.replace("\n", "\r\n").split("\r\n"))
         out.append(l)
+        if not s.upper().startswith("REM"):
+            depth += l.count("(") - l.count(")")
+            if depth < 0:
+                depth = 0
 
     data = "\r\n".join(out).encode("utf-8")
     if not dry:

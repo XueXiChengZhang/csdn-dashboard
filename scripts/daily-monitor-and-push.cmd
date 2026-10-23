@@ -1,23 +1,23 @@
 @echo off
-REM ============================================================================
-REM daily-monitor-and-push.cmd â€” å…¨é‡æŠ“å– + push (æ‰‹åŠ¨ / å…œåº•ç”¨)
-REM
-REM ! 2026-10-21 èµ·, æ¯æ—¥å®šæ—¶ä»»åŠ¡**ä¸å†**è·‘è¿™ä¸ªæ–‡ä»¶:
-REM   00:00 -> incremental-monitor.cmd  (å¢žé‡, è½»é‡, é˜…è¯»é‡æ¯å¤©éƒ½ä¼šæ¶¨)
-REM   05:30 -> gitee-monitor.cmd        (åªåˆ· Gitee, ä¸ç¢° CSDN)
-REM   å‘¨æ—¥03:00 -> weekly-full-monitor.cmd (å…¨é‡å…œåº•)
-REM   åŽŸå› : ä¸¤ä¸ªå®šæ—¶ä»»åŠ¡éƒ½è·‘å…¨é‡ CSDN, ç¬¬äºŒæ¬¡å¿…ç„¶è¢« 521 é£ŽæŽ§é™æµ,
-REM         äºŽæ˜¯æŠŠç¬¬ä¸€æ¬¡çš„å¥½æ•°æ®è¦†ç›–æˆ 0 (7604 -> 1297)ã€‚
-REM
-REM æœ¬æ–‡ä»¶ä¿ç•™ç»™"æ‰‹åŠ¨å…¨é‡"ç”¨, ä¾‹å¦‚æƒ³ç«‹åˆ»åˆ·æ–°ä¸€æ¬¡å®Œæ•´æ•°æ®æ—¶ã€‚
-REM ============================================================================
 chcp 65001 >nul
-REM â˜… å¿…é¡»è®¾ UTF-8 æ¨¡å¼: è®¡åˆ’ä»»åŠ¡è·‘çš„æ—¶å€™æ²¡æœ‰ PYTHONIOENCODING/PYTHONUTF8,
-REM   Python çš„ stdout ä¼šé€€åˆ°ç³»ç»Ÿ ANSI ä»£ç é¡µ (GBK/936)ã€‚æ—¥å¿—æ˜¯é‡å®šå‘åˆ°æ–‡ä»¶çš„,
-REM   äºŽæ˜¯ print() é‡åˆ° openclaw è¾“å‡ºé‡Œçš„ emoji (U+2705) å°±ä¼šæŠ›
+REM ============================================================================
+REM daily-monitor-and-push.cmd ¡ª È«Á¿×¥È¡ + push (ÊÖ¶¯ / ¶µµ×ÓÃ)
+REM
+REM ! 2026-10-21 Æð, Ã¿ÈÕ¶¨Ê±ÈÎÎñ**²»ÔÙ**ÅÜÕâ¸öÎÄ¼þ:
+REM   00:00 -> incremental-monitor.cmd  (ÔöÁ¿, ÇáÁ¿, ÔÄ¶ÁÁ¿Ã¿Ìì¶¼»áÕÇ)
+REM   05:30 -> gitee-monitor.cmd        (Ö»Ë¢ Gitee, ²»Åö CSDN)
+REM   ÖÜÈÕ03:00 -> weekly-full-monitor.cmd (È«Á¿¶µµ×)
+REM   Ô­Òò: Á½¸ö¶¨Ê±ÈÎÎñ¶¼ÅÜÈ«Á¿ CSDN, µÚ¶þ´Î±ØÈ»±» 521 ·ç¿ØÏÞÁ÷,
+REM         ÓÚÊÇ°ÑµÚÒ»´ÎµÄºÃÊý¾Ý¸²¸Ç³É 0 (7604 -> 1297)¡£
+REM
+REM ±¾ÎÄ¼þ±£Áô¸ø"ÊÖ¶¯È«Á¿"ÓÃ, ÀýÈçÏëÁ¢¿ÌË¢ÐÂÒ»´ÎÍêÕûÊý¾ÝÊ±¡£
+REM ============================================================================
+REM ¡ï ±ØÐëÉè UTF-8 Ä£Ê½: ¼Æ»®ÈÎÎñÅÜµÄÊ±ºòÃ»ÓÐ PYTHONIOENCODING/PYTHONUTF8,
+REM   Python µÄ stdout »áÍËµ½ÏµÍ³ ANSI ´úÂëÒ³ (GBK/936)¡£ÈÕÖ¾ÊÇÖØ¶¨Ïòµ½ÎÄ¼þµÄ,
+REM   ÓÚÊÇ print() Óöµ½ openclaw Êä³öÀïµÄ emoji (U+2705) ¾Í»áÅ×
 REM   UnicodeEncodeError: 'gbk' codec can't encode character 'U+2705'
-REM   â€”â€” å®žæµ‹ 2026-10-21: é£žä¹¦å…¶å®ž**å·²ç»å‘æˆåŠŸäº†**, åªæ˜¯æ‰“å°æ—¥å¿—é‚£ä¸€æ­¥ç‚¸äº†,
-REM   çœ‹èµ·æ¥åƒå‘é€å¤±è´¥ã€‚PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 ä¸€èµ·è§£å†³ã€‚
+REM   ¡ª¡ª Êµ²â 2026-10-21: ·ÉÊéÆäÊµ**ÒÑ¾­·¢³É¹¦ÁË**, Ö»ÊÇ´òÓ¡ÈÕÖ¾ÄÇÒ»²½Õ¨ÁË,
+REM   ¿´ÆðÀ´Ïñ·¢ËÍÊ§°Ü¡£PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 Ò»Æð½â¾ö¡£
 set PYTHONIOENCODING=utf-8
 set PYTHONUTF8=1
 setlocal
@@ -29,21 +29,21 @@ if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
 cd /d "%DASHBOARD_DIR%"
 
-REM 1. å…¨é‡æŠ“å– (--no-reuse: å¿½ç•¥ 24h å¤ç”¨, æ¯ç¯‡éƒ½é‡æŠ“)
+REM 1. È«Á¿×¥È¡ (--no-reuse: ºöÂÔ 24h ¸´ÓÃ, Ã¿Æª¶¼ÖØ×¥)
 "%PYTHON%" "%SCRIPT_DIR%csdn-monitor-v2.py" --force-now --no-reuse >> "%LOGDIR%\full-monitor.log" 2>&1
 if errorlevel 1 (
     echo [%date% %time%] FULL MONITOR FAILED
     exit /b 1
 )
 
-REM 2. å¦‚æžœæœ‰å˜åŒ–, commit + push
+REM 2. Èç¹ûÓÐ±ä»¯, commit + push
 if exist data.json (
     git add -A
     git diff --cached --quiet
     if errorlevel 1 (
-        git commit -m "data: %date:~0,10% è‡ªåŠ¨æ›´æ–°"
-        REM push ä¼˜å…ˆ HTTPS,å¤±è´¥å›žé€€ SSH (Ma: å®¶é‡Œ HTTPS 443 ç»å¸¸è¢«å±è”½,SSH æ›´ç¨³)
-        REM pack flags é¿å¼€ Windows ä¸Š git push çš„ OOM
+        git commit -m "data: %date:~0,10% ×Ô¶¯¸üÐÂ"
+        REM push ÓÅÏÈ HTTPS,Ê§°Ü»ØÍË SSH (Ma: ¼ÒÀï HTTPS 443 ¾­³£±»ÆÁ±Î,SSH ¸üÎÈ)
+        REM pack flags ±Ü¿ª Windows ÉÏ git push µÄ OOM
         git -c pack.window=0 -c pack.depth=0 push origin main
         if errorlevel 1 (
             echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
@@ -54,7 +54,7 @@ if exist data.json (
     )
 )
 
-REM 3. æŽ¨é€åŽ, æ£€æŸ¥æ˜¯å¦åŒæ­¥
+REM 3. ÍÆËÍºó, ¼ì²éÊÇ·ñÍ¬²½
 REM NOTE: fetch needs a timeout - without one a network hiccup hangs the whole scheduled task
 set "FETCHCMD=$p = Start-Process git -ArgumentList 'fetch','origin','main' -NoNewWindow -PassThru; if (-not $p.WaitForExit(60000)) { $p.Kill(); exit 1 } else { exit $p.ExitCode }"
 powershell -NoProfile -Command "%FETCHCMD%" >nul 2>&1

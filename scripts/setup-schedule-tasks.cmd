@@ -1,44 +1,44 @@
 @echo off
-REM ============================================================================
-REM setup-schedule-tasks.cmd â€” é‡è£…ä¸‰ä¸ªå®šæ—¶ä»»åŠ¡ (éœ€è¦ç®¡ç†å‘˜æƒé™)
-REM
-REM 2026-10-21 ä¹‹å‰çš„é…ç½® (äº‹æ•…ç°åœº):
-REM   \csdn-dashboard-monitor-0000  -> daily-monitor-and-push.cmd  (å…¨é‡ CSDN)
-REM   \csdn-dashboard-monitor-0530  -> daily-monitor-and-push.cmd  (å…¨é‡ CSDN)
-REM   ä¸¤ä¸ªéƒ½è·‘å…¨é‡, ç¬¬äºŒæ¬¡å¿…ç„¶è¢« CSDN çš„ 521 é£æ§é™æµ, äºæ˜¯:
-REM     00:00 -> total_views 7,604 (å¥½)
-REM     05:30 -> total_views 1,297 (è¢«é™æµ, æŠŠå¥½æ•°æ®è¦†ç›–æˆ 0)
-REM
-REM ç°åœ¨çš„é…ç½® (ä¸‰æ¬¡ä»»åŠ¡åˆ†å·¥):
-REM   00:00        -> incremental-monitor.cmd    å¢é‡æŠ“ CSDN (é˜…è¯»é‡æ¯å¤©éƒ½ä¼šæ¶¨)
-REM   05:30        -> gitee-monitor.cmd          åªåˆ· Gitee, ä¸ç¢° CSDN
-REM   å‘¨æ—¥ 03:00   -> weekly-full-monitor.cmd    å…¨é‡å…œåº• (--no-reuse å¼ºåˆ¶å…¨åˆ·)
-REM
-REM ! schtasks çš„å‘ (æ¥è‡ª memory): /tr è·¯å¾„å«ç©ºæ ¼æˆ–ç‰¹æ®Šå­—ç¬¦æ—¶,
-REM   ç›´æ¥ä¼  python è·¯å¾„ä¼šæŠ¥ "æ— æ•ˆå‚æ•°"ã€‚æ‰€ä»¥è¿™é‡Œä¸€å¾‹ç”¨ .cmd åŒ…è£…æ–‡ä»¶,
-REM   .cmd é‡Œé¢å†å†™ç»å¯¹è·¯å¾„çš„ python.exeã€‚
-REM ============================================================================
 chcp 65001 >nul
+REM ============================================================================
+REM setup-schedule-tasks.cmd ¡ª ÖØ×°Èı¸ö¶¨Ê±ÈÎÎñ (ĞèÒª¹ÜÀíÔ±È¨ÏŞ)
+REM
+REM 2026-10-21 Ö®Ç°µÄÅäÖÃ (ÊÂ¹ÊÏÖ³¡):
+REM   \csdn-dashboard-monitor-0000  -> daily-monitor-and-push.cmd  (È«Á¿ CSDN)
+REM   \csdn-dashboard-monitor-0530  -> daily-monitor-and-push.cmd  (È«Á¿ CSDN)
+REM   Á½¸ö¶¼ÅÜÈ«Á¿, µÚ¶ş´Î±ØÈ»±» CSDN µÄ 521 ·ç¿ØÏŞÁ÷, ÓÚÊÇ:
+REM     00:00 -> total_views 7,604 (ºÃ)
+REM     05:30 -> total_views 1,297 (±»ÏŞÁ÷, °ÑºÃÊı¾İ¸²¸Ç³É 0)
+REM
+REM ÏÖÔÚµÄÅäÖÃ (Èı´ÎÈÎÎñ·Ö¹¤):
+REM   00:00        -> incremental-monitor.cmd    ÔöÁ¿×¥ CSDN (ÔÄ¶ÁÁ¿Ã¿Ìì¶¼»áÕÇ)
+REM   05:30        -> gitee-monitor.cmd          Ö»Ë¢ Gitee, ²»Åö CSDN
+REM   ÖÜÈÕ 03:00   -> weekly-full-monitor.cmd    È«Á¿¶µµ× (--no-reuse Ç¿ÖÆÈ«Ë¢)
+REM
+REM ! schtasks µÄ¿Ó (À´×Ô memory): /tr Â·¾¶º¬¿Õ¸ñ»òÌØÊâ×Ö·ûÊ±,
+REM   Ö±½Ó´« python Â·¾¶»á±¨ "ÎŞĞ§²ÎÊı"¡£ËùÒÔÕâÀïÒ»ÂÉÓÃ .cmd °ü×°ÎÄ¼ş,
+REM   .cmd ÀïÃæÔÙĞ´¾ø¶ÔÂ·¾¶µÄ python.exe¡£
+REM ============================================================================
 setlocal
 
 set DASH=D:\WebArchives\csdn-dashboard\scripts
 
 net session >nul 2>&1
 if errorlevel 1 (
-    echo [!] éœ€è¦ç®¡ç†å‘˜æƒé™, è¯·ç”¨ç®¡ç†å‘˜èº«ä»½è¿è¡Œ
+    echo [!] ĞèÒª¹ÜÀíÔ±È¨ÏŞ, ÇëÓÃ¹ÜÀíÔ±Éí·İÔËĞĞ
     exit /b 1
 )
 
-echo [1/3] 00:00 å¢é‡æŠ“å– (åŸæ¥è·‘çš„æ˜¯å…¨é‡, è¿™æ˜¯é˜…è¯»é‡å½’é›¶çš„å…ƒå‡¶ä¹‹ä¸€)
+echo [1/3] 00:00 ÔöÁ¿×¥È¡ "(Ô­À´ÅÜµÄÊÇÈ«Á¿, ÕâÊÇÔÄ¶ÁÁ¿¹éÁãµÄÔªĞ×Ö®Ò»)"
 schtasks /change /tn "\csdn-dashboard-monitor-0000" /tr "%DASH%\incremental-monitor.cmd"
 
-echo [2/3] 05:30 åªåˆ· Gitee (åŸæ¥è·‘çš„æ˜¯å…¨é‡)
+echo [2/3] 05:30 Ö»Ë¢ Gitee "(Ô­À´ÅÜµÄÊÇÈ«Á¿)"
 schtasks /change /tn "\csdn-dashboard-monitor-0530" /tr "%DASH%\gitee-monitor.cmd"
 
-echo [3/3] å‘¨æ—¥ 03:00 å…¨é‡å…œåº• (æ–°å¢)
+echo [3/3] ÖÜÈÕ 03:00 È«Á¿¶µµ× "(ĞÂÔö)"
 schtasks /create /tn "\csdn-dashboard-monitor-weekly" /tr "%DASH%\weekly-full-monitor.cmd" /sc weekly /d SUN /st 03:00 /f
 
 echo.
-echo === ç°åœ¨çš„ä»»åŠ¡æŒ‡å‘ ===
+echo === ÏÖÔÚµÄÈÎÎñÖ¸Ïò ===
 schtasks /query /fo csv /v | findstr /i "csdn-dashboard"
 endlocal

@@ -1,27 +1,27 @@
 @echo off
-REM ============================================================================
-REM gitee-monitor.cmd ‚Äî ÊØèÊó• 05:30 ÁöÑ Gitee Âà∑Êñ∞ (Âè™Ë∑ë Gitee, ‰∏çÁ¢∞ CSDN)
-REM
-REM ‰∏∫‰ªÄ‰πàÊää 05:30 ÈÇ£‰∏™‰ªªÂä°‰ªé"ÂÖ®Èáè CSDN"ÊîπÊàê"Âè™Ë∑ë Gitee":
-REM   00:00 Âíå 05:30 ÈÉΩË∑ëÂÖ®Èáè CSDN ÊòØËøôÊ¨°"ÈòÖËØªÈáèÂΩíÈõ∂"‰∫ãÊïÖÁöÑÁõ¥Êé•ÂéüÂõ† ‚Äî‚Äî
-REM   Á¨¨‰∫åÊ¨°ÂÖ®ÈáèÂøÖÁÑ∂Ë¢´ CSDN ÁöÑ 521 È£éÊéßÊã¶Êéâ, ÁÑ∂ÂêéÊääÁ¨¨‰∏ÄÊ¨°ÁöÑÂ•ΩÊï∞ÊçÆË¶ÜÁõñÊàê 0„ÄÇ
-REM   (ÂÆûÊµã: 00:00 -> total_views 7,604;  05:30 -> total_views 1,297)
-REM
-REM Áé∞Âú®‰∏§Ê¨°‰ªªÂä°ÁöÑÂàÜÂ∑•:
-REM   00:00  Â¢ûÈáèÊäì CSDN (ÊúÄËøë 4 ÁØá + ËΩÆËΩ¨ 2 ÁØá + ‰∏™‰∫∫‰∏ªÈ°µ)
-REM   05:30  Âè™Âà∑ Gitee (‰æøÂÆú, ‰∏çÂèó CSDN È£éÊéßÂΩ±Âìç, Êï∞ÊçÆ‰πüÂÄºÂæóÊØèÂ§©Âà∑Êñ∞)
-REM   Âë®Êó•03:00  ÂÖ®ÈáèÂÖúÂ∫ï (‰øÆÊï∞ÊçÆÊºÇÁßª/Ë°•Êºè, --no-reuse Âº∫Âà∂ÂÖ®ÈÉ®ÈáçÊäì)
-REM
-REM --gitee-only Ê®°Âºè‰∏ã v2 ‰ºöÂ§çÁî® data.json ÈáåÂ∑≤ÊúâÁöÑ CSDN posts/stats ÂéüÊ†∑ÂÜôÂõû,
-REM ‰∏ç‰ºöÊää CSDN ÁöÑÊï∞ÊçÆÂÜ≤Êéâ„ÄÇ
-REM ============================================================================
 chcp 65001 >nul
-REM ‚òÖ ÂøÖÈ°ªËÆæ UTF-8 Ê®°Âºè: ËÆ°Âàí‰ªªÂä°Ë∑ëÁöÑÊó∂ÂÄôÊ≤°Êúâ PYTHONIOENCODING/PYTHONUTF8,
-REM   Python ÁöÑ stdout ‰ºöÈÄÄÂà∞Á≥ªÁªü ANSI ‰ª£Á†ÅÈ°µ (GBK/936)„ÄÇÊó•ÂøóÊòØÈáçÂÆöÂêëÂà∞Êñá‰ª∂ÁöÑ,
-REM   ‰∫éÊòØ print() ÈÅáÂà∞ openclaw ËæìÂá∫ÈáåÁöÑ emoji (U+2705) Â∞±‰ºöÊäõ
+REM ============================================================================
+REM gitee-monitor.cmd °™ √ø»’ 05:30 µƒ Gitee À¢–¬ (÷ª≈‹ Gitee, ≤ª≈ˆ CSDN)
+REM
+REM Œ™ ≤√¥∞— 05:30 ƒ«∏ˆ»ŒŒÒ¥”"»´¡ø CSDN"∏ƒ≥…"÷ª≈‹ Gitee":
+REM   00:00 ∫Õ 05:30 ∂º≈‹»´¡ø CSDN  «’‚¥Œ"‘ƒ∂¡¡øπÈ¡„" ¬π µƒ÷±Ω”‘≠“Ú °™°™
+REM   µ⁄∂˛¥Œ»´¡ø±ÿ»ª±ª CSDN µƒ 521 ∑Áøÿ¿πµÙ, »ª∫Û∞—µ⁄“ª¥Œµƒ∫√ ˝æ›∏≤∏«≥… 0°£
+REM   ( µ≤‚: 00:00 -> total_views 7,604;  05:30 -> total_views 1,297)
+REM
+REM œ÷‘⁄¡Ω¥Œ»ŒŒÒµƒ∑÷π§:
+REM   00:00  ‘ˆ¡ø◊• CSDN (◊ÓΩ¸ 4 ∆™ + ¬÷◊™ 2 ∆™ + ∏ˆ»À÷˜“≥)
+REM   05:30  ÷ªÀ¢ Gitee (±„“À, ≤ª ‹ CSDN ∑Áøÿ”∞œÏ,  ˝æ›“≤÷µµ√√øÃÏÀ¢–¬)
+REM   ÷‹»’03:00  »´¡ø∂µµ◊ (–ﬁ ˝æ›∆Ø“∆/≤π¬©, --no-reuse «ø÷∆»´≤ø÷ÿ◊•)
+REM
+REM --gitee-only ƒ£ Ωœ¬ v2 ª·∏¥”√ data.json ¿Ô“—”–µƒ CSDN posts/stats ‘≠—˘–¥ªÿ,
+REM ≤ªª·∞— CSDN µƒ ˝æ›≥ÂµÙ°£
+REM ============================================================================
+REM °Ô ±ÿ–Î…Ë UTF-8 ƒ£ Ω: º∆ªÆ»ŒŒÒ≈‹µƒ ±∫Ú√ª”– PYTHONIOENCODING/PYTHONUTF8,
+REM   Python µƒ stdout ª·ÕÀµΩœµÕ≥ ANSI ¥˙¬Î“≥ (GBK/936)°£»’÷æ «÷ÿ∂®œÚµΩŒƒº˛µƒ,
+REM   ”⁄ « print() ”ˆµΩ openclaw  ‰≥ˆ¿Ôµƒ emoji (U+2705) æÕª·≈◊
 REM   UnicodeEncodeError: 'gbk' codec can't encode character 'U+2705'
-REM   ‚Äî‚Äî ÂÆûÊµã 2026-10-21: È£û‰π¶ÂÖ∂ÂÆû**Â∑≤ÁªèÂèëÊàêÂäü‰∫Ü**, Âè™ÊòØÊâìÂç∞Êó•ÂøóÈÇ£‰∏ÄÊ≠•ÁÇ∏‰∫Ü,
-REM   ÁúãËµ∑Êù•ÂÉèÂèëÈÄÅÂ§±Ë¥•„ÄÇPYTHONIOENCODING=utf-8 + PYTHONUTF8=1 ‰∏ÄËµ∑Ëß£ÂÜ≥„ÄÇ
+REM   °™°™  µ≤‚ 2026-10-21: ∑… È∆‰ µ**“—æ≠∑¢≥…π¶¡À**, ÷ª «¥Ú”°»’÷æƒ«“ª≤Ω’®¡À,
+REM   ø¥∆¿¥œÒ∑¢ÀÕ ß∞‹°£PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 “ª∆Ω‚æˆ°£
 set PYTHONIOENCODING=utf-8
 set PYTHONUTF8=1
 setlocal enabledelayedexpansion
@@ -40,9 +40,6 @@ set "LOCKPYEXE=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\py
 "%LOCKPYEXE%" "%LOCKPY%" acquire "%LOCKFILE%" 120
 if errorlevel 1 (
     echo [%date% %time%] LOCK BUSY, another monitor task is running, exit
-REM release lock
-"%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
-
     endlocal
     exit /b 0
 )
@@ -56,18 +53,23 @@ if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
 cd /d "%DASHBOARD_DIR%"
 
-REM 1. Âè™Ë∑ë Gitee Èò∂ÊÆµ
+REM 1. ÷ª≈‹ Gitee Ω◊∂Œ
 "%PYTHON%" "%SCRIPT_DIR%csdn-monitor-v2.py" --gitee-only --force-now >> "%LOGDIR%\gitee-cron.log" 2>&1
 if errorlevel 1 (
     echo [%date% %time%] GITEE-ONLY FAILED
+    "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
     exit /b 1
 )
 
-REM 2. Êèê‰∫§ + push
-git add data.json
+REM 2. Ã·Ωª + push
+REM NOTE: must add all 4 files, not just data.json.
+REM   The run also writes cache/csdn/snapshot.json, history-real/<date>.json
+REM   and reports/csdn-report-<date>.md. Adding only data.json left them
+REM   uncommitted, so the dashboard showed stale data after a successful push.
+git add data.json cache/csdn/snapshot.json history-real reports
 git diff --cached --quiet
 if errorlevel 1 (
-    git commit -m "data: %date:~0,10% Gitee Âà∑Êñ∞"
+    git commit -m "data: %date:~0,10% Gitee refresh"
     git -c pack.window=0 -c pack.depth=0 push origin main
     if errorlevel 1 (
         echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
@@ -87,7 +89,7 @@ if not "%LOCAL%"=="%REMOTE%" (
 ) else (
     echo [%date% %time%] In sync OK
 )
+
 REM release lock
 "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
-
 endlocal

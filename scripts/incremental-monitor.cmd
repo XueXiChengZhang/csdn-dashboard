@@ -1,30 +1,30 @@
 @echo off
-REM ============================================================================
-REM incremental-monitor.cmd â€” æ¯æ—¥ 00:00 çš„ CSDN **å¢é‡**æŠ“å– (Ma: æ•°æ®åº”è¯¥æ˜¯å¢é‡çš„)
-REM
-REM ä¸ºä»€ä¹ˆä¸è·‘å…¨é‡ (2026-10-21 æ ¹å› ):
-REM   æ—§çš„ä¸¤ä¸ªå®šæ—¶ä»»åŠ¡ (00:00 å’Œ 05:30) éƒ½è·‘ csdn-monitor-v2.py --force-now,
-REM   ä¹Ÿå°±æ˜¯æ¯å¤©ä¸¤æ¬¡å…¨é‡é‡æŠ“ 385 ç¯‡æ–‡ç« ã€‚å®æµ‹ CSDN çš„é£æ§å“åº”æ˜¯ HTTP 521:
-REM     - ä¸åŠ å»¶è¿Ÿè¿æ‰“ 40 ç¯‡ -> ç¬¬ 17 ç¯‡å¼€å§‹å¤§é¢ç§¯ 521
-REM     - é—´éš” 2.0s è¿æ‰“ 40 ç¯‡ -> 40/40 å…¨éƒ¨ 200
-REM   æ‰€ä»¥ç¬¬äºŒæ¬¡å…¨é‡å¿…ç„¶è¢«é™æµ, äºæ˜¯:
-REM     00:00 é‚£æ¬¡ total_views = 7,604  (å¥½)
-REM     05:30 é‚£æ¬¡ total_views = 1,297  (è¢«é™æµ, æŠŠå¥½æ•°æ®è¦†ç›–æˆ 0)
-REM
-REM ç°åœ¨ 00:00 è·‘å¢é‡:
-REM   - æ¯ä¸ªå­¦ç”Ÿé‡æŠ“æœ€è¿‘ 4 ç¯‡ (é˜…è¯»é‡å¢é•¿æœ€å¿«çš„åœ°æ–¹)
-REM   - æ¯ä¸ªå­¦ç”Ÿè½®è½¬é‡æŠ“ 2 ç¯‡è€æ–‡ç«  (ä¿è¯è€æ–‡ç« ä¹Ÿä¼šæ›´æ–°)
-REM   - å…¶ä½™æ–‡ç« å¤ç”¨ä¸Šæ¬¡å€¼, æŒ‰å¤©è½®è½¬åˆ·æ–°
-REM   - é¡ºå¸¦æŠ“ä¸€æ¬¡ä¸ªäººä¸»é¡µæ€»è®¿é—®é‡ (æƒå¨çš„ total_views)
-REM   è¯·æ±‚æ•°ä¸æ–‡ç« æ€»æ•°æ— å…³, 34 ä¸ªå­¦ç”Ÿçº¦ 280 ä¸ªè¯·æ±‚ã€‚
-REM ============================================================================
 chcp 65001 >nul
-REM â˜… å¿…é¡»è®¾ UTF-8 æ¨¡å¼: è®¡åˆ’ä»»åŠ¡è·‘çš„æ—¶å€™æ²¡æœ‰ PYTHONIOENCODING/PYTHONUTF8,
-REM   Python çš„ stdout ä¼šé€€åˆ°ç³»ç»Ÿ ANSI ä»£ç é¡µ (GBK/936)ã€‚æ—¥å¿—æ˜¯é‡å®šå‘åˆ°æ–‡ä»¶çš„,
-REM   äºæ˜¯ print() é‡åˆ° openclaw è¾“å‡ºé‡Œçš„ emoji (U+2705) å°±ä¼šæŠ›
+REM ============================================================================
+REM incremental-monitor.cmd ¡ª Ã¿ÈÕ 00:00 µÄ CSDN **ÔöÁ¿**×¥È¡ (Ma: Êı¾İÓ¦¸ÃÊÇÔöÁ¿µÄ)
+REM
+REM ÎªÊ²Ã´²»ÅÜÈ«Á¿ (2026-10-21 ¸ùÒò):
+REM   ¾ÉµÄÁ½¸ö¶¨Ê±ÈÎÎñ (00:00 ºÍ 05:30) ¶¼ÅÜ csdn-monitor-v2.py --force-now,
+REM   Ò²¾ÍÊÇÃ¿ÌìÁ½´ÎÈ«Á¿ÖØ×¥ 385 ÆªÎÄÕÂ¡£Êµ²â CSDN µÄ·ç¿ØÏìÓ¦ÊÇ HTTP 521:
+REM     - ²»¼ÓÑÓ³ÙÁ¬´ò 40 Æª -> µÚ 17 Æª¿ªÊ¼´óÃæ»ı 521
+REM     - ¼ä¸ô 2.0s Á¬´ò 40 Æª -> 40/40 È«²¿ 200
+REM   ËùÒÔµÚ¶ş´ÎÈ«Á¿±ØÈ»±»ÏŞÁ÷, ÓÚÊÇ:
+REM     00:00 ÄÇ´Î total_views = 7,604  (ºÃ)
+REM     05:30 ÄÇ´Î total_views = 1,297  (±»ÏŞÁ÷, °ÑºÃÊı¾İ¸²¸Ç³É 0)
+REM
+REM ÏÖÔÚ 00:00 ÅÜÔöÁ¿:
+REM   - Ã¿¸öÑ§ÉúÖØ×¥×î½ü 4 Æª (ÔÄ¶ÁÁ¿Ôö³¤×î¿ìµÄµØ·½)
+REM   - Ã¿¸öÑ§ÉúÂÖ×ªÖØ×¥ 2 ÆªÀÏÎÄÕÂ (±£Ö¤ÀÏÎÄÕÂÒ²»á¸üĞÂ)
+REM   - ÆäÓàÎÄÕÂ¸´ÓÃÉÏ´ÎÖµ, °´ÌìÂÖ×ªË¢ĞÂ
+REM   - Ë³´ø×¥Ò»´Î¸öÈËÖ÷Ò³×Ü·ÃÎÊÁ¿ (È¨ÍşµÄ total_views)
+REM   ÇëÇóÊıÓëÎÄÕÂ×ÜÊıÎŞ¹Ø, 34 ¸öÑ§ÉúÔ¼ 280 ¸öÇëÇó¡£
+REM ============================================================================
+REM ¡ï ±ØĞëÉè UTF-8 Ä£Ê½: ¼Æ»®ÈÎÎñÅÜµÄÊ±ºòÃ»ÓĞ PYTHONIOENCODING/PYTHONUTF8,
+REM   Python µÄ stdout »áÍËµ½ÏµÍ³ ANSI ´úÂëÒ³ (GBK/936)¡£ÈÕÖ¾ÊÇÖØ¶¨Ïòµ½ÎÄ¼şµÄ,
+REM   ÓÚÊÇ print() Óöµ½ openclaw Êä³öÀïµÄ emoji (U+2705) ¾Í»áÅ×
 REM   UnicodeEncodeError: 'gbk' codec can't encode character 'U+2705'
-REM   â€”â€” å®æµ‹ 2026-10-21: é£ä¹¦å…¶å®**å·²ç»å‘æˆåŠŸäº†**, åªæ˜¯æ‰“å°æ—¥å¿—é‚£ä¸€æ­¥ç‚¸äº†,
-REM   çœ‹èµ·æ¥åƒå‘é€å¤±è´¥ã€‚PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 ä¸€èµ·è§£å†³ã€‚
+REM   ¡ª¡ª Êµ²â 2026-10-21: ·ÉÊéÆäÊµ**ÒÑ¾­·¢³É¹¦ÁË**, Ö»ÊÇ´òÓ¡ÈÕÖ¾ÄÇÒ»²½Õ¨ÁË,
+REM   ¿´ÆğÀ´Ïñ·¢ËÍÊ§°Ü¡£PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 Ò»Æğ½â¾ö¡£
 set PYTHONIOENCODING=utf-8
 set PYTHONUTF8=1
 setlocal enabledelayedexpansion
@@ -43,9 +43,6 @@ set "LOCKPYEXE=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\py
 "%LOCKPYEXE%" "%LOCKPY%" acquire "%LOCKFILE%" 120
 if errorlevel 1 (
     echo [%date% %time%] LOCK BUSY, another monitor task is running, exit
-REM release lock
-"%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
-
     endlocal
     exit /b 0
 )
@@ -59,28 +56,33 @@ if not exist "%LOGDIR%" mkdir "%LOGDIR%"
 
 cd /d "%DASHBOARD_DIR%"
 
-REM 1. å¢é‡æŠ“å– (--max-minutes 18 æ˜¯ç»™"è¡¥å†å²"å±‚çš„å…¨å±€æ—¶é—´é¢„ç®—, ä¿è¯ä¸ä¼šè·‘é£)
+REM 1. ÔöÁ¿×¥È¡ (--max-minutes 18 ÊÇ¸ø"²¹ÀúÊ·"²ãµÄÈ«¾ÖÊ±¼äÔ¤Ëã, ±£Ö¤²»»áÅÜ·É)
 "%PYTHON%" "%SCRIPT_DIR%csdn_incremental.py" --all --recent 4 --rotate 2 --max-minutes 18 >> "%LOGDIR%\incremental-cron.log" 2>&1
 if errorlevel 1 (
     echo [%date% %time%] INCREMENTAL FAILED, exit=%%errorlevel%%
+    "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
     exit /b 1
 )
 
-REM 2. æäº¤ + push (HTTPS -> SSH å…œåº•; pack flags é¿å¼€ Windows ä¸Šçš„ push OOM)
-git add data.json
+REM 2. commit + push (pack flags avoid Windows push OOM)
+REM NOTE: must add all 4 files, not just data.json.
+REM   The run also writes cache/csdn/snapshot.json, history-real/<date>.json
+REM   and reports/csdn-report-<date>.md. Adding only data.json left them
+REM   uncommitted, so the dashboard showed stale data after a successful push.
+git add data.json cache/csdn/snapshot.json history-real reports
 git diff --cached --quiet
 if errorlevel 1 (
-    git commit -m "data: %date:~0,10% å¢é‡æŠ“å–"
+    git commit -m "data: %date:~0,10% incremental scrape"
     git -c pack.window=0 -c pack.depth=0 push origin main
     if errorlevel 1 (
-        echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
+        echo [%date% %time%] PUSH FAILED, retrying via ssh.github.com:443...
+        REM keep ssh.github.com:443 - both github.com:443 and :22 are unreachable from this host
         git remote set-url origin ssh://git@ssh.github.com:443/XueXiChengZhang/csdn-dashboard.git
         git -c pack.window=0 -c pack.depth=0 push origin main
-        REM keep ssh.github.com:443 - both github.com:443 and :22 are unreachable from this host
     )
 )
 
-REM 3. æ¨é€åæ£€æŸ¥æ˜¯å¦åŒæ­¥ (skill: push é™é»˜å¤±è´¥æ˜¯å¸¸è§å‘)
+REM 3. ÍÆËÍºó¼ì²éÊÇ·ñÍ¬²½ (skill: push ¾²Ä¬Ê§°ÜÊÇ³£¼û¿Ó)
 REM NOTE: fetch needs a timeout - without one a network hiccup hangs the whole scheduled task
 set "FETCHCMD=$p = Start-Process git -ArgumentList 'fetch','origin','main' -NoNewWindow -PassThru; if (-not $p.WaitForExit(60000)) { $p.Kill(); exit 1 } else { exit $p.ExitCode }"
 powershell -NoProfile -Command "%FETCHCMD%" >nul 2>&1
@@ -91,7 +93,7 @@ if not "%LOCAL%"=="%REMOTE%" (
 ) else (
     echo [%date% %time%] In sync OK
 )
+
 REM release lock
 "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
-
 endlocal
