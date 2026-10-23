@@ -93,16 +93,47 @@ csdn-dashboard/
 
 ## 自动任务
 
-| 任务 | 时间 | 脚本 |
-|---|---|---|
-| 增量抓取 | 每日 00:00 | `scripts/incremental-monitor.cmd` |
-| Gitee 同步 | 每日 05:30 | `scripts/gitee-monitor.cmd` |
-| 周日全量 + 安全网 | 每周日 03:00 | `scripts/weekly-full-monitor.cmd` |
+| 任务 | 时间 | 在哪跑 | 脚本 |
+|---|---|---|---|
+| 增量抓取 | 每日 00:00 | 本机 | `scripts/incremental-monitor.cmd` |
+| Gitee 采集 | 每日 05:10 | **ECS** | `/root/gitee_collect.sh` |
+| Gitee 同步 + 汇报 | 每日 05:30 | 本机 | `scripts/gitee-monitor.cmd` |
+| 周日全量 + 安全网 | 每周日 03:00 | 本机 | `scripts/weekly-full-monitor.cmd` |
 
 **周日全量安全网**（`scripts/weekly_guard.py`）是数据正确性的唯一保护：
 `backup` → `check`（访问量低于 60% 下限或失败率超 20% 则判定异常）→ `rollback`（自动回滚，**且不 push**）。
 
 2026-10-22 已在 live checkout 实跑验证：4 个备份文件齐全，回滚前后 SHA256 一致。
+
+### Gitee 采集为什么跑在 ECS（2026-10-23 起）
+
+本机出口 IP 被 Gitee API 限流封了 —— HTML 页面 200 正常，但
+`https://gitee.com/api/v5/...` 一律 `403 Rate Limit Exceeded`。
+**根因是调试时打了大量 Gitee API 请求把自己的 IP 封了**（不是账号或仓库问题）。
+
+绕行方案：在 ECS 上跑 `gitee_collector.py`，走两条**不受 API 限流**的通道：
+
+| 通道 | 拿到什么 | 状态 |
+|---|---|---|
+| `https://gitee.com/<owner>/<repo>.md` | stars / forks / Last Updated | 两个 IP 都 200 |
+| `git clone --bare` | sha / date / subject / commit_count | 两个 IP 都通 |
+
+**关键坑**：`git clone --depth 1` 只能看到 1 个 commit，**拿不到真实提交次数**
+（实测 shallow=1 / full=2）—— 必须完整 clone + 超时保护。
+
+**数据流**：
+
+```
+ECS cron 05:10  →  /root/gitee_result.json
+                        ↓ ssh 取回
+本机 05:30  →  合并进 data.json  →  commit + push  →  飞书汇报
+```
+
+本机脚本里 `load_gitee_from_ecs()` / `merge_ecs_gitee()` 负责取回与合并，
+ECS 没覆盖到的才走本机直连补抓。
+
+**效果**：Gitee 阶段 257 秒 → **407 毫秒**，0 次 403，
+而且能区分「真空仓库」和「抓取失败」（此前 API 报"成功"的很多其实是空仓库被误判）。
 
 ---
 
