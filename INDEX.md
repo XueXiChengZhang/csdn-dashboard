@@ -7,9 +7,9 @@
 | 项 | 数量 |
 |---|---|
 | 页面 | 5 |
-| 脚本 | 18 |
-| 报告 | 35 |
-| 历史快照 | 34 |
+| 脚本 | 22 |
+| 报告 | 36 |
+| 历史快照 | 35 |
 | 测试项 | 250（全绿）|
 
 ## 页面
@@ -53,6 +53,10 @@
 
 ### 其他
 
+- `_gen_index.py`
+- `fix_cmd_emoji.py`
+- `fix_cmd_syntax.py`
+- `fix_git_network.py`
 - `install-cron.sh`
 - `probe_csdn_limits.py`
 - `weekly_guard.py`
@@ -61,7 +65,6 @@
 
 每日报告 `reports/csdn-report-YYYY-MM-DD.md`（最新 10 份）：
 
-- `csdn-report-2026-10-13.md`
 - `csdn-report-2026-10-14.md`
 - `csdn-report-2026-10-15.md`
 - `csdn-report-2026-10-16.md`
@@ -71,6 +74,7 @@
 - `csdn-report-2026-10-20.md`
 - `csdn-report-2026-10-21.md`
 - `csdn-report-2026-10-22.md`
+- `csdn-report-2026-10-23.md`
 
 修复与验证报告：
 - `FIX-2026-10-22.md`
@@ -80,10 +84,10 @@
 `history-real/YYYY-MM-DD.json` —— 逐日快照，**只增不改**，是趋势计算的事实来源。
 最新 5 份：
 
-- `2026-10-19.json`
 - `2026-10-20.json`
 - `2026-10-21.json`
 - `2026-10-22.json`
+- `2026-10-23.json`
 - `index.json`
 
 ---
