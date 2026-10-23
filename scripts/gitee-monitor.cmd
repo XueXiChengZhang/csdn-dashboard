@@ -24,7 +24,30 @@ REM   —— 实测 2026-10-21: 飞书其实**已经发成功了**, 只是打印
 REM   看起来像发送失败。PYTHONIOENCODING=utf-8 + PYTHONUTF8=1 一起解决。
 set PYTHONIOENCODING=utf-8
 set PYTHONUTF8=1
-setlocal
+setlocal enabledelayedexpansion
+REM ------------------------------------------------------------------
+REM Mutex lock: the three CSDN tasks must not run at the same time.
+REM They all write data.json and all do git add/commit/push.
+REM (2026-10-23: running 00:00 and 05:30 together made the Gitee
+REM  task's commit silently lose the index race, result stuck at 267009)
+REM The lock itself is done in Python because cmd has no atomic CAS:
+REM mkdir/ren/copy/move all fail as a lock (5 concurrent processes all
+REM "acquired" with move). Python os.open(O_CREAT|O_EXCL) is atomic.
+REM ------------------------------------------------------------------
+set "LOCKFILE=D:\WebArchives\csdn-dashboard\cache\monitor.lock"
+set "LOCKPY=D:\WebArchives\csdn-dashboard\scripts\monitor_lock.py"
+set "LOCKPYEXE=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\python.exe"
+"%LOCKPYEXE%" "%LOCKPY%" acquire "%LOCKFILE%" 120
+if errorlevel 1 (
+    echo [%date% %time%] LOCK BUSY, another monitor task is running, exit
+REM release lock
+"%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
+
+    endlocal
+    exit /b 0
+)
+echo [%date% %time%] lock acquired
+
 set SCRIPT_DIR=%~dp0
 set DASHBOARD_DIR=%SCRIPT_DIR%..
 set PYTHON=C:\Users\Administrator\AppData\Local\Programs\Python\Python314\python.exe
@@ -64,4 +87,7 @@ if not "%LOCAL%"=="%REMOTE%" (
 ) else (
     echo [%date% %time%] In sync OK
 )
+REM release lock
+"%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
+
 endlocal
