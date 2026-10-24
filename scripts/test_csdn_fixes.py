@@ -49,6 +49,46 @@ def check(name, cond, detail=""):
     return bool(cond)
 
 
+# 测试用的临时目录 (日志/快照/备份一律写这里, 绝不碰生产目录)
+TEST_TMP = Path(os.environ.get("TEMP") or "C:/Windows/Temp") / "csdn_test_sandbox"
+
+
+def _redirect_module_logs(mod, name):
+    """把模块的日志/缓存输出全部重定向到 TEST_TMP。
+
+    ★ 2026-10-24 修: 之前 load_module() 直接 exec 生产脚本, 模块里的
+      LOG_PATH / SNAPSHOT / CACHE_DIR 仍指向生产目录, 于是测试调用
+      inc.log() / v2.save_snapshot() 会把**假数据写进生产日志**。
+      实测 09:53:18 有 24 行 "[1/7] 8 (recent): views 100->123" 这种
+      测试数据混进了 logs/incremental-2026-10-24.log, 排查故障时会被误导。
+    """
+    import tempfile
+    tmp = TEST_TMP / name
+    tmp.mkdir(parents=True, exist_ok=True)
+    (tmp / "cache" / "csdn").mkdir(parents=True, exist_ok=True)
+
+    for attr, val in (("LOG_PATH", tmp / "test.log"),
+                      ("LOG_DIR", tmp),
+                      ("CACHE_DIR", tmp / "cache" / "csdn"),
+                      ("SNAPSHOT", tmp / "cache" / "csdn" / "snapshot.json"),
+                      ("DATA_JSON", tmp / "data.json"),
+                      ("HISTORY_DIR", tmp / "history-real"),
+                      ("DASHBOARD_DIR", tmp),
+                      ("DASHBOARD", tmp)):
+        if hasattr(mod, attr):
+            try:
+                setattr(mod, attr, val)
+            except Exception:
+                pass
+    # 某些模块用 dict 记日志路径
+    if hasattr(mod, "LOG") and isinstance(getattr(mod, "LOG"), str):
+        try:
+            mod.LOG = str(tmp / "test.log")
+        except Exception:
+            pass
+    return mod
+
+
 def load_module(name, filename):
     spec = importlib.util.spec_from_file_location(name, SCRIPT_DIR / filename)
     mod = importlib.util.module_from_spec(spec)
@@ -56,7 +96,7 @@ def load_module(name, filename):
         spec.loader.exec_module(mod)
     except SystemExit:
         pass
-    return mod
+    return _redirect_module_logs(mod, name)
 
 
 def load_v2():
