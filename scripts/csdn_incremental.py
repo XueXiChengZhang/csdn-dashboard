@@ -200,6 +200,20 @@ def _atomic_write_text(path, text):
         path.write_text(text, encoding="utf-8")
 
 
+def _checkpoint_save(d, done, total):
+    """周期性把已完成的学生的结果落盘 (崩溃不丢已完成的部分)。
+
+    只写 data.json —— snapshot / history / last_fetch_meta 留给主流程最后统一写,
+    因为它们描述的是**整轮**的统计, 半轮的数字没有意义。
+    """
+    d["total_posts"] = sum(len(s.get("posts", []) or [])
+                           for s in d.get("students", []))
+    d["last_update"] = datetime.now().isoformat(timespec="seconds")
+    _atomic_write_text(DATA_PATH, json.dumps(
+        d, ensure_ascii=False, separators=(",", ":")))
+    log(f"💾 检查点已保存 ({done}/{total} 个学生)")
+
+
 def csdn_get(url, timeout=15, retries=1):
     """带全局限流 + 计数的 GET。521 = CSDN 风控, 会触发全局冷却。
 
@@ -976,6 +990,19 @@ def main():
             + (f" | 🗑️已删除{r.get('deleted', 0)}" if r.get("deleted") else ""))
         log(f"  👁️ total_views={r['total_views']} (来源 {r['views_source']}, "
             f"profile={r['profile_views']}, 文章累加={r['article_views_sum']})")
+
+        # ★ 2026-10-24: **周期性落盘** —— 每 5 个学生存一次。
+        #   以前 data.json 只在 main() 末尾写一次, 整轮 30~60 分钟里
+        #   任何中断 (机器重启/被杀/断电) 都会丢掉**全部**已抓到的更新,
+        #   下一轮得从零再抓 (又是一次 30~60 分钟)。
+        #   incremental_update_student() 是原地改 student dict, 所以循环里
+        #   随时可以安全地把已完成的学生的结果写下去。
+        #   配合 _atomic_write_text (原子替换), 中断时 data.json 永远完整。
+        if (not args.dry_run) and ((i % 5) == 0):
+            try:
+                _checkpoint_save(d, i, len(targets))
+            except Exception as _e:
+                log(f"⚠️ 检查点保存失败: {type(_e).__name__}: {str(_e)[:60]}")
 
     elapsed = time.time() - t0
     log("")
