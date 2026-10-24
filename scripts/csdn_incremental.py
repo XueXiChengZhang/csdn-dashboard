@@ -864,7 +864,16 @@ def main():
     ap = argparse.ArgumentParser(description="CSDN 增量抓取 (Ma: 数据应该是增量的)")
     ap.add_argument("--all", action="store_true", help="所有学生")
     ap.add_argument("--student", help="单个学生名")
-    ap.add_argument("--max-pages", type=int, default=20, help="最大翻页数")
+    # ★ 2026-10-24: 增量模式默认只翻 3 页 (原来 20 页)。
+    #   实测 (本次补跑): 521 风控有 6/10 打在**列表页** (?type=blog&page=N),
+    #   因为增量模式只要"最近 4 篇 + 轮转 2 篇", 却要翻 20 页列表。
+    #   34 个学生 x 20 页 = 最多 680 次列表请求, 远超实际需要。
+    #   CSDN 列表页第 1 页就有最近 20 篇, 增量够用了。
+    #   --full (周日全量) 仍需要翻完整列表 -> 用 --full-pages (默认 20)。
+    ap.add_argument("--max-pages", type=int, default=3,
+                    help="增量模式最大翻页数 (默认 3)")
+    ap.add_argument("--full-pages", type=int, default=20,
+                    help="全量模式最大翻页数 (默认 20)")
     ap.add_argument("--recent", type=int, default=4,
                     help="每人每天重抓的最近文章数 (阅读量主要增长在这里)")
     ap.add_argument("--rotate", type=int, default=2,
@@ -914,7 +923,7 @@ def main():
         log(f"[{i}/{len(targets)}] {name}...")
         r = incremental_update_student(
             s,
-            max_pages=args.max_pages,
+            max_pages=(args.full_pages if args.full else args.max_pages),
             recent_n=args.recent,
             rotate_m=args.rotate,
             full=args.full,
