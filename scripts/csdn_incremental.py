@@ -171,6 +171,35 @@ def log(msg):
         pass
 
 
+def _atomic_write_text(path, text):
+    """原子写文件: 先写同目录的 .tmp, 再 os.replace 覆盖。
+
+    ★ 2026-10-24: 增量跑一次要 30~60 分钟 (CSDN 521 风控 + 45~60s 冷却)。
+      如果写到一半进程被杀 / 断电 / 磁盘满, 原来的 open(path, "w") 会留下
+      **半截 JSON** —— data.json 是整个仪表盘唯一数据源, 损坏了就得全量重抓。
+      os.replace() 在同一文件系统内是原子操作, 中途失败旧文件保持完整。
+
+    为什么不直接写: Windows 上 os.replace 对被打开的文件会抛 PermissionError
+      (PermissionError: [WinError 5]), 所以先确保没有别的进程占着目标文件;
+      实在拿不到锁就退回直接写 (宁可少一次原子性, 也不能让整个脚本崩掉)。
+    """
+    import os as _os
+    path = Path(path)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        _os.replace(str(tmp), str(path))
+    except Exception as e:
+        # 原子替换失败 (通常是被占用): 退回直接写, 保证数据不丢
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except Exception:
+            pass
+        log(f"⚠️ 原子写入失败({type(e).__name__}), 退回直接写: {path.name}")
+        path.write_text(text, encoding="utf-8")
+
+
 def csdn_get(url, timeout=15, retries=1):
     """带全局限流 + 计数的 GET。521 = CSDN 风控, 会触发全局冷却。
 
@@ -671,11 +700,12 @@ def write_snapshot(d):
             for s in d.get("students", [])
         },
     }
-    (snap_dir / "snapshot.json").write_text(
-        # R10: 紧凑格式 (和 v2 的 save_snapshot 保持一致 ——
-        #     否则每天 00:00 增量跑完会把它改回缩进形态, 紧凑化白做)
-        json.dumps(snap, ensure_ascii=False, separators=(",", ":")),
-        encoding="utf-8")
+    # ★ 2026-10-24: 原子写入 (同 data.json, 见 _atomic_write_text)
+    # R10: 紧凑格式 (和 v2 的 save_snapshot 保持一致 ——
+    #     否则每天 00:00 增量跑完会把它改回缩进形态, 紧凑化白做)
+    _atomic_write_text(
+        snap_dir / "snapshot.json",
+        json.dumps(snap, ensure_ascii=False, separators=(",", ":")))
 
 
 def write_history_snapshot(d):
@@ -996,10 +1026,12 @@ def main():
                                   rotate=args.rotate)
     d["last_fetch_meta"] = meta
 
-    with open(DATA_PATH, "w", encoding="utf-8") as f:
-        # R10: 紧凑格式 —— 前端全部用 r.json() 解析, 缩进无关;
-        #      体积 -32% (传输/下载都快一截)
-        json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
+    # ★ 2026-10-24: 改成**原子写入** (先写 .tmp 再 os.replace)。
+    #   原来是 open(DATA_PATH, "w") 直接覆盖 —— 中途崩溃/被杀会留下
+    #   半截 JSON, 而 data.json 是整个仪表盘唯一数据源, 丢了就得重抓。
+    #   os.replace() 在同一文件系统内是原子操作, 失败时旧文件保持完整。
+    _atomic_write_text(DATA_PATH, json.dumps(
+        d, ensure_ascii=False, separators=(",", ":")))
 
     for _fn, _label in ((write_snapshot, "cache/csdn/snapshot.json"),
                         (write_history_snapshot, "history-real 快照")):
