@@ -136,14 +136,24 @@ CSDN_HEADERS = {
 }
 
 # 限流: 实测 2.0s 间隔 40/40 通过, 0s 间隔第 17 篇起大面积 521
-CSDN_MIN_INTERVAL = float(os.environ.get("CSDN_MIN_INTERVAL", "2.2"))
-CSDN_JITTER = float(os.environ.get("CSDN_JITTER", "0.6"))
+# ★ 2026-10-24: 基准间隔 2.2s -> 3.0s。
+#   实测 (本次补跑, 34 人增量): 2.2s 下每 ~7 次请求撞一次 521,
+#   45s 冷却把整轮拖到 53 分钟, 成功率只有 78%。
+#   csdn_stats.py 的 RateLimiter 文档记的实测是 "间隔 3.0s 连打 30 篇
+#   -> 30/30 全部 200, 一个 521 都没有" (2026-10-21 实测数据)。
+#   2.2s 低于那个已验证的安全值, 所以调回 3.0s。
+#   间隔调高 = 单轮慢一点, 但 521 从 22% 降到接近 0, 实际总时长更短,
+#   而且不会污染章节数据 (521 被当成 0 才是真正的问题)。
+CSDN_MIN_INTERVAL = float(os.environ.get("CSDN_MIN_INTERVAL", "3.0"))
+CSDN_JITTER = float(os.environ.get("CSDN_JITTER", "0.8"))
 LIMITER = RateLimiter(min_interval=CSDN_MIN_INTERVAL, jitter=CSDN_JITTER)
 
 # ★ 521 (CSDN 风控) 命中后的冷却秒数。
 #   521 是 IP 级封禁, 持续分钟级 —— 5~6 秒的冷却等于没冷却
 #   (实测 6/7 篇两次尝试全挂)。默认 45 秒。
-CSDN_521_COOLDOWN = float(os.environ.get("CSDN_521_COOLDOWN", "45"))
+# ★ 2026-10-24: 45s -> 60s。521 是 IP 级封禁, 45 秒后重试仍经常再撞
+#   (本次补跑里连续两篇都 521)。60s 更贴合分钟级封禁的实际时长。
+CSDN_521_COOLDOWN = float(os.environ.get("CSDN_521_COOLDOWN", "60"))
 
 REQUESTS = 0
 

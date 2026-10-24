@@ -7,7 +7,7 @@ test_csdn_fixes.py — 2026-10-22 第二轮修复的回归测试
   [1] R1  last_fetch_meta 按模式分块 (增量块 / gitee 块互不覆盖)
   [2] R1  日报"抓取健康度"行如实显示 (不再出现"成功 66/0")
   [3] Gitee 空仓库 vs 有 commit 的判定 (d280330 补测试)
-  [4] R2  模拟 521: 两次尝试间隔 >= 45 秒
+  [4] R2  模拟 521: 两次尝试间隔 >= 45 秒 (默认冷却 60s)
   [5] R3  模拟 404: 文章被标记 _deleted_on_csdn 且不再重试
   [6] R4  列表抓取: no_posts (真没文章) vs fetch_failed (被风控)
   [7] R5  增量跑完重算 class_stats
@@ -245,8 +245,10 @@ def test_521_backoff():
     inc = load_incremental()
     from csdn_stats import RateLimiter
 
-    check("默认冷却常量是 45 秒",
-          abs(inc.CSDN_521_COOLDOWN - 45.0) < 1e-6,
+    # ★ 2026-10-24: 冷却从 45s 提到 60s (521 是分钟级 IP 封禁, 45s 常常不够)。
+    #   断言不再写死具体秒数, 只保证"默认冷却 >= 45 秒"这个安全底线。
+    check("默认冷却常量 >= 45 秒 (60s)",
+          inc.CSDN_521_COOLDOWN >= 45.0,
           str(inc.CSDN_521_COOLDOWN))
 
     slept = []
