@@ -1416,6 +1416,38 @@ def send_feishu(text, dry=False, attachment=None):
     if dry:
         safe_print(f"[DRY-RUN] feishu skipped, len={len(text)}, attachment={attachment}")
         return True
+
+    # ★ 2026-10-24: 优先走**直调飞书 OpenAPI** (stdlib urllib, 10s 超时)。
+    #   原来只走 openclaw CLI —— 它要起 Node 进程 + 连 MCP client,
+    #   带 --media 附件时经常卡死, 2026-10-24 那次直接 TimeoutExpired(120s),
+    #   日报没发出去 (Ma 反馈"监控没数据")。
+    #   直调 API 实测 0.7s 拿到 token, 稳定。
+    #   openclaw CLI 保留为兜底。
+    try:
+        sys.path.insert(0, str(Path(__file__).parent))
+        import feishu_sender as fs
+        if attachment and Path(attachment).exists():
+            # 有附件: 先发文字, 再发文件 (两步)
+            ok = fs.send_text(text)
+            try:
+                from feishu_send_file import upload_file, send_file
+                fk = upload_file(str(attachment))
+                if fk:
+                    send_file(fk)
+                    ok = True
+                else:
+                    safe_print("[feishu] 文件上传失败, 文字已发")
+            except Exception as fe:
+                safe_print(f"[feishu] 附件发送失败: {type(fe).__name__}: {fe}")
+        else:
+            ok = fs.send_text(text)
+        if ok:
+            safe_print(f"[feishu] sent ok (direct API), {len(text)} chars")
+            return True
+        safe_print("[feishu] 直调 API 失败, 回退 openclaw CLI")
+    except Exception as e:
+        safe_print(f"[feishu] 直调 API 异常: {type(e).__name__}: {e}, 回退 openclaw CLI")
+
     openclaw_cmd = shutil.which("openclaw") or shutil.which("openclaw.cmd")
     if not openclaw_cmd:
         for p in [r"C:\Users\Administrator\AppData\Roaming\npm\openclaw.cmd",
@@ -1438,7 +1470,7 @@ def send_feishu(text, dry=False, attachment=None):
                "--message", text]
         if attachment and Path(attachment).exists():
             cmd.extend(["--media", str(attachment)])
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=45,
                                 encoding="utf-8", errors="replace")
         out = (result.stdout or "") + (result.stderr or "")
         if result.returncode != 0:

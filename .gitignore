@@ -46,3 +46,6 @@ secrets/
 
 # CSDN 监控任务互斥锁 (运行时文件, 不进仓库)
 cache/monitor.lock
+
+# backup files (2026-10-24)
+*.bak.2026*
