@@ -826,12 +826,15 @@ function renderHeat(stu) {
 function renderPosts(stu) {
   const posts = (stu.posts || []).slice();
   // Ma: 兼容两个字段名 (新抓的用 views, 老的可能用 total_views)
-  const v = (p) => p.views ?? p.total_views ?? 0;
-  const l = (p) => p.likes ?? p.total_likes ?? 0;
-  const c = (p) => p.comments ?? p.total_comments ?? 0;
-  const col = (p) => p.collections ?? p.total_collections ?? 0;
+  // ★ 2026-10-26: 别用 `?? 0` —— 那会把"没抓到"变成"真的是 0"。
+  //   保留 null, 由 fmtCell 显示成 "—"。
+  const pick = (p, a, b) => (p[a] ?? p[b] ?? null);
+  const v = (p) => pick(p, 'views', 'total_views');
+  const l = (p) => pick(p, 'likes', 'total_likes');
+  const c = (p) => pick(p, 'comments', 'total_comments');
+  const col = (p) => pick(p, 'collections', 'total_collections');
   // 按 views 降序 (没有此字段的排最后)
-  posts.sort((a, b) => v(b) - v(a));
+  posts.sort((a, b) => (v(b) ?? -1) - (v(a) ?? -1));
 
   if (posts.length === 0) {
     return '<div class="empty-state">暂无文章</div>';
@@ -851,11 +854,13 @@ function renderPosts(stu) {
         || (p.likes != null && Number.isFinite(p.likes))
         || (p.comments != null && Number.isFinite(p.comments))
         || (p.collections != null && Number.isFinite(p.collections));
-      const fmtCell = (x, hasStat) => hasStat ? fmt(x) : '<span class="dim">—</span>';
-      const viewsHtml = fmtCell(viewsV, hasAnyStat);
-      const likesHtml = fmtCell(likesV, hasAnyStat);
-      const commentsHtml = fmtCell(commentsV, hasAnyStat);
-      const colsHtml = fmtCell(colsV, hasAnyStat);
+      // ★ 2026-10-26: 每个格子独立判断 —— 以前用 hasAnyStat 一刀切,
+      //   只要 likes 有值, comments 的 null 也会被 fmtCell 画成 "0"。
+      const fmtCell = (x) => (x != null && Number.isFinite(x)) ? fmt(x) : '<span class="dim">—</span>';
+      const viewsHtml = fmtCell(viewsV);
+      const likesHtml = fmtCell(likesV);
+      const commentsHtml = fmtCell(commentsV);
+      const colsHtml = fmtCell(colsV);
     return `<tr>
       <td>${i + 1}</td>
       <td class="ttl"><a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener">${escapeHtml(p.title || '(无标题)')}</a></td>
