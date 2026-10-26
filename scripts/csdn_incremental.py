@@ -775,6 +775,33 @@ def write_history_snapshot(d):
     path.write_text(json.dumps(hist, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def write_history_index(d=None):
+    """刷新 history-real/index.json —— 趋势页(trend.html)靠它找日期文件。
+
+    ★ 2026-10-26: 以前这个索引是**手工生成的一次性文件**, generated 停在
+      2026-10-22。之后每天照常写 history-real/YYYY-MM-DD.json, 但索引不更新,
+      trend.html 只读索引里的 files 列表 → 10-23 起的趋势一条都画不出来。
+      现在每次写快照后自动重建, 以**磁盘实际文件**为准, 不依赖任何外部状态。
+
+    幂等: 同一批文件重复生成, 除 generated 字段外内容完全一致。
+    """
+    hist_dir = DASHBOARD_DIR / "history-real"
+    hist_dir.mkdir(parents=True, exist_ok=True)
+    files = sorted(
+        f.name for f in hist_dir.iterdir()
+        if f.is_file() and f.suffix == ".json" and f.name != "index.json"
+    )
+    index = {
+        "files": files,
+        "count": len(files),
+        "note": "CSDN 每日归档快照, 供 trend.html 读取",
+        "generated": datetime.now().strftime("%Y-%m-%d"),
+    }
+    _atomic_write_text(hist_dir / "index.json",
+                       json.dumps(index, ensure_ascii=False, indent=2))
+    return index
+
+
 def compute_class_stats(d):
     """按 v2 (csdn-monitor-v2.py: compute_class_stats) **同样的结构**重算班级统计。
 
@@ -1061,7 +1088,8 @@ def main():
         d, ensure_ascii=False, separators=(",", ":")))
 
     for _fn, _label in ((write_snapshot, "cache/csdn/snapshot.json"),
-                        (write_history_snapshot, "history-real 快照")):
+                        (write_history_snapshot, "history-real 快照"),
+                        (write_history_index, "history-real/index.json")):
         try:
             _fn(d)
             log(f"🗂  {_label} 已写入")

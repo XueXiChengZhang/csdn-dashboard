@@ -1190,6 +1190,33 @@ def write_history_snapshot(data):
     })
     path.write_text(json.dumps(hist, ensure_ascii=False, indent=2),
                    encoding="utf-8")
+    write_history_index()
+
+
+def write_history_index():
+    """刷新 history-real/index.json —— trend.html 靠它找日期文件。
+
+    ★ 2026-10-26: 索引以前是手工生成的一次性文件, generated 停在 2026-10-22,
+      之后每天照写快照但索引不更新, 趋势页 10-23 起全空白。
+      改成每次写快照后按磁盘实际文件重建, 幂等。
+    """
+    HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    files = sorted(
+        f.name for f in HISTORY_DIR.iterdir()
+        if f.is_file() and f.suffix == ".json" and f.name != "index.json"
+    )
+    index = {
+        "files": files,
+        "count": len(files),
+        "note": "CSDN 每日归档快照, 供 trend.html 读取",
+        "generated": TODAY,
+    }
+    path = HISTORY_DIR / "index.json"
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(index, ensure_ascii=False, indent=2),
+                   encoding="utf-8")
+    os.replace(tmp, path)
+    return index
 
 
 # ---------- 班级统计 ----------
