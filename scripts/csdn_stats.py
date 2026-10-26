@@ -112,6 +112,15 @@ _GET_COLLECTION_DATA_RE = re.compile(r'data-num="([\d,]+)"[^>]*id="get-collectio
 _GET_COLLECTION_SPAN_RE = re.compile(r'<span class="get-collection"[^>]*>\s*([\d,]+)')
 _COMMENTS_COUNT_VAR_RE = re.compile(r"commentscount\s*=\s*(\d+)")
 
+# ★ 2026-10-26 新增: CSDN 文章页实际把评论数放在这几个地方 (meta description 里没有)。
+#   按可靠性从高到低排, parse_article_stats 依次尝试。
+#   - commentCount:  CSDN 前端 JS 的全局计数变量 (形如 commentCount: 3 / commentCount = 3)
+#   - title="N 条评论": 评论区标题
+#   - commentId=...&...: 评论锚点, 只能说明"有评论", 拿不到总数时兜底为 1 不可靠 → 不用
+_COMMENT_COUNT_JSON_RE = re.compile(r'commentCount["\']?\s*[:=]\s*["\']?(\d+)')
+_COMMENT_TITLE_RE = re.compile(r'title="(\d+)\s*条评论"')
+_COMMENT_ID_RE = re.compile(r'id="commentCount"[^>]*>\s*(\d+)')
+
 
 def parse_article_stats(html: str | None) -> dict:
     """从文章详情页 HTML 里解析 views/likes/comments/collections。
@@ -170,10 +179,21 @@ def parse_article_stats(html: str | None) -> dict:
     if out["collections"] is None:
         out["collections"] = meta_stats["collections"]
 
-    # --- comments: commentscount 变量 -> meta description ---
-    m = _COMMENTS_COUNT_VAR_RE.search(html)
-    if m:
-        out["comments"] = _to_int(m.group(1))
+    # --- comments: commentscount 变量 -> commentCount -> DOM 计数 -> meta description ---
+    # ★ 2026-10-26 调查记录（别再把结论搞错）:
+    #   抓真实页面确认 CSDN 的 meta description 原文是
+    #     "文章浏览阅读155次，点赞2次，收藏2次"  —— 里面没有"评论"字段;
+    #   但 `<span class="count">0</span>&nbsp;条评论` 和 `var commentscount = 0`
+    #   都真实存在, 说明 commentscount 一直是有效来源, 现有数据里的 0 是**真的 0**。
+    #   这里补三个备用来源, 只为防 CSDN 改版; 仍然遵守"拿不到就 None, 绝不编 0"。
+    for rx in (_COMMENTS_COUNT_VAR_RE,
+               _COMMENT_COUNT_JSON_RE,
+               _COMMENT_TITLE_RE,
+               _COMMENT_ID_RE):
+        m = rx.search(html)
+        if m:
+            out["comments"] = _to_int(m.group(1))
+            break
     if out["comments"] is None:
         out["comments"] = meta_stats["comments"]
 

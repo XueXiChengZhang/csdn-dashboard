@@ -402,9 +402,9 @@ def fetch_article_stats(article_id, username):
         return None
     return {
         "views": parsed["views"],
-        "likes": parsed["likes"] or 0,
-        "comments": parsed["comments"] or 0,
-        "collections": parsed["collections"] or 0,
+        "likes": parsed["likes"],
+        "comments": parsed["comments"],
+        "collections": parsed["collections"],
     }
 
 
@@ -667,6 +667,11 @@ def incremental_update_student(student, max_pages=20, recent_n=4, rotate_m=2,
                                      if isinstance(p.get("likes"), int))
         student["total_comments"] = sum((p.get("comments") or 0) for p in all_posts
                                          if isinstance(p.get("comments"), int))
+        # ★ 2026-10-26: 只有"有评论的文章数"才能区分"真没人评论"和"没抓到评论数"。
+        #   total_comments=0 且 comments_known=0 → 真的没人评论;
+        #   total_comments=0 且 comments_known<总篇数 → 大部分没抓到, 页面应显示 —
+        student["comments_known"] = sum(1 for p in all_posts
+                                        if isinstance(p.get("comments"), int))
         student["total_collections"] = sum((p.get("collections") or 0) for p in all_posts
                                            if isinstance(p.get("collections"), int))
         student["articles_scanned"] = stats["fetched"]

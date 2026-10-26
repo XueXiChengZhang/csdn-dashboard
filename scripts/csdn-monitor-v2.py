@@ -509,15 +509,19 @@ def fetch_article_stats(article_id, username=""):
         html = r.text
         # 解析全部交给公共模块 (增量脚本共用同一套正则, 不会再各坏各的)
         parsed = parse_article_stats(html)
+        # ★ 2026-10-26: 以前这里把 None 一律 `else 0` —— 于是"没解析到"被
+        #   伪装成"真的是 0 次"。parse_article_stats 的注释明确写了绝不
+        #   返回 0 去冒充, 但调用方又把 None 拍平成 0, 前功尽弃。
+        #   现在 None 原样保留, 由聚合层决定怎么展示 (未抓到 = 不参与求和)。
         stats = {
-            "views": parsed["views"] if parsed["views"] is not None else 0,
-            "comments": parsed["comments"] if parsed["comments"] is not None else 0,
-            "collections": parsed["collections"] if parsed["collections"] is not None else 0,
-            "likes": parsed["likes"] if parsed["likes"] is not None else 0,
+            "views": parsed["views"],
+            "comments": parsed["comments"],
+            "collections": parsed["collections"],
+            "likes": parsed["likes"],
             "ok": True,
         }
         # 抓到了页面但一个数都没解析出来 → 页面结构变了, 打印出来便于诊断
-        if not any(stats[k] for k in ("views", "comments", "collections", "likes")):
+        if not any(v for v in stats.values() if isinstance(v, int)):
             safe_print(f"[stats] all zeros aid={article_id} len(html)={len(html)} "
                   f"meta_desc={'文章浏览阅读' in html} view_count_format={'viewCountFormat' in html}")
             safe_print(f"[stats] html_head={html[:300]!r}")
