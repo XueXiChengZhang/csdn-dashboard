@@ -66,10 +66,20 @@ REM NOTE: must add all 4 files, not just data.json.
 REM   The run also writes cache/csdn/snapshot.json, history-real/<date>.json
 REM   and reports/csdn-report-<date>.md. Adding only data.json left them
 REM   uncommitted, so the dashboard showed stale data after a successful push.
+REM NOTE: do NOT use %date:~0,10% -- the region format on this host is
+REM   "2026/10/26 <weekday>" (date first), but older builds assumed
+REM   "<weekday> 2026/10/26" (weekday first). Slicing 10 chars then gives
+REM   "<weekday> 2026/10" -- half weekday, half date. Seen in real commits.
+REM   Use PowerShell ISO date: independent of region settings.
+REM   Must be OUTSIDE the if-block, otherwise %CDATE% will not expand.
+set "CDATE="
+for /f %%d in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"') do set "CDATE=%%d"
+if not defined CDATE set "CDATE=unknown-date"
+
 git add data.json cache/csdn/snapshot.json history-real reports
 git diff --cached --quiet
 if errorlevel 1 (
-    git commit -m "data: %date:~0,10% Gitee refresh"
+    git commit -m "data: %CDATE% Gitee refresh"
     git -c pack.window=0 -c pack.depth=0 push origin main
     if errorlevel 1 (
         echo [%date% %time%] HTTPS PUSH FAILED, trying SSH...
