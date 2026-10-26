@@ -500,19 +500,47 @@ async function loadAll() {
 }
 
 async function loadHistory() {
-  // Ma: 优先尝试 history-test/ (开发期), 失败回退 history/
-  const tries = ['history-test', 'history'];
-  for (const dir of tries) {
+  // ★ 2026-10-26: 原来找的是 'history-test/_index.json' 和 'history/_index.json',
+  //   两个都不存在 —— 真实数据在 history-real/index.json (trend.html 一直读的是它)。
+  //   目录名和文件名双双对不上, 所以个人页趋势永远显示"暂无历史数据"。
+  //   现在按 history-real 优先, 逐日快照聚合成 [{date, students:{sid:{posts:[...]}}}]。
+  const dir = 'history-real/';
+  let names = [];
+  try {
+    const r = await fetch(dir + 'index.json?t=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) names = (await r.json()).files || [];
+  } catch (e) { /* 无索引则不加载 */ }
+  if (!names.length) return [];
+
+  const files = await Promise.all(names.map(async n => {
     try {
-      const idx = await fetch(`${dir}/_index.json?t=${Date.now()}`, { cache: 'no-store' });
-      if (idx.ok) {
-        const arr = await idx.json();
-        return arr;
-      }
-    } catch (e) {}
+      const r = await fetch(dir + n, { cache: 'no-store' });
+      if (!r.ok) return null;
+      return { name: n, json: await r.json() };
+    } catch (e) { return null; }
+  }));
+
+  // 同一天可能有多个快照 (00:00 增量 + 05:30 Gitee), 取当天最后一个
+  const byDay = {};
+  for (const f of files) {
+    if (!f) continue;
+    const snaps = f.json.snapshots || [];
+    if (!snaps.length) continue;
+    const last = snaps[snaps.length - 1];
+    const day = (last.at || f.name).slice(0, 10);
+    const students = {};
+    for (const s of (last.students_summary || [])) {
+      if (!s || s.sid == null) continue;
+      // renderTrend 读 .posts.length, 而快照只有 post_count —— 用占位数组还原长度
+      students[s.sid] = {
+        name: s.name,
+        total_views: s.total_views,
+        posts: new Array(s.post_count || 0).fill(0)
+      };
+    }
+    byDay[day] = { date: day, students };
   }
-  // 没 _index.json - 直接尝试已知文件名
-  return [];
+  return Object.values(byDay).sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function render(stu, history, lastUpdate) {
