@@ -1096,12 +1096,16 @@
     const meta = document.getElementById('gitee-card-meta');
     const grid = document.getElementById('gitee-grid');
     if (!card || !grid) return;
-    // 取所有 gitee.ok=true 的学生,按 date 倒序
+    // ★ 2026-10-31: 只列**有提交**的仓库。
+    //   以前是 filter(s => s.gitee && s.gitee.ok) —— 而"仓库存在但没提交"的空仓库
+    //   ok 也是 true, 于是总览卡混着一堆 "⭐0 📦0", 看着像"抓到了但数据是 0",
+    //   事实是"学生一个 commit 都没提交"。
     const ok = ALL_STUDENTS
-    .filter(s => s.gitee && s.gitee.ok)
+    .filter(s => s.gitee && s.gitee.ok && !(s.gitee.status === 'empty' || s.gitee.empty)
+    && (s.gitee.commit_count || 0) > 0)
     .sort((a, b) => {
-    const da = (a.gitee && a.gitee.date) || '';
-    const db = (b.gitee && b.gitee.date) || '';
+    const da = (a.gitee && (a.gitee.pushed_at || a.gitee.date)) || '';
+    const db = (b.gitee && (b.gitee.pushed_at || b.gitee.date)) || '';
     return db.localeCompare(da);
     })
     .slice(0, 8);
@@ -1110,22 +1114,38 @@
     return;
     }
     card.style.display = '';
-    const okAll = ALL_STUDENTS.filter(s => s.gitee && s.gitee.ok).length;
+    // ★ 2026-10-31: 三个口径分开报 —— 有提交 / 从未提交 / 近 7 天有更新。
+    //   混在一起报 "抓取成功 32/34" 会让人以为 32 个人都在提交代码。
+    const withCommit = ALL_STUDENTS.filter(s => s.gitee && (s.gitee.commit_count || 0) > 0).length;
+    const emptyRepo = ALL_STUDENTS.filter(s => s.gitee && (s.gitee.status === 'empty' || s.gitee.empty)).length;
     const totalG = ALL_STUDENTS.filter(s => s.gitee && (s.gitee.commit_count || 0) > 0)
     .reduce((s, x) => s + (x.gitee.commit_count || 0), 0);
-    meta.textContent = `抓取成功 ${okAll} / ${ALL_STUDENTS.length} · 总 commit ${totalG}`;
+    const recent = ALL_STUDENTS.filter(s => {
+    const dd = s.gitee && (s.gitee.pushed_at || s.gitee.last_activity_at);
+    if (!dd) return false;
+    const t = new Date(String(dd).slice(0, 10)).getTime();
+    return !!t && (Date.now() - t) < 7 * 864e5;
+    }).length;
+    meta.innerHTML = `有提交 <strong>${withCommit}</strong> / ${ALL_STUDENTS.length} 人`
+    + ` · 从未提交 <strong>${emptyRepo}</strong> 人`
+    + ` · 近 7 天有更新 <strong>${recent}</strong> 人`
+    + ` · 总 commit <strong>${totalG}</strong>`;
     grid.innerHTML = ok.map(s => {
     const g = s.gitee;
     const ownerRepo = `${g.owner}/${g.repo}`;
-    const shortMsg = (g.msg || '').slice(0, 36);
+    const shortMsg = (g.msg || g.subject || '').slice(0, 36);
+    const pushed = g.pushed_at || g.date;
+    const days = g.days_since_update;
+    const fresh = g.updated_since_last_check
+    ? '<span class="gitee-empty" style="background:#dcfce7;color:#166534;">🆕 有新提交</span>' : '';
     return `<div class="gitee-grid-item">
-    <div class="name">${escapeHtml(s.name)}</div>
+    <div class="name">${escapeHtml(s.name)} ${fresh}</div>
     <div class="repo"><a href="${escapeHtml(g.url)}" target="_blank" rel="noopener">${escapeHtml(ownerRepo)}</a></div>
     <div class="stats">
     <span>⭐ <strong>${g.stars || 0}</strong></span>
     <span>🍴 <strong>${g.forks || 0}</strong></span>
     <span>📦 commit <strong>${g.commit_count || 0}</strong></span>
-    <span class="gitee-date">${escapeHtml(fmtRel(g.date))}</span>
+    <span class="gitee-date">最后提交 ${escapeHtml(fmtRel(pushed))}${days != null ? ` (${days} 天前)` : ''}</span>
     </div>
     ${shortMsg ? `<div class="repo" style="margin-top:6px;">${escapeHtml(shortMsg)}</div>` : ''}
     </div>`;
@@ -1411,24 +1431,41 @@
     // 没 Gitee URL (240110104 缺 - 但其实他也有, 看 watchlist)
     return '';
     }
-    if (g.ok) {
+    // ★ 2026-10-31: 空仓库判定从 g.ok 改成 status==='empty' || empty===true。
+    //   以前 g.ok 对空仓库也是 true (仓库确实存在, 抓到了 created_at), 于是空仓库
+    //   走"有提交"分支显示成 "⭐0 📦0" —— 与"真的 0 提交"长得一模一样, 看不出差别。
+    //   这是本看板最需要说清楚的一件事: 仓库是空的, 学生还没提交。
+    const isEmpty = (g.status === 'empty') || (g.empty === true);
     const ownerRepo = `${g.owner}/${g.repo}`;
-    return `<div class="gitee-mini" title="${escapeHtml(g.msg || '')}">
+    if (isEmpty) {
+    const created = g.created_at || g.last_activity_at || '';
+    const days = g.days_since_update;
+    return `<div class="gitee-mini" title="${escapeHtml(g.err || '仓库存在但没有任何提交')}">
     <a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(ownerRepo)}</a>
+    <span class="gitee-empty">从未提交</span>
+    ${created ? `<span class="gitee-stat">建仓于 ${escapeHtml(String(created).slice(0, 10))}${days != null ? ` (${days} 天前)` : ''}</span>` : ''}
+    </div>`;
+    }
+    if (g.ok) {
+    const pushed = g.pushed_at || g.date;
+    const days = g.days_since_update;
+    const fresh = g.updated_since_last_check
+    ? '<span class="gitee-empty" style="background:#dcfce7;color:#166534;">🆕</span>' : '';
+    return `<div class="gitee-mini" title="${escapeHtml(g.msg || g.subject || '')}">
+    <a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(ownerRepo)}</a>
+    ${fresh}
     <span class="gitee-stat">⭐ <strong>${g.stars || 0}</strong></span>
     <span class="gitee-stat">📦 <strong>${g.commit_count || 0}</strong></span>
     ${g.sha ? `<span class="gitee-sha">${escapeHtml(g.sha)}</span>` : ''}
-    <span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(g.date))}</span>
+    <span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(pushed))}${days != null ? ` · ${days}天前` : ''}</span>
     </div>`;
     }
     // Ma v11: 区分 empty (仓库存在但没 commit) 和 fail (404/限流)
-    const isEmpty = g.status === 'empty';
-    const badge = isEmpty ? '<span class="gitee-empty">空仓库</span>'
-                      : `<span class="gitee-fail">抓取失败</span>`;
-    const ownerRepo = (g.owner && g.repo) ? `${g.owner}/${g.repo}` : '未配置';
+    const badge = `<span class="gitee-fail">抓取失败</span>`;
+    const ownerRepo2 = (g.owner && g.repo) ? `${g.owner}/${g.repo}` : '未配置';
     return `<div class="gitee-mini" title="${escapeHtml(g.err || '抓取失败')}">
-    ${g.url ? `<a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(ownerRepo)}</a>`
-        : `<span class="gitee-stat">${escapeHtml(ownerRepo)}</span>`}
+    ${g.url ? `<a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(ownerRepo2)}</a>`
+        : `<span class="gitee-stat">${escapeHtml(ownerRepo2)}</span>`}
     ${badge}
     ${g.date ? `<span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(g.date))}</span>` : ''}
     </div>`;

@@ -626,21 +626,53 @@ function renderGitee(stu) {
   if (!g || !g.url) {
     return `<div class="gitee-card-detail empty">未配置 Gitee 仓库</div>`;
   }
+  // ★ 2026-10-31: 先判空仓库 (status==='empty' || empty===true), 再判 ok。
+  //   g.ok 对空仓库也是 true —— 以前空仓库走"有提交"分支, 显示成 commit 0 的正常仓库,
+  //   老师看不出"这学生建了仓库但一直没提交"。
+  const isEmpty = (g.status === 'empty') || (g.empty === true);
+  if (isEmpty) {
+    const created = (g.created_at || g.last_activity_at || '').slice(0, 10);
+    const days = g.days_since_update;
+    return `<div class="gitee-card-detail empty-repo">
+      <div class="gitee-ico">📭</div>
+      <div class="gitee-info">
+        <h3 style="color:#92400e;">Gitee 仓库存在, 但从未提交</h3>
+        <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · 建仓于 ${escapeHtml(created || '—')}${days != null ? ` (${days} 天前)` : ''}</div>
+        <div class="stats">
+          <span style="color:#92400e;"><strong>0</strong> commit</span>
+          <span style="color:var(--stone);">最后活动 ${escapeHtml((g.last_activity_at || created || '—').slice(0, 10))}</span>
+        </div>
+        <div class="msg" style="color:#92400e;">仓库已建但没有任何提交记录 —— 学生需要在本地 git commit 后 push, 这里才会出现 commit 数。</div>
+      </div>
+      <div class="gitee-actions">
+        <a href="${escapeHtml(g.url)}" target="_blank" rel="noopener" style="background:#92400e;">访问仓库 ↗</a>
+        <a href="analytics.html" style="background:var(--ivory);color:var(--brand);">← 返回班级分析</a>
+      </div>
+    </div>`;
+  }
   if (g.ok) {
-    const dateStr = g.date ? g.date.slice(0, 10) : '—';
+    const pushed = g.pushed_at || g.date || '';
+    const dateStr = pushed ? pushed.slice(0, 10) : '—';
+    const days = g.days_since_update;
     const shaShort = g.sha ? `<code style="font-size:11px;background:var(--brand-soft);color:var(--brand);padding:1px 5px;border-radius:2px;">${escapeHtml(g.sha)}</code>` : '';
+    const fresh = g.updated_since_last_check
+    ? '<span class="gitee-empty" style="background:#dcfce7;color:#166534;">🆕 有新提交</span>' : '';
+    const created = (g.created_at || '').slice(0, 10);
+    const desc = (g.description || '').trim();
     return `<div class="gitee-card-detail">
       <div class="gitee-ico">💾</div>
       <div class="gitee-info">
-        <h3>Gitee 仓库</h3>
-        <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · 抓取自 <code>${escapeHtml(g.source || '?')}</code></div>
+        <h3>Gitee 仓库 ${fresh}</h3>
+        <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · 抓取自 <code>${escapeHtml(g.source || '?')}</code>${created ? ` · 建仓于 ${escapeHtml(created)}` : ''}</div>
         <div class="stats">
           <span><strong>${fmt(g.commit_count || 0)}</strong>commit</span>
           <span><strong>${fmt(g.stars || 0)}</strong>⭐ star</span>
           <span><strong>${fmt(g.forks || 0)}</strong>🍴 fork</span>
-          <span style="color:var(--stone);">最后 commit ${escapeHtml(dateStr)} ${shaShort}</span>
+          <span style="color:var(--stone);">最后提交 ${escapeHtml(dateStr)}${days != null ? ` (${days} 天前)` : ''} ${shaShort}</span>
         </div>
-        ${g.msg ? `<div class="msg">"${escapeHtml(g.msg)}"</div>` : ''}
+        ${desc ? `<div class="msg">${escapeHtml(desc)}</div>` : ''}
+        ${g.commits_delta ? `<div class="msg" style="color:#166534;">较上次采集新增 ${fmt(g.commits_delta)} 个提交</div>` : ''}
+        ${(g.msg || g.subject) ? `<div class="msg">"${escapeHtml(g.msg || g.subject)}"</div>` : ''}
       </div>
       <div class="gitee-actions">
         <a href="${escapeHtml(g.url)}" target="_blank" rel="noopener">访问仓库 ↗</a>
