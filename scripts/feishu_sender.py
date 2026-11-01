@@ -17,7 +17,19 @@ from pathlib import Path
 # Hermes .env 路径
 # __file__ = D:\WebArchives\workspace_backup\scripts\feishu_sender.py
 # Hermes .env = C:\Users\Administrator\WorkBuddy\2026-08-23-00-58-07\hermes-home\.env
-HERMES_HOME = Path("C:/Users/Administrator/WorkBuddy/2026-08-23-00-58-07/hermes-home")
+# Hermes .env = 多候选查找 (2026-10-31):
+#   原来硬编码 C:/Users/Administrator/WorkBuddy/2026-08-23-00-58-07/hermes-home/.env
+#   —— 那是 C 盘清理前的旧路径, 清理后目录已不存在, 飞书日报从此发不出去
+#   (日志特征: "[WARN] Hermes .env not found" + "openclaw not found")。
+_HERMES_ENV_CANDIDATES = [
+    Path(os.environ.get("HERMES_HOME", "")) / ".env" if os.environ.get("HERMES_HOME") else None,
+    Path.home() / "AppData" / "Local" / "hermes" / ".env",
+    Path.home() / ".hermes" / ".env",
+    Path("C:/Users/Administrator/AppData/Local/hermes/.env"),
+]
+HERMES_ENV = next((p for p in _HERMES_ENV_CANDIDATES if p and Path(p).exists()),
+                    _HERMES_ENV_CANDIDATES[1])
+HERMES_HOME = HERMES_ENV.parent
 HERMES_ENV = HERMES_HOME / ".env"
 
 APP_ID = os.environ.get("FEISHU_APP_ID", "")

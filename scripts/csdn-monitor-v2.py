@@ -1139,6 +1139,23 @@ def write_data_json(students_state, fetch_meta, class_stats=None):
                 #   (本机 IP 被 Gitee API 限流, 走 ECS 的 .md + git clone 通道)
                 "ecs_collected": bool(g.get("ecs_collected", False)),
                 "subject": g.get("subject", ""),
+                # ★ 2026-10-31: 仓库更新监控所需字段 (之前写盘白名单里没有,
+                #   采集侧拿到了也进不了 data.json, 页面自然渲染不出来)
+                #   pushed_at        = 最后一次**提交**时间; 空 => 从未提交
+                #   last_activity_at = 仓库最后活动时间 (markdown 的 Last Updated)
+                #   created_at       = 仓库创建时间
+                "pushed_at": g.get("pushed_at", ""),
+                "last_activity_at": g.get("last_activity_at", ""),
+                "created_at": g.get("created_at", ""),
+                "updated_at": g.get("updated_at", ""),
+                "watchers": g.get("watchers", 0),
+                "default_branch": g.get("default_branch", ""),
+                "human_name": g.get("human_name", ""),
+                "description": g.get("description", ""),
+                # 更新监控: 与上一轮采集对比的结果
+                "days_since_update": g.get("days_since_update"),
+                "updated_since_last_check": bool(g.get("updated_since_last_check", False)),
+                "commits_delta": g.get("commits_delta"),
             },
         })
 
@@ -1652,8 +1669,44 @@ def load_gitee_from_ecs(host="aliyun-fuyeboke", remote_json="/root/gitee_result.
     return GITEE_ECS_CACHE
 
 
-def merge_ecs_gitee(rec, ecs_map):
-    """把 ECS 采集结果并入 rec["gitee"], 返回是否成功合并。"""
+# ── 仓库更新监控: 上一轮的仓库状态, 用来算"这次有没有新提交" ──
+GITEE_STATE_FILE = CACHE_DIR / "gitee_last.json"
+
+
+def load_gitee_last_state():
+    """载入上一轮的 gitee 状态快照 (失败返回空 dict, 不阻断主流程)。"""
+    try:
+        p = Path(GITEE_STATE_FILE)
+        if not p.exists():
+            return {}
+        return json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def save_gitee_last_state(state):
+    try:
+        p = Path(GITEE_STATE_FILE)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(state, ensure_ascii=False, indent=1), encoding="utf-8")
+        os.replace(str(tmp), str(p))
+    except Exception:
+        pass
+
+
+def merge_ecs_gitee(rec, ecs_map, last_state=None):
+    """把 ECS 采集结果并入 rec["gitee"], 返回是否成功合并。
+
+    ★ 2026-10-31 重写。旧版有三个问题:
+      1) 只搬 6 个字段, **不搬 url/owner/repo** —— 本机本来就知道这三个,
+         于是 data.json 里永远是空串, 页面上的"仓库链接"渲染不出来;
+      2) 不搬 pushed_at / created_at / updated_at / human_name / empty,
+         也不搬 md_date —— "Last Updated" 这个唯一能用的日期在链路里丢失;
+      3) `ok = bool(e.get("ok")) or ...` —— e["ok"] 为 True 就直接算成功,
+         即使一个数都没有。**假成功被原样保留**: 页面显示成"抓到了但数据是 0",
+         而事实是"仓库是空的, 学生根本没提交" —— 显示与事实正好相反。
+    """
     owner, repo = parse_gitee_repo(rec.get("gitee_url", ""))
     if not owner or not repo:
         return False
@@ -1662,20 +1715,73 @@ def merge_ecs_gitee(rec, ecs_map):
     if not e:
         return False
     g = rec.get("gitee") or {}
-    # ECS 数据优先 (它拿到的是 git 协议的真实 commit 数)
-    for k in ("sha", "date", "subject", "commit_count", "stars", "forks"):
-        if e.get(k) not in (None, "", 0) or k in ("commit_count",):
-            g[k] = e.get(k, g.get(k))
+
+    # ① 本地已知的三件套 (以前不搬, 导致页面拿不到仓库链接)
+    g["url"] = g.get("url") or f"https://gitee.com/{owner}/{repo}"
+    g["owner"] = g.get("owner") or owner
+    g["repo"] = g.get("repo") or repo
+
+    # ② 搬全部数据字段
+    for k in ("sha", "date", "subject", "commit_count", "stars", "forks", "watchers",
+              "created_at", "updated_at", "pushed_at", "last_activity_at",
+              "default_branch", "human_name", "description"):
+        if e.get(k) not in (None, ""):
+            g[k] = e[k]
+    # ③ md_date 是 markdown 里的 "Last Updated" —— ECS 侧没映射过来, 这里兜底
+    if not g.get("date") and e.get("md_date"):
+        g["date"] = e["md_date"]
+    if not g.get("last_activity_at") and e.get("md_date"):
+        # md_date 是 "Last Updated" —— 对空仓库等于创建日, 只能当 last_activity_at
+        g["last_activity_at"] = e["md_date"]
+    if not g.get("created_at") and e.get("md_created"):
+        g["created_at"] = e["md_created"]
+
+    # ④ 空仓库判定: pushed_at 为空 = 从未提交 = 学生还没动手。
+    #    这是本看板最要紧的业务信号, 不能被 "ok=True" 盖掉。
+    g["empty"] = bool(e.get("empty")) or (not g.get("pushed_at") and not g.get("commit_count"))
+
     if e.get("status"):
         g["status"] = e.get("status")
     if e.get("err"):
         g["err"] = e.get("err")
     if e.get("source"):
         g["source"] = e.get("source")
-    g["ok"] = bool(e.get("ok")) or bool(g.get("sha")) or bool(g.get("commit_count"))
+
+    # ⑤ ok 判定: 必须有实际数据, 不能只看 e["ok"]
+    has_data = any(g.get(k) not in (None, "", 0) for k in
+                   ("sha", "date", "commit_count", "stars", "forks",
+                    "pushed_at", "created_at", "watchers"))
+    g["ok"] = bool(has_data)
+    if not g["ok"] and g["empty"]:
+        g["status"] = "empty"
+
+    # ⑥ 仓库更新监控: 与上一轮对比
+    prev = (last_state or {}).get(key) or {}
+    if prev:
+        psha = prev.get("sha") or ""
+        csha = g.get("sha") or ""
+        if psha and csha and psha != csha:
+            g["updated_since_last_check"] = True
+        elif not psha and csha:
+            g["updated_since_last_check"] = True
+        try:
+            g["commits_delta"] = int(g.get("commit_count") or 0) - int(prev.get("commit_count") or 0)
+        except (TypeError, ValueError):
+            g["commits_delta"] = 0
+        # 距上次推送多少天 —— pushed_at 为空 = 从未提交, 此时用 last_activity_at
+        # (仓库最后活动时间) 兜底, 让"建了仓库但一直没动"也能看出闲置多久
+        d = (g.get("pushed_at") or g.get("last_activity_at") or g.get("date") or "")[:10]
+        if d:
+            try:
+                from datetime import date as _date
+                y, m, dd = (int(x) for x in d.split("-"))
+                g["days_since_update"] = (_date.today() - _date(y, m, dd)).days
+            except Exception:
+                pass
+
     g["ecs_collected"] = True
     rec["gitee"] = g
-    rec["gitee_status"] = "ok" if g["ok"] else "failed"
+    rec["gitee_status"] = "ok" if g["ok"] else ("empty" if g["empty"] else "failed")
     return True
 
 
@@ -2082,10 +2188,26 @@ def run(args):
         ecs_map = load_gitee_from_ecs()
         if ecs_map:
             merged = 0
+            # ★ 仓库更新监控 (2026-10-31): 载入上一轮的仓库状态, 合并时对比 ——
+            #   sha 变了 = 有新提交; commit_count 差值 = 新增几个提交;
+            #   pushed_at 距今 = 多久没动了。这是"仓库更新情况监控"的数据基础。
+            gitee_last = load_gitee_last_state()
+            gitee_now = {}
             for rec in students_state:
-                if merge_ecs_gitee(rec, ecs_map):
+                if merge_ecs_gitee(rec, ecs_map, gitee_last):
                     merged += 1
-            safe_print(f"[gitee-ecs] 合并 {merged}/{len(students_state)} 个学生")
+                    ow, rp = parse_gitee_repo(rec.get("gitee_url", ""))
+                    if ow and rp:
+                        gg = rec.get("gitee") or {}
+                        gitee_now[f"{ow}/{rp}"] = {
+                            "sha": gg.get("sha", ""),
+                            "commit_count": gg.get("commit_count", 0),
+                            "pushed_at": gg.get("pushed_at", ""),
+                            "date": gg.get("date", ""),
+                        }
+            save_gitee_last_state(gitee_now)
+            safe_print(f"[gitee-ecs] 合并 {merged}/{len(students_state)} 个学生 "
+                       f"(更新监控基线 {len(gitee_now)} 个仓库)")
         # ECS 没覆盖到的再走本机直连 (HTML/markdown fallback)
         need_local = [r for r in students_state
                       if not (r.get("gitee") or {}).get("ecs_collected")]
