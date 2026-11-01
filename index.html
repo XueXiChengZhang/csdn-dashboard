@@ -296,6 +296,18 @@
     .gitee-mini .gitee-link:hover { text-decoration: underline; }
     .gitee-mini .gitee-stat { color: var(--stone); }
     .gitee-mini .gitee-stat strong { color: var(--brand); font-weight: 600; }
+  /* ★ 2026-11-01: 移动端整页横向溢出 (375px 视口 scrollWidth 551px)。
+     .gitee-sha 是 40 位 hex (212px) 不可压缩, 把卡片 min-content 撑到 488px。 */
+  .gitee-mini {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .gitee-mini > * { min-width: 0; }
+  .gitee-sha {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     .gitee-mini .gitee-sha {
       background: var(--brand-soft);
       color: var(--brand);
@@ -975,7 +987,9 @@
     const incTot = Number(inc.students_total || 0);
     const gitOk = Number(git.ok || 0);
     const gitTot = Number(git.students_total || 0);
-    const fail = Number(fm.fail_count || 0);
+  // ★ 2026-11-01: 真实失败数在 stages.gitee.fail; fm.fail_count 恒为 0,
+  //   于是折叠面板显示「失败 0」却同时写着「Gitee 成功 32/34」 —— 自相矛盾。
+  const fail = Number((fm.stages && fm.stages.gitee && fm.stages.gitee.fail) || fm.fail_count || 0);
     const ts = fm.fetched_at || '';
     const ms = Number(fm.duration_ms || 0);
     // ★ R8: method_breakdown 的**真实 key** 是 csdn_html / csdn_rss /
@@ -1081,13 +1095,11 @@
     // 改成:用所有学生中最大 guid 数字做基准,guid 数字靠后的算 NEW。
     // 这太复杂,简化为:post_count > 0 就给个"N 篇"作为信息密度。NEW 标记改成:
     // 如果 last_update 是今天,且该学生 post_count > 0,就标记 NEW(说明今天抓到了内容)
+    // ★ 2026-11-01: 旧判据是「last_update 是今天 且 post_count>0」—— 只要当天跑过抓取,
+    //   全班 34 人全部标 NEW (实测 34/34), 等于没标。改用 post 级真实信号 is_new。
     function isNewlyPosted(s) {
-    if (!LAST_UPDATE_ISO || s.post_count === 0) return false;
-    try {
-    const lu = new Date(LAST_UPDATE_ISO);
-    const today = new Date();
-    return lu.toDateString() === today.toDateString();
-    } catch { return false; }
+      if (!s.posts || !s.posts.length) return false;
+      return s.posts.some(p => p && p.is_new);
     }
 
     // v10: Gitee 顶部活动卡片 - 显示最近 commit 的仓库
@@ -1419,8 +1431,15 @@
         <span class="stats-item empty"><span class="ico">📊</span><span class="num">—</span><span>暂无数据</span></span>
         </div>`;
         }
-    return `<div class="stats-row" title="总访问量 = CSDN 个人主页口径; 文章累加 = 每篇文章阅读数相加 (${fmtNum(s.article_views_sum || 0)})">
-    <span class="stats-item"><span class="ico">👁</span><span class="num">${fmtNum(tv)}</span><span>总访问量</span></span>
+    // ★ 2026-11-01: 两个口径并列显示, 不再混在一句话里藏进 tooltip。
+    //   主页口径与文章累加经常不等 (6/34 人主页数反而更小), 并列才看得出差别。
+    //   未抓到的显示 dim 的 — 而不是 0。
+    const av = s.article_views_sum;
+    const avCell = (av == null || !Number.isFinite(av))
+      ? '<span class="dim">—</span>' : fmtNum(av);
+    return `<div class="stats-row">
+      <span class="stats-item" title="CSDN 个人主页上的总访问量 (含主页/搜索等来源)"><span class="ico">👁</span><span class="num">${fmtNum(tv)}</span><span>总访问量(主页)</span></span>
+      <span class="stats-item" title="把这个人每一篇文章的阅读数加起来 (与主页口径不同)"><span class="ico">📰</span><span class="num">${avCell}</span><span>文章累加</span></span>
     </div>`;
     }
 

@@ -167,18 +167,18 @@
     <div class="card">
       <h2>班级总阅读量走势</h2>
       <div class="note">每个点是一次抓取完成后的快照。同一日多次抓取时取峰值 —— 因为 05:30 的任务会覆盖写入残缺值，峰值才是真实值。</div>
-      <svg class="chart-svg" id="line-chart" viewBox="0 0 1000 320" preserveAspectRatio="none"></svg>
+      <svg class="chart-svg" id="line-chart" viewBox="0 0 1000 320" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
 
     <div class="card">
       <h2>每日净增</h2>
       <div class="note">正数为当日新增阅读，负数通常来自数据被覆盖写坏（而非真实下跌）。</div>
-      <svg class="chart-svg" id="bar-chart" viewBox="0 0 1000 320" preserveAspectRatio="none"></svg>
+      <svg class="chart-svg" id="bar-chart" viewBox="0 0 1000 320" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
 
     <div class="card">
       <h2>学生增长排行</h2>
-      <div class="note">区间内累计阅读量的净增长。快照覆盖全部 34 名学生，每人 64 个数据点。</div>
+  <div class="note" id="trend-note">区间内累计阅读量的净增长。<span id="trend-cov"></span></div>
       <table>
         <thead>
           <tr>
@@ -200,7 +200,8 @@
   <div class="tip" id="tip"></div>
 
 <script>
-const fmt = n => (n || 0).toLocaleString('en-US');
+  // ★ 2026-11-01: null 不该显示成 0 —— 与「真的 0 增长」无法区分
+  const fmt = n => (n == null || !Number.isFinite(n)) ? '—' : Number(n).toLocaleString('en-US');
 const $ = id => document.getElementById(id);
 
 // 暗色模式
@@ -266,7 +267,9 @@ async function loadAll() {
       });
       for (const st of (s.students_summary || [])) {
         if (!bySid[st.sid]) bySid[st.sid] = { name: st.name, pts: [] };
-        bySid[st.sid].pts.push({ at: s.at, v: st.total_views || 0, av: st.article_views_sum || 0, pc: st.post_count || 0 });
+          // ★ 2026-11-01: 删掉 av —— 89% 的快照记录里没有 article_views_sum 这个键,
+  //   而 pts 全程只取 .v 和 .pc, 它是个永远为 0 的假字段。
+  bySid[st.sid].pts.push({ at: s.at, v: st.total_views || 0, pc: st.post_count || 0 });
       }
     }
   }
@@ -313,7 +316,7 @@ function renderLine(d) {
     const v = lo + ((hi - lo) * k) / 4;
     const y = ys(v);
     g += `<line class="grid" x1="${PL}" y1="${y}" x2="${W - PR}" y2="${y}"/>`;
-    g += `<text x="${PL - 7}" y="${y + 3.5}" text-anchor="end">${Math.round(v / 1000)}k</text>`;
+    g += `<text class="lbl" x="${PL - 7}" y="${y + 3.5}" text-anchor="end">${Math.round(v / 1000)}k</text>`;
   }
   // 面积 + 折线
   const line = p.map((x, i) => `${i ? 'L' : 'M'}${xs(i).toFixed(1)},${ys(x.total_views).toFixed(1)}`).join('');
@@ -327,7 +330,7 @@ function renderLine(d) {
   const step = Math.max(1, Math.ceil(p.length / 8));
   p.forEach((x, i) => {
     if (i % step !== 0 && i !== p.length - 1) return;
-    g += `<text x="${xs(i).toFixed(1)}" y="${H - PB + 16}" text-anchor="middle">${x.day.slice(5)}</text>`;
+    g += `<text class="lbl" x="${xs(i).toFixed(1)}" y="${H - PB + 16}" text-anchor="middle">${x.day.slice(5)}</text>`;
   });
   // 基线
   g += `<line class="axis" x1="${PL}" y1="${H - PB}" x2="${W - PR}" y2="${H - PB}"/>`;
@@ -354,8 +357,8 @@ function renderBar(d) {
 
   let g = '';
   g += `<line class="grid" x1="${PL}" y1="${zeroY}" x2="${W - PR}" y2="${zeroY}"/>`;
-  g += `<text x="${PL - 7}" y="${PT + 4}" text-anchor="end">+${Math.round(maxA / 1000)}k</text>`;
-  g += `<text x="${PL - 7}" y="${H - PB}" text-anchor="end">-${Math.round(maxA / 1000)}k</text>`;
+  g += `<text class="lbl" x="${PL - 7}" y="${PT + 4}" text-anchor="end">+${Math.round(maxA / 1000)}k</text>`;
+  g += `<text class="lbl" x="${PL - 7}" y="${H - PB}" text-anchor="end">-${Math.round(maxA / 1000)}k</text>`;
   deltas.forEach((d2, i) => {
     const x = PL + i * ((W - PL - PR) / deltas.length);
     const h = Math.abs(d2.v) * scale;
@@ -365,7 +368,7 @@ function renderBar(d) {
   const step = Math.max(1, Math.ceil(deltas.length / 8));
   deltas.forEach((d2, i) => {
     if (i % step !== 0 && i !== deltas.length - 1) return;
-    g += `<text x="${(PL + i * ((W - PL - PR) / deltas.length) + bw / 2).toFixed(1)}" y="${H - PB + 16}" text-anchor="middle">${d2.day.slice(5)}</text>`;
+    g += `<text class="lbl" x="${(PL + i * ((W - PL - PR) / deltas.length) + bw / 2).toFixed(1)}" y="${H - PB + 16}" text-anchor="middle">${d2.day.slice(5)}</text>`;
   });
   g += `<line class="axis" x1="${PL}" y1="${PT}" x2="${PL}" y2="${H - PB}"/>`;
   svg.innerHTML = g;

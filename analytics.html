@@ -507,7 +507,7 @@
       <span class="hint">X=文章数 · Y=阅读量 · hover 显示姓名</span>
     </div>
     <div class="scatter-wrap">
-      <svg class="scatter-svg" id="scatter" viewBox="0 0 800 360" preserveAspectRatio="none"></svg>
+  <svg class="scatter-svg" id="scatter" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet"></svg>
       <div class="scatter-tip" id="scatter-tip"></div>
       <div class="scatter-legend">
         <span><span class="swatch" style="background:#E4ECF5;"></span>低</span>
@@ -635,8 +635,13 @@ function render() {
   const avgViews = withViews.length
     ? Math.round(withViews.reduce((s, x) => s + x.total_views, 0) / withViews.length)
     : 0;
-  const engage = stu.reduce((s, x) =>
-    s + (x.total_likes || 0) + (x.total_comments || 0) + (x.total_collections || 0), 0);
+  // ★ 2026-11-01: 跳过 null 而不是当 0 —— 6 篇 likes=null 的帖子不该让总数虚高
+  const engage = stu.reduce((s, x) => {
+    // ★ 2026-11-01: 跳过 null 而不是当 0 —— 6 篇 likes=null 的帖子不该让总数虚高
+    const vals = [x.total_likes, x.total_comments, x.total_collections]
+      .filter(v => v != null && Number.isFinite(v));
+    return s + vals.reduce((a, b) => a + b, 0);
+  }, 0);
 
   document.getElementById('stat-total').textContent = stu.length;
   document.getElementById('stat-total-meta').textContent = `${withViews.length} 人有阅读数据`;
@@ -649,17 +654,20 @@ function render() {
 
   // v11: Gitee 班级统计 (区分 ok / empty / fail)
   const gAll = stu.filter(s => s.gitee);
-  const gOk = stu.filter(s => s.gitee && s.gitee.ok);
-  const gEmpty = stu.filter(s => s.gitee && s.gitee.status === 'empty');
+  // ★ 2026-11-01: 空仓库的 gitee.ok 也是 true (仓库确实存在), 旧写法
+  //   gOk(32) + gEmpty(24) + gFail(1) = 57, 超过班级人数 34。口径与 index.html 对齐。
+  const gOk = stu.filter(s => s.gitee && s.gitee.ok
+    && s.gitee.status !== 'empty' && !s.gitee.empty && (s.gitee.commit_count || 0) > 0);
+  const gEmpty = stu.filter(s => s.gitee && (s.gitee.status === 'empty' || s.gitee.empty === true));
   const gFail = stu.filter(s => s.gitee && ['notfound','failed','rate_limit'].includes(s.gitee.status));
   const gTotalCommits = stu.reduce((s, x) => s + ((x.gitee && x.gitee.commit_count) || 0), 0);
   const gTotalStars = stu.reduce((s, x) => s + ((x.gitee && x.gitee.stars) || 0), 0);
   const gTotalForks = stu.reduce((s, x) => s + ((x.gitee && x.gitee.forks) || 0), 0);
   document.getElementById('stat-gitee-commits').textContent = fmt(gTotalCommits);
   document.getElementById('stat-gitee-commits-meta').textContent =
-    `${gOk.length} 仓库抓取成功 · ${gEmpty.length} 空仓库 · ${gFail.length} 失败`;
+    `${gOk.length} 有提交 · ${gEmpty.length} 空仓库 · ${gFail.length} 失败`;
   document.getElementById('stat-gitee-stars').textContent = `${fmt(gTotalStars)} / ${fmt(gTotalForks)}`;
-  document.getElementById('stat-gitee-stars-meta').textContent = `star · fork · 共 ${gAll.length} 仓库`;
+  document.getElementById('stat-gitee-stars-meta').textContent = `star · fork · 共 ${stu.filter(s => s.gitee && s.gitee.url).length} 仓库`;
 
   // TOP 10 by views
   const sorted = [...stu]

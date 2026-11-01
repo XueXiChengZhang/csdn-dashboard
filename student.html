@@ -193,6 +193,11 @@
       margin-top: 6px;
       font-style: italic;
     }
+    /* ★ 2026-11-01: 移动端横向溢出 (375px 视口 scrollWidth 404px)。
+       按钮被压成 43px 宽仍溢出屏幕。 */
+    .gitee-actions {
+      flex-wrap: wrap;
+      width: 100%;
     .gitee-card-detail .gitee-actions {
       display: flex;
       flex-direction: column;
@@ -470,6 +475,19 @@ let VERSION = '...';
 const NAME = new URLSearchParams(location.search).get('name') || '';
 
 function fmt(n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-US'); }
+
+  // ★ 2026-11-01: 未抓到的统计值必须显示 dim 的 — 而不是 0。
+  //   0 和「真的没有」在页面上长得一样, 会让人以为数据错了。
+  //   同页 fmtCell 已经做对了, 这里把头部统计也统一过来。
+  function fmtOrDash(n) {
+    return (n == null || !Number.isFinite(n)) ? '<span class="dim">—</span>' : fmt(n);
+  }
+  // 求和时跳过 null: 6 篇 likes=null 的帖子不该让「互动」总数虚高。
+  function sumKnown(arr) {
+    const vals = arr.filter(v => v != null && Number.isFinite(v));
+    if (!vals.length) return null;
+    return vals.reduce((a, b) => a + b, 0);
+  }
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]);
@@ -567,10 +585,10 @@ function render(stu, history, lastUpdate) {
         <div class="meta-line">CSDN · <code>${escapeHtml(stu.csdn_username || '未配置')}</code></div>
         <div class="meta-line">最近抓取 · ${escapeHtml(lastUpdate || '—')}</div>
         <div class="head-stats">
-          <div class="head-stat"><strong>${fmt(stu.post_count || 0)}</strong>文章数</div>
-          <div class="head-stat" title="CSDN 个人主页上的「总访问量」(含主页/搜索等来源, 与 CSDN 站显示一致)"><strong>${fmt(stu.total_views || 0)}</strong>总访问量</div>
-          <div class="head-stat" title="把这个人每一篇文章的阅读数加起来 (文章累加, 与主页口径不同)"><strong>${fmt(stu.article_views_sum || 0)}</strong>文章阅读合计</div>
-          <div class="head-stat"><strong>${fmt((stu.total_likes || 0) + (stu.total_comments || 0) + (stu.total_collections || 0))}</strong>互动</div>
+      <div class="head-stat"><strong>${fmtOrDash(stu.post_count)}</strong>文章数</div>
+      <div class="head-stat" title="CSDN 个人主页上的「总访问量」(含主页/搜索等来源, 与 CSDN 站显示一致)"><strong>${fmtOrDash(stu.total_views)}</strong>总访问量</div>
+      <div class="head-stat" title="把这个人每一篇文章的阅读数加起来 (文章累加, 与主页口径不同)"><strong>${fmtOrDash(stu.article_views_sum)}</strong>文章阅读合计</div>
+      <div class="head-stat"><strong>${fmtOrDash(sumKnown([stu.total_likes, stu.total_comments, stu.total_collections]))}</strong>互动</div>
           <div class="head-stat" title="文章阅读合计 ÷ 文章数 (分子分母同一口径)"><strong>${stu.post_count ? fmt(Math.round((stu.article_views_sum || 0) / stu.post_count)) : '—'}</strong>平均阅读/篇</div>
         </div>
       </div>
@@ -873,7 +891,9 @@ function renderPosts(stu) {
   }
 
   const rows = posts.map((p, i) => {
-      const ts = p.pubDate || (p.guid ? p.guid.slice(-10) : '—');
+      // ★ 2026-11-01: 原 fallback 用 p.guid.slice(-10) —— guid 尾部是数字 ID,
+      //   渲染出来是 "/169330663" 这种 URL 尾巴。改为明确的 —。
+      const ts = p.pubDate || '';
       // Ma: 没抓的 views 显示 "—"
       const viewsV = v(p);
       const likesV = l(p);
@@ -913,7 +933,7 @@ function renderPosts(stu) {
         <th style="text-align:right;">点赞</th>
         <th style="text-align:right;">评论</th>
         <th style="text-align:right;">收藏</th>
-        <th>抓取时间</th>
+        <th>发文时间</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
