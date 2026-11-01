@@ -1145,7 +1145,7 @@
     <span>⭐ <strong>${g.stars || 0}</strong></span>
     <span>🍴 <strong>${g.forks || 0}</strong></span>
     <span>📦 commit <strong>${g.commit_count || 0}</strong></span>
-    <span class="gitee-date">最后提交 ${escapeHtml(fmtRel(pushed))}${days != null ? ` (${days} 天前)` : ''}</span>
+    <span class="gitee-date">最后提交 ${escapeHtml(fmtRel(pushed))}</span>
     </div>
     ${shortMsg ? `<div class="repo" style="margin-top:6px;">${escapeHtml(shortMsg)}</div>` : ''}
     </div>`;
@@ -1457,7 +1457,7 @@
     <span class="gitee-stat">⭐ <strong>${g.stars || 0}</strong></span>
     <span class="gitee-stat">📦 <strong>${g.commit_count || 0}</strong></span>
     ${g.sha ? `<span class="gitee-sha">${escapeHtml(g.sha)}</span>` : ''}
-    <span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(pushed))}${days != null ? ` · ${days}天前` : ''}</span>
+    <span class="gitee-stat" style="margin-left:auto;">${escapeHtml(fmtRel(pushed))}</span>
     </div>`;
     }
     // Ma v11: 区分 empty (仓库存在但没 commit) 和 fail (404/限流)

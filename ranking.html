@@ -261,11 +261,13 @@
 
     <div class="ranking-card">
       <h2><span class="ico">⭐</span> Gitee star TOP 10</h2>
+      <ul class="ranking-list" id="rank-gitee-stars"></ul>
+    </div>
+
     <div class="ranking-card">
       <h2><span class="ico">🕒</span> Gitee 最近提交 TOP 10</h2>
       <ul class="ranking-list" id="rank-gitee-recent"></ul>
     </div>
-
 
     <div class="ranking-card">
       <h2><span class="ico">🔥</span> 最勤奋 (综合分 TOP 10)</h2>
@@ -400,7 +402,7 @@ function render() {
 
   // 4.5) ★ 2026-10-31: Gitee 最近提交 TOP 10 —— 仓库"更新情况"的正面视图。
   //   按最后一次 push 时间倒序, 只列真正提交过的仓库 (pushed_at 非空)。
-  //   空仓库 (建了但从未提交) 的 pushed_at 是空的, 天然被排除在外。
+  //   空仓库(建了但从未提交)的 pushed_at 是空的, 天然被排除在外。
   const byPushed = [...stu].filter(s => s.gitee && (s.gitee.pushed_at || '')).sort((a, b) => {
     const pa = String(a.gitee.pushed_at || '').slice(0, 10);
     const pb = String(b.gitee.pushed_at || '').slice(0, 10);
