@@ -261,8 +261,11 @@
 
     <div class="ranking-card">
       <h2><span class="ico">⭐</span> Gitee star TOP 10</h2>
-      <ul class="ranking-list" id="rank-gitee-stars"></ul>
+    <div class="ranking-card">
+      <h2><span class="ico">🕒</span> Gitee 最近提交 TOP 10</h2>
+      <ul class="ranking-list" id="rank-gitee-recent"></ul>
     </div>
+
 
     <div class="ranking-card">
       <h2><span class="ico">🔥</span> 最勤奋 (综合分 TOP 10)</h2>
@@ -394,6 +397,23 @@ function render() {
   });
   renderList('rank-gitee-stars', byStars.slice(0, 10),
     s => `<strong>${fmt((s.gitee && s.gitee.stars) || 0)}</strong> ⭐`);
+
+  // 4.5) ★ 2026-10-31: Gitee 最近提交 TOP 10 —— 仓库"更新情况"的正面视图。
+  //   按最后一次 push 时间倒序, 只列真正提交过的仓库 (pushed_at 非空)。
+  //   空仓库 (建了但从未提交) 的 pushed_at 是空的, 天然被排除在外。
+  const byPushed = [...stu].filter(s => s.gitee && (s.gitee.pushed_at || '')).sort((a, b) => {
+    const pa = String(a.gitee.pushed_at || '').slice(0, 10);
+    const pb = String(b.gitee.pushed_at || '').slice(0, 10);
+    return pb.localeCompare(pa);
+  });
+  renderList('rank-gitee-recent', byPushed.slice(0, 10),
+    s => {
+      const g = s.gitee || {};
+      const dateShort = (g.pushed_at || '').slice(5, 10) || '—';
+      const days = g.days_since_update;
+      const fresh = g.updated_since_last_check ? ' 🆕' : '';
+      return `<strong>${fmt(g.commit_count || 0)}</strong> commit · ${escapeHtml(dateShort)}${days != null ? ` · ${days}天前` : ''}${fresh}`;
+    });
 
   // 5) 最勤奋 (综合分): 文章数 × 10 + Gitee commit × 2 + 阅读 / 100
   const diligent = [...stu].map(s => {
