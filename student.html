@@ -196,8 +196,11 @@
     /* ★ 2026-11-01: 移动端横向溢出 (375px 视口 scrollWidth 404px)。
        按钮被压成 43px 宽仍溢出屏幕。 */
     .gitee-actions {
+      display: flex;
       flex-wrap: wrap;
       width: 100%;
+      min-width: 0;
+    }
     .gitee-card-detail .gitee-actions {
       display: flex;
       flex-direction: column;
@@ -891,28 +894,28 @@ function renderPosts(stu) {
   }
 
   const rows = posts.map((p, i) => {
-      // ★ 2026-11-01: 原 fallback 用 p.guid.slice(-10) —— guid 尾部是数字 ID,
-      //   渲染出来是 "/169330663" 这种 URL 尾巴。改为明确的 —。
-      const ts = p.pubDate || '';
-      // Ma: 没抓的 views 显示 "—"
-      const viewsV = v(p);
-      const likesV = l(p);
-      const commentsV = c(p);
-      const colsV = col(p);
-      // P1-1: 用 views/likes/comments/collections 任意有效字段做开关,
-      // 不再死扣 stats_updated_at (后端可能漏写, 死扣会导致所有文章都 "—")
-      const hasAnyStat = p.stats_updated_at != null
-        || (p.views != null && Number.isFinite(p.views))
-        || (p.likes != null && Number.isFinite(p.likes))
-        || (p.comments != null && Number.isFinite(p.comments))
-        || (p.collections != null && Number.isFinite(p.collections));
-      // ★ 2026-10-26: 每个格子独立判断 —— 以前用 hasAnyStat 一刀切,
-      //   只要 likes 有值, comments 的 null 也会被 fmtCell 画成 "0"。
-      const fmtCell = (x) => (x != null && Number.isFinite(x)) ? fmt(x) : '<span class="dim">—</span>';
-      const viewsHtml = fmtCell(viewsV);
-      const likesHtml = fmtCell(likesV);
-      const commentsHtml = fmtCell(commentsV);
-      const colsHtml = fmtCell(colsV);
+    // ★ 2026-11-01: 原 fallback 用 p.guid.slice(-10) —— guid 尾部是数字 ID,
+    //   渲染出来是 "/169330663" 这种 URL 尾巴。改为明确的 —。
+    const ts = p.pubDate || '';
+    // Ma: 没抓的 views 显示 "—"
+    const viewsV = v(p);
+    const likesV = l(p);
+    const commentsV = c(p);
+    const colsV = col(p);
+    // P1-1: 用 views/likes/comments/collections 任意有效字段做开关,
+    // 不再死扣 stats_updated_at (后端可能漏写, 死扣会导致所有文章都 "—")
+    const hasAnyStat = p.stats_updated_at != null
+      || (p.views != null && Number.isFinite(p.views))
+      || (p.likes != null && Number.isFinite(p.likes))
+      || (p.comments != null && Number.isFinite(p.comments))
+      || (p.collections != null && Number.isFinite(p.collections));
+    // ★ 2026-10-26: 每个格子独立判断 —— 以前用 hasAnyStat 一刀切,
+    //   只要 likes 有值, comments 的 null 也会被 fmtCell 画成 "0"。
+    const fmtCell = (x) => (x != null && Number.isFinite(x)) ? fmt(x) : '<span class="dim">—</span>';
+    const viewsHtml = fmtCell(viewsV);
+    const likesHtml = fmtCell(likesV);
+    const commentsHtml = fmtCell(commentsV);
+    const colsHtml = fmtCell(colsV);
     return `<tr>
       <td>${i + 1}</td>
       <td class="ttl"><a href="${escapeHtml(p.link || '#')}" target="_blank" rel="noopener">${escapeHtml(p.title || '(无标题)')}</a></td>

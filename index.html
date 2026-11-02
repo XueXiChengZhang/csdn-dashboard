@@ -304,32 +304,36 @@
   }
   .gitee-mini > * { min-width: 0; }
   .gitee-sha {
+    display: inline-block;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    .gitee-mini .gitee-sha {
-      background: var(--brand-soft);
-      color: var(--brand);
-      padding: 1px 6px;
-      border-radius: 2px;
-      font-size: 10px;
-    }
-    .gitee-mini .gitee-fail {
-      background: var(--accent-soft);
-      color: var(--accent);
-      padding: 1px 6px;
-      border-radius: 2px;
-      font-size: 10px;
-    }
-    /* Ma v11: Gitee empty 仓库徽章 (学生刚建, 没 commit) */
-    .gitee-mini .gitee-empty {
-      background: #fef3c7;
-      color: #92400e;
-      padding: 1px 6px;
-      border-radius: 2px;
-      font-size: 10px;
-    }
+    min-width: 0;
+  }
+  .gitee-mini .gitee-sha {
+    background: var(--brand-soft);
+    color: var(--brand);
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+  }
+  .gitee-mini .gitee-fail {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+  }
+
+  /* Ma v11: Gitee empty 仓库徽章 (学生刚建, 没 commit) */
+  .gitee-mini .gitee-empty {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+  }
 
     /* Ma v10: Gitee 卡片样式 (与 CSDN 平行) */
     .gitee-card {
