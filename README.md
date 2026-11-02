@@ -17,6 +17,7 @@
 | 测试 | `scripts/test_*.py` / `scripts/test_*.js`（共 250 项，全绿）|
 | 部署 | `DEPLOY.md`（GitHub Pages）/ `ALIYUN_DEPLOY.md`（阿里云）|
 | 中文提交 | `scripts/git-commit-zh.sh`（**必须用**，见下）|
+| **交付前闸门** | `python scripts/check_ci_gate.py`（**必须过**，见下）|
 
 **数据口径**：`data.json` 是当前状态，`history-real/` 是逐日快照。**趋势计算读 `history-real/`，不要从 `data.json` 反推**。
 
@@ -194,3 +195,43 @@ EOF
 - 数据只增不改：`history-real/` 是趋势的事实来源
 - 抓取有频率限制，遇 HTTP 521 须退避（`scripts/probe_csdn_limits.py` 是探测器）
 - 本机 GitHub 推送走 `ssh.github.com:443`（本机到 `github.com:443` 的 HTTPS 不通）
+
+
+## 交付前闸门（2026-11-02 起强制）
+
+> **改完任何页面，必须先跑过这个闸门再 commit。**
+
+```bash
+python scripts/check_ci_gate.py            # 全查（含浏览器实测，约 40 秒）
+python scripts/check_ci_gate.py --quick    # 只查语法+括号（1.5 秒）
+```
+
+**检查三件事**：
+
+| 检查 | 抓什么 | 为什么 node --check 不够 |
+|---|---|---|
+| JS 语法 | `node --check` 每个 `<script>` | 基础防线 |
+| **CSS 规则完整性** | 源码大括号配对 + CRCRLF 行尾 | **2026-11-01 真实事故**：`.gitee-sha` 少一个 `}`，导致其后所有 CSS 被浏览器丢弃（`.student-grid { display:grid }` 一起没了），页面从多列网格塌成单列。`node --check` 完全发现不了 —— 那不是 JS 问题 |
+| **移动端不溢出** | CDP 真视口 375px 下 `scrollWidth == innerWidth` | headless 的 `--window-size=375` 有窗口装饰补偿，实测 `innerWidth` 给到 504，必须用 CDP `Emulation.setDeviceMetricsOverride` |
+
+**闸门已做故障注入验证**：故意删掉 `index.html` 里一个 `}`，闸门报
+`✗ index.html CSS 括号  142 开 / 141 闭 ← 不配对!`（结果 14/15），还原后恢复 15/15。
+
+## 交付流程（写死的分工）
+
+```
+谁写代码          → Claude Code (CC) 派单执行
+谁验证            → Hermes 独立复验（不采信 CC 的自报）
+谁进 Git          → 复验通过后，Hermes commit + push
+```
+
+**关键约束**（来自 DeepSeek《Super-agent 设计探索》§7.1 的实验结论）：
+
+> 中性提示下，模型在 5 次运行中一次都没有调用 Subagent —— 所有工作都在主 Session 里做、
+> 不断被新消息打断，p95 达 29.5 分钟。
+
+**光在提示词里说「该派子代理」是没用的。** 所以分工必须写成**架构层约束**
+（派单时明确限定：改哪个文件、只改哪一处、验收标准是什么），而不是靠临场自觉。
+
+**每次改完页面，必须由 Hermes 独立复验**：CC 的自报不算数，
+要用真实浏览器实测拿数字（CSSOM 规则数、computed style、scrollWidth、卡片数）。
