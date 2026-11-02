@@ -193,14 +193,6 @@
       margin-top: 6px;
       font-style: italic;
     }
-    /* ★ 2026-11-01: 移动端横向溢出 (375px 视口 scrollWidth 404px)。
-       按钮被压成 43px 宽仍溢出屏幕。 */
-    .gitee-actions {
-      display: flex;
-      flex-wrap: wrap;
-      width: 100%;
-      min-width: 0;
-    }
     .gitee-card-detail .gitee-actions {
       display: flex;
       flex-direction: column;
@@ -400,6 +392,21 @@
       .student-head { padding: 18px; }
       .head-info h1 { font-size: 22px; }
       .avatar { width: 64px; height: 64px; font-size: 26px; }
+      /* 移动端: 卡片是三列网格 (auto 1fr auto)。窄屏下第三列 auto 会被挤成
+         0px, .gitee-actions 宽度塌陷 → flex column 的按钮在 x=361 竖直堆叠,
+         把页面撑到 404px。改为单列堆叠 + 按钮组占满宽度, 按钮横排可换行。 */
+      .gitee-card-detail {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+      .gitee-card-detail .gitee-ico { display: none; }
+      .gitee-card-detail .gitee-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        min-width: 0;
+        align-items: stretch;
+      }
     }
   /* v21: 暗色模式 — Ma 晚上看 dashboard */
     html.dark {
