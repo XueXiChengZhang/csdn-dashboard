@@ -770,7 +770,15 @@
        审查实测: 缺这条时 .dim 的 color 继承 --olive, opacity=1,
        "—" 与旁边真实数字视觉上完全无法区分。 */
     .dim { color: var(--stone); opacity: 0.4; }
-  </style>
+      /* ★ 2026-11-04 无障碍: 视觉隐藏但读屏可见 */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+    /* ★ 2026-11-04: 可聚焦元素必须有可见焦点圈 (键盘用户靠它定位) */
+    .student:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+    .student-grid .student:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+</style>
 </head>
 <body>
   <nav class="topnav">
@@ -829,11 +837,11 @@
 
   <!-- v7: fetch_meta 折叠面板 -->
   <div class="fetch-meta-panel" id="fetch-meta-panel">
-    <div class="fetch-meta-toggle" id="fetch-meta-toggle">
+    <button type="button" class="fetch-meta-toggle" id="fetch-meta-toggle" aria-expanded="false" aria-controls="fetch-meta-body">
       <span>📡 <strong>抓取元数据</strong> · <span id="fm-summary">点击展开</span></span>
       <span class="arrow">▶</span>
-    </div>
-    <div class="fetch-meta-body">
+    </button>
+    <div class="fetch-meta-body" id="fetch-meta-body">
       <div class="fetch-meta-grid" id="fetch-meta-grid">
         <div class="empty">尚未运行抓取任务</div>
       </div>
@@ -841,8 +849,9 @@
   </div>
 
   <div class="toolbar">
-      <input type="text" id="search" placeholder="搜索姓名..." />
-            <select id="sort">
+      <input type="text" id="search" placeholder="搜索姓名..." aria-label="按姓名搜索学生" />
+            <label class="sr-only" for="sort">排序方式</label>
+      <select id="sort">
         <option value="activity-desc" selected>综合活跃度 ↓</option>
         <option value="latest-desc">最新文章 ↓</option>
         <option value="latest-update-desc">文章最近更新 ↓</option>
@@ -853,6 +862,7 @@
         <option value="gitee-fresh">Gitee 最新活动</option>
         <option value="name-asc">姓名 A-Z</option>
       </select>
+      <label class="sr-only" for="filter">筛选条件</label>
       <select id="filter">
         <option value="all">全部</option>
         <option value="active">仅活跃</option>
@@ -862,9 +872,9 @@
         <option value="gitee-fail">Gitee 抓取失败</option>
       </select>
       <div class="time-filter" id="time-filter" title="时间筛选(基于最近抓取快照)">
-        <button data-range="all" class="active">全部</button>
-        <button data-range="7">7 天</button>
-        <button data-range="30">30 天</button>
+        <button type="button" data-range="all" class="active" aria-pressed="true">全部</button>
+        <button type="button" data-range="7" aria-pressed="false">7 天</button>
+        <button type="button" data-range="30" aria-pressed="false">30 天</button>
       </div>
       <button class="refresh-btn" id="refresh-btn" title="强制重新加载数据">↻ 刷新</button>
       <button class="refresh-btn" id="export-btn" title="导出当前学生列表为 CSV">⬇ 导出 CSV</button>
@@ -931,7 +941,7 @@
       ...s,
       csdn: !!s.csdn_url,
     }));
-    CLASS_STATS = data.class_stats || null;
+    CLASS_STATS = data.class_stats || null;   // 后端算好的班级统计 (单一事实来源)
     renderStats(data);
     renderAlert(data);
     renderGiteeCard();
@@ -966,7 +976,15 @@
         const total = data.total_students;
         const posts = data.total_posts;
         const active = ALL_STUDENTS.filter(s => s.post_count > 0).length;
-        const avg = active > 0 ? (posts / active).toFixed(1) : 0;
+        // ★ 2026-11-04: 优先用后端算好的 class_stats.csdn.avg_posts_per_active。
+        //   以前前端自己重算 (posts/active).toFixed(1) = 18.6, 后端值是 18.65 ——
+        //   差 0.003 纯四舍五入, 但两个数来自两处计算, 一旦采集端口径调整就会打架。
+        //   后端算完存在 data.json 里, 前端直接读, 单一事实来源。
+        const backendAvg = data.class_stats && data.class_stats.csdn
+          ? data.class_stats.csdn.avg_posts_per_active : null;
+        const avg = backendAvg != null
+          ? Number(backendAvg).toFixed(1)
+          : (active > 0 ? (posts / active).toFixed(1) : 0);
         document.getElementById('stat-total').textContent = total;
         document.getElementById('stat-posts').textContent = posts;
         document.getElementById('stat-active').textContent = active;
@@ -1020,12 +1038,24 @@
     const inc = fm.incremental || {};
     const git = fm.gitee || {};
     const incReq = Number(inc.total_requests || 0);
-    const gitReq = Number(git.total_requests || 0);
+    // ★ 2026-11-04 修 #9: gitee.total_requests 恒为 0 (采集端没写这个字段),
+    //   于是面板显示「Gitee 0 请求」, 同一格里却写着「成功 32/34」—— 自相矛盾,
+    //   读者会以为 Gitee 那一路根本没跑。
+    //   真实请求数在 method_breakdown 里 (gitee_api / gitee_html / gitee_markdown), 用它算。
+    const _mb = fm.method_breakdown || {};
+    const gitReq = (Number(_mb.gitee_api || 0) + Number(_mb.gitee_html || 0)
+      + Number(_mb.gitee_markdown || 0)) || Number(git.total_requests || 0);
     const total = incReq + gitReq;                  // 两个分块的请求数之和
     const incOk = Number(inc.students_ok || 0);
     const incTot = Number(inc.students_total || 0);
     const gitOk = Number(git.ok || 0);
     const gitTot = Number(git.students_total || 0);
+    const gitEmpty = Number(git.empty || 0);
+    // ★ 2026-11-04 修 #9: git.ok 的语义是「仓库存在」(含空仓库), 不是「抓取成功有提交」。
+    //   实测 2026-11-04: ok=32 / empty=19 / stages.gitee.fail=2 —— 32+19 > 34,
+    //   说明 ok 里含着 18 个空仓库, 所以「成功 32/34」会让人以为 32 个人都在提交代码。
+    //   真实「有提交」的人数 = ok - empty。
+    const gitWithCommits = Math.max(0, gitOk - gitEmpty);
   // ★ 2026-11-01: 真实失败数在 stages.gitee.fail; fm.fail_count 恒为 0,
   //   于是折叠面板显示「失败 0」却同时写着「Gitee 成功 32/34」 —— 自相矛盾。
   const fail = Number((fm.stages && fm.stages.gitee && fm.stages.gitee.fail) || fm.fail_count || 0);
@@ -1052,7 +1082,7 @@
     }
     if (gitTot || gitReq) {
     const gitExtra = Number(git.empty || 0) ? ` · ${git.empty} 空仓库` : '';
-    pills.push(`<span class="pill">Gitee ${gitReq} 请求 · ${gitOk}/${gitTot} 人${gitExtra}</span>`);
+    pills.push(`<span class="pill">Gitee ${gitReq} 请求 · 有提交 ${gitWithCommits}/${gitTot} 人${gitExtra}</span>`);
     }
     pills.push(`<span class="pill">失败 ${fail}</span>`);
     healthMeta.innerHTML = pills.join('');
@@ -1081,7 +1111,7 @@
     grid.innerHTML = '<div class="empty">尚未运行抓取任务 — 跑一次 csdn-monitor.py 会自动出现</div>';
     } else {
     summary.textContent =
-    `${covOk}/${covTot} 覆盖 · 增量 ${incReq} 请求 · Gitee ${gitReq} 请求 · ${ms}ms`;
+    `${covOk}/${covTot} 覆盖 · 增量 ${incReq} 请求 · Gitee ${gitReq} 请求 · 有提交 ${gitWithCommits} 人 · ${ms}ms`;
     grid.innerHTML = `
     <div><span class="k">抓取时间</span><span class="v">${escapeHtml(ts.replace('T',' ').slice(0,19))}</span></div>
     <div><span class="k">总请求</span><span class="v">${total}</span></div>
@@ -1089,8 +1119,9 @@
     <div><span class="k">增量覆盖</span><span class="v">${incOk}/${incTot} 人</span></div>
     <div><span class="k">增量新文章</span><span class="v">${Number(inc.new_posts || 0)}</span></div>
     <div><span class="k">Gitee 请求</span><span class="v">${gitReq}</span></div>
-    <div><span class="k">Gitee 成功</span><span class="v">${gitOk}/${gitTot} 人</span></div>
+    <div><span class="k">Gitee 有提交</span><span class="v">${gitWithCommits}/${gitTot} 人</span></div>
     <div><span class="k">Gitee 空仓库</span><span class="v">${Number(git.empty || 0)}</span></div>
+    <div><span class="k">Gitee 仓库存在</span><span class="v" title="仓库存在 ≠ 有提交。空仓库也计入这一格。">${gitOk} 人</span></div>
     <div><span class="k">Gitee commit</span><span class="v">${Number(git.total_commits || 0)}</span></div>
     <div><span class="k">抓取方式·CSDN 列表</span><span class="v">${Number(methods.csdn_html || 0)}</span></div>
     <div><span class="k">抓取方式·CSDN RSS</span><span class="v">${Number(methods.csdn_rss || 0)}</span></div>
@@ -1130,15 +1161,43 @@
     }
     }
 
-    // v4: 派生"最近更新"集合(简化:post_count > 0 且 guid 中 details/ 数字 > 某阈值? 不可靠)
-    // 改成:用所有学生中最大 guid 数字做基准,guid 数字靠后的算 NEW。
-    // 这太复杂,简化为:post_count > 0 就给个"N 篇"作为信息密度。NEW 标记改成:
-    // 如果 last_update 是今天,且该学生 post_count > 0,就标记 NEW(说明今天抓到了内容)
-    // ★ 2026-11-01: 旧判据是「last_update 是今天 且 post_count>0」—— 只要当天跑过抓取,
-    //   全班 34 人全部标 NEW (实测 34/34), 等于没标。改用 post 级真实信号 is_new。
+    // ★ 2026-11-04 重做 NEW 徽章判据。
+    //   问题: is_new 是**永久标记** —— 采集端 (csdn_incremental.py) 只在文章首次
+    //   入库时打 is_new=True, 从不清除。所以 10-26 的老文章至今还带着标记,
+    //   实测 171/634 篇文章带 is_new, 覆盖 32/34 个学生 -> 徽章失去区分度。
+    //   (2026-11-01 那次从"学生级"改成"文章级"也没解决, 因为文章级标记本身不衰减。)
+    //   新判据: **最近 48 小时内发布过文章**。
+    //     - 语义可解释: "最近发的文", 不需要知道采集端内部状态
+    //     - 衰减自然: 48 小时后自动不再算新
+    //     - 不动采集端 (改采集端的 is_new 生命周期风险更高, 涉及 data.json 写入)
+    //   同时**不再**用 is_new 兜底 —— 那正是问题本身: is_new 永不衰减,
+    //   留着它等于没改。48 小时内没发过文就是"不新", 与 is_new 无关。
+    //   (is_new 仍留在 data.json 里给采集端和离线分析用, 前端不再读它。)
+    const NEW_WINDOW_HOURS = 48;
     function isNewlyPosted(s) {
       if (!s.posts || !s.posts.length) return false;
-      return s.posts.some(p => p && p.is_new);
+      const cutoff = Date.now() - NEW_WINDOW_HOURS * 3600 * 1000;
+      return s.posts.some(p => {
+        if (!p || !p.pubDate) return false;
+        const t = new Date(p.pubDate).getTime();
+        return !Number.isNaN(t) && t >= cutoff;
+      });
+    }
+    // 徽章上写清楚"几天内", 避免读者以为是"本轮刚抓到"
+    function newBadgeLabel(s) {
+      if (!isNewlyPosted(s)) return '';
+      const days = new Set();
+      const cutoff = Date.now() - NEW_WINDOW_HOURS * 3600 * 1000;
+      for (const p of (s.posts || [])) {
+        if (!p || !p.pubDate) continue;
+        const t = new Date(p.pubDate).getTime();
+        if (!Number.isNaN(t) && t >= cutoff) {
+          days.add(Math.floor((Date.now() - t) / 86400000));
+        }
+      }
+      if (days.size === 0) return 'NEW';
+      const maxD = Math.max(...days);
+      return maxD === 0 ? 'NEW' : `${maxD}天内`;
     }
 
     // v10: Gitee 顶部活动卡片 - 显示最近 commit 的仓库
@@ -1267,8 +1326,6 @@
       list = list.filter(s => s.name.toLowerCase().includes(search));
     }
     // v6: 阅读量排序 - 无数据(null/0)排到最后
-    const viewsOf = (s) => (s.total_views != null && s.total_views > 0) ? s.total_views : 0;
-    const viewsKey = (s) => (s.total_views != null && s.total_views > 0) ? 0 : 1;
     // v12 Ma: 综合活跃度 (不用阅读量)
     // 公式: 有文章+30, Gitee 成功+20, 最新文章越近+分 (≤30 天), 文章数+1 (≤10), Gitee commits+1 (≤10)
     // 惩罚: 缺 CSDN -50
@@ -1341,8 +1398,13 @@
     // v4.1: 卡片外层用 <div>(避免 <a> 嵌套 <a> 触发 HTML 解析器自动闭合)
     // 主页跳转通过 onclick + data-href 实现,内部 <a> 仍可独立点击
     const cardTag = 'div';
+    // ★ 2026-11-04 修 #14: 原来卡片外层 role="link", 里面又套了 6 个真 <a>
+    //   (4 个文章链接 + Gitee 链接 + 详情链接)。role="link" 的元素里不能有
+    //   可聚焦后代 —— 读屏会把整卡读成一个链接, 但 Tab 会逐个进去, 焦点语义全乱。
+    //   改: 去掉 role="link", 只保留 tabindex="0" + aria-label (说明整卡可回车跳转),
+    //   内部链接各走各的。
     const cardAttrs = hasCsdn
-    ? `data-href="${escapeHtml(s.csdn_url)}" role="link" tabindex="0"`
+    ? `data-href="${escapeHtml(s.csdn_url)}" tabindex="0" aria-label="${escapeHtml(s.name)} 的卡片, 回车打开 CSDN 主页"`
     : '';
     const cardClass = hasCsdn ? 'student' : 'student no-csdn';
     const rank = idx + 1;
@@ -1403,7 +1465,10 @@
     `;
     }
 
-    const newBadgeHtml = isNew ? `<span class="new-badge">NEW</span>` : '';
+    // ★ 2026-11-04: 徽章文案带上时间范围, 读者一眼知道是"几天内发的"而不是"刚抓到"。
+    const newBadgeHtml = isNew
+      ? `<span class="new-badge" title="最近 ${NEW_WINDOW_HOURS} 小时内发布过文章">${newBadgeLabel(s)}</span>`
+      : '';
 
     // v6: 总统计 row - 仅阅读量
     const statsRowHtml = renderStatsRow(s);
@@ -1625,16 +1690,25 @@
     // v10: 时间筛选按钮事件
     document.querySelectorAll('#time-filter button').forEach(btn => {
     btn.addEventListener('click', () => {
-    document.querySelectorAll('#time-filter button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#time-filter button').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
     btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
     TIME_RANGE = btn.dataset.range;
     render();
     });
     });
 
     // v7: fetch_meta 折叠面板点击
-    document.getElementById('fetch-meta-toggle').addEventListener('click', () => {
-    document.getElementById('fetch-meta-panel').classList.toggle('open');
+    // ★ 2026-11-04: 同步 aria-expanded —— 屏幕阅读器用户要知道面板开没开。
+    //   元素已从 <div> 改成 <button>, 现在键盘可达了 (原来只有 click 监听, Tab 到不了)。
+    const fmToggle = document.getElementById('fetch-meta-toggle');
+    const fmPanel = document.getElementById('fetch-meta-panel');
+    fmToggle.addEventListener('click', () => {
+    const opened = fmPanel.classList.toggle('open');
+    fmToggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
     });
 
     // v4.1: 卡片点击跳转(委托到 #students)

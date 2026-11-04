@@ -116,7 +116,14 @@
     .bar-wrap { display: flex; align-items: center; gap: 10px; }
     .bar-track { flex: 1; height: 6px; background: var(--border-soft); border-radius: 3px; overflow: hidden; }
     .bar-fill { height: 100%; background: var(--brand); border-radius: 3px; }
-  </style>
+      /* ★ 2026-11-04 无障碍: 视觉隐藏但读屏可见 (表格 caption / 补充说明用) */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+    /* ★ 2026-11-04: 可聚焦元素必须有可见焦点圈 (键盘用户靠它定位) */
+    table tbody tr:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+</style>
 </head>
 <body>
   <nav class="topnav">
@@ -167,27 +174,28 @@
     <div class="card">
       <h2>班级总阅读量走势</h2>
       <div class="note">每个点是一次抓取完成后的快照。同一日多次抓取时取峰值 —— 因为 05:30 的任务会覆盖写入残缺值，峰值才是真实值。</div>
-      <svg class="chart-svg" id="line-chart" viewBox="0 0 1000 320" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg class="chart-svg" id="line-chart" viewBox="0 0 1000 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="全班总阅读量趋势折线图, X 轴为日期, Y 轴为总阅读量"></svg>
     </div>
 
     <div class="card">
       <h2>每日净增</h2>
       <div class="note">正数为当日新增阅读，负数通常来自数据被覆盖写坏（而非真实下跌）。</div>
-      <svg class="chart-svg" id="bar-chart" viewBox="0 0 1000 320" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg class="chart-svg" id="bar-chart" viewBox="0 0 1000 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="人均阅读量柱状图, X 轴为日期, Y 轴为人均阅读量"></svg>
     </div>
 
     <div class="card">
       <h2>学生增长排行</h2>
   <div class="note" id="trend-note">区间内累计阅读量的净增长。<span id="trend-cov"></span></div>
       <table>
-        <thead>
+      <caption class="sr-only">学生阅读量增长排行</caption>
+        <th scope="col"ead>
           <tr>
-            <th style="width:44px">#</th>
-            <th>学生</th>
-            <th class="num">区间增长</th>
-            <th class="num">当前总阅读</th>
-            <th class="num">文章数</th>
-            <th style="width:34%">相对增长</th>
+            <th scope="col" style="width:44px">#</th>
+            <th scope="col">学生</th>
+            <th scope="col" class="num">区间增长</th>
+            <th scope="col" class="num">当前总阅读</th>
+            <th scope="col" class="num">文章数</th>
+            <th scope="col" style="width:34%">相对增长</th>
           </tr>
         </thead>
         <tbody id="rank-body">

@@ -83,6 +83,18 @@ def check_css_braces():
     return ok_all
 
 
+def _port_free(port):
+    import socket
+    s = socket.socket()
+    try:
+        s.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+    finally:
+        s.close()
+
+
 def start_server():
     import socket
     s = socket.socket()
@@ -171,6 +183,11 @@ def check_browser():
             srv.terminate()
         except Exception:
             pass
+        # 等端口真正释放
+        for _ in range(30):
+            if _port_free(PORT):
+                break
+            time.sleep(0.2)
 
     if not out:
         return add("CDP 探测", False, "无输出")
@@ -270,6 +287,128 @@ def check_local_date():
     return ok_all
 
 
+def check_no_undefined_refs():
+    """★ 2026-11-04 新增 (#9 回归防护) —— **运行时**未定义变量 / 加载失败检查。
+
+    事故: 修 fetch_meta 面板时, 引用处 (${gitWithCommits}) 改了, 但变量定义段
+    的 replace 因为 assert 失败整段没写入 —— 结果 index.html **整页白屏**
+    ("加载失败: gitWithCommits is not defined")。
+
+    **node --check 完全发现不了**: 它只查语法, 不查作用域。
+
+    ⚠️ 走过的弯路 (别重走):
+      - 静态扫标识符 → 误报 162 个 (注释里的中文、字符串内容全被当成变量)。
+      - Node 里真跑 <script> → 抓不到: 变量在**函数体内**, 而函数在 Node 环境
+        (无 DOM) 里根本执行不到, 提前就 TypeError 了。
+
+    最终方案: 在**真浏览器**里渲染, 断言 DOM 里没有失败态文本。
+    这是唯一能抓到「运行时报错」的位置 —— 页面自己会显示 "加载失败: xxx is not defined"。
+    """
+    print("\n[6] 运行时未定义变量 (node --check 查不出)")
+    ok_all = True
+    # 需要浏览器 —— 复用 check_browser 的基础设施
+    if not os.path.exists(CHROME):
+        return add("Chrome 存在", False, CHROME)
+    # ⚠️ 必须用**独立端口** —— check_browser 也用 PORT, 两个检查连跑会抢端口,
+    #   导致后一个的 start_server() 失败、页面加载到残留的旧服务器, 结果乱报。
+    UNDEF_PORT = PORT + 1
+    if not _port_free(UNDEF_PORT):
+        return add("端口空闲", False, f"{UNDEF_PORT} 被占用")
+    srv = subprocess.Popen(["python", "-m", "http.server", str(UNDEF_PORT), "--bind", "127.0.0.1"],
+                           cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    time.sleep(2.5)
+    node_script = os.path.join(tempfile.gettempdir(), "_csdn_undef_probe.js")
+    with open(node_script, "w", encoding="utf-8") as f:
+        f.write(r'''
+(async () => {
+  const list = await (await fetch("http://127.0.0.1:9360/json")).json();
+  const tgt = list.find(t => t.type === "page");
+  const ws = new WebSocket(tgt.webSocketDebuggerUrl);
+  let id=0; const pending=new Map(); const errs=[];
+  ws.onmessage = e => { const m=JSON.parse(e.data);
+    if(m.method==="Runtime.exceptionThrown") errs.push((m.params.exceptionDetails.text||"").slice(0,160));
+    if(pending.has(m.id)){pending.get(m.id)(m);pending.delete(m.id);} };
+  await new Promise(r => ws.onopen = r);
+  const cmd=(m,p={})=>new Promise(res=>{const i=++id;pending.set(i,res);ws.send(JSON.stringify({id:i,method:m,params:p}));});
+  await cmd("Runtime.enable");
+  const out={};
+  for (const p of ["index.html","student.html?name=%E9%9F%A9%E5%8D%9A","analytics.html","ranking.html","trend.html"]) {
+    await cmd("Page.navigate",{url:"http://127.0.0.1:PORT/"+p});
+    // 等渲染完成 (轮询到有实质内容)
+    let ready=false;
+    for (let i=0;i<22;i++){
+      await new Promise(r=>setTimeout(r,600));
+      const rr = await cmd("Runtime.evaluate",{expression:"(()=>{const t=document.body.innerText||'';return t.length>500 && !/加载失败:\\s*[^\\n]/.test(t)})()",returnByValue:true});
+      if (rr.result.result.value) { ready=true; break; }
+    }
+    const r = await cmd("Runtime.evaluate",{expression:`JSON.stringify((()=>{
+      // ⚠️ 只看**渲染后的可见文本**, 不看 innerHTML —— 源码里有"加载失败:"字样的
+      //    错误处理代码会被误当成失败态 (student.html / analytics.html / ranking.html
+      //    都有这种 catch 分支)。innerText 才是用户真正看到的东西。
+      const txt = document.body.innerText || '';
+      // 更严的判据: 失败态是**渲染出来的** "加载失败: xxx" —— 必须紧跟冒号和内容
+      const failMatch = txt.match(/加载失败:\\s*[^\\n]{0,110}/);
+      const refMatch = txt.match(/[A-Za-z_$][\\w$]* is not defined/);
+      return {
+        ready: txt.length > 500,
+        len: txt.length,
+        failText: failMatch ? failMatch[0].slice(0,110) : null,
+        refError: refMatch ? refMatch[0] : null,
+        cards: document.querySelectorAll('.student').length,
+        tables: document.querySelectorAll('table').length,
+        rows: document.querySelectorAll('tbody tr').length
+      };
+    })())`,returnByValue:true});
+    out[p.split('?')[0]] = r.result.result.value?JSON.parse(r.result.result.value):{err:"?"};
+  }
+  out.errors = errs.slice(0,6);
+  console.log(JSON.stringify(out));
+  ws.close(); process.exit(0);
+})();
+'''.replace("PORT", str(UNDEF_PORT)))
+
+    prof = os.path.join(tempfile.gettempdir(), "_csdn_undef_prof")
+    chrome = subprocess.Popen([CHROME, "--headless=new", "--disable-gpu", "--no-sandbox",
+                               "--remote-debugging-port=9360", f"--user-data-dir={prof}",
+                               "about:blank"],
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    time.sleep(4)
+    out = {}
+    try:
+        r = subprocess.run(["node", node_script], capture_output=True, timeout=280)
+        txt = ((r.stdout or b"") + (r.stderr or b"")).decode("utf-8", "replace")
+        i = txt.find("{")
+        out = json.loads(txt[i:txt.rfind("}") + 1]) if i >= 0 else {}
+    finally:
+        for proc in (chrome, srv):
+            try:
+                proc.terminate()
+            except Exception:
+                pass
+        # 等端口真正释放 —— 否则下一个检查抢不到端口, 页面会加载到残留服务器
+        for _ in range(30):
+            if _port_free(UNDEF_PORT):
+                break
+            time.sleep(0.2)
+
+    if not out:
+        return add("CDP 探测", False, "无输出")
+
+    for page, v in out.items():
+        if page == "errors":
+            continue
+        # 失败态文本 = 未定义变量 / 加载失败
+        bad = v.get("failText") or v.get("refError")
+        # 页面必须有实质内容 (防止"白屏也算过")
+        thin = not v.get("ready") or (v.get("len", 0) < 300)
+        ok_all = add(f"{page} 渲染正常", (not bad) and (not thin),
+                     (bad or f"len={v.get('len')} 卡片={v.get('cards')} 行={v.get('rows')}")
+                     ) & ok_all
+    ok_all = add("无 ReferenceError", not out.get("errors"),
+                 str(out.get("errors") or "无")) & ok_all
+    return ok_all
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true", help="跳过浏览器检查")
@@ -287,6 +426,9 @@ def main():
     ok = check_no_inline_userdata() and ok
     ok = check_local_date() and ok
     if not args.quick:
+        # [6] 需要真浏览器 (在 Node 里跑 <script> 抓不到函数体内的未定义变量),
+        #     所以不放进 --quick。
+        ok = check_no_undefined_refs() and ok
         ok = check_browser() and ok
 
     print("\n" + "=" * 62)

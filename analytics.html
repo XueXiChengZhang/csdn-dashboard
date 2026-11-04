@@ -360,6 +360,24 @@
       .hist { grid-template-columns: repeat(2, 1fr); }
       .top-table { font-size: 12px; }
       .top-table th, .top-table td { padding: 8px 8px; }
+      /* ★ 2026-11-04 移动端表格列折叠 (报告 #22):
+         第二张表 (Gitee) 375px 下宽 578 vs 容器 343 —— 溢出 235px, 必须横拖才能看完。
+         「最后 commit」列 217px 是最大头, 移动端缩成日期; 仓库列允许省略号截断。 */
+      .gitee-table th:nth-child(6),
+      .gitee-table td:nth-child(6) {
+        max-width: 74px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+      }
+      .gitee-table th:nth-child(3),
+      .gitee-table td:nth-child(3) {
+        max-width: 96px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
   /* v21: 暗色模式 — Ma 晚上看 dashboard */
     html.dark {
@@ -414,7 +432,14 @@
        铁律: 未抓到的值必须 dimmed 的 —, 不能和真实数字同色。 */
     .dim { color: var(--stone); opacity: 0.4; }
     
-  </style>
+      /* ★ 2026-11-04 无障碍: 视觉隐藏但读屏可见 (表格 caption / 补充说明用) */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+    /* ★ 2026-11-04: 可聚焦元素必须有可见焦点圈 (键盘用户靠它定位) */
+    #top10-body tr:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+</style>
 </head>
 <body>
 
@@ -475,13 +500,14 @@
     </div>
     <div class="section-table-wrap">
     <table class="top-table">
-      <thead>
+      <caption class="sr-only">按文章阅读量排序的学生 TOP 10</caption>
+      <th scope="col"ead>
         <tr>
-          <th class="rank">#</th>
-          <th>姓名</th>
-          <th>文章数</th>
-          <th title="CSDN 个人主页口径的总访问量">总访问量</th>
-          <th title="每篇文章阅读数之和 ÷ 文章数 (同一口径)">平均阅读/篇 (文章累加)</th>
+          <th scope="col" class="rank">#</th>
+          <th scope="col">姓名</th>
+          <th scope="col">文章数</th>
+          <th scope="col" title="CSDN 个人主页口径的总访问量">总访问量</th>
+          <th scope="col" title="每篇文章阅读数之和 ÷ 文章数 (同一口径)">平均阅读/篇 (文章累加)</th>
         </tr>
       </thead>
       <tbody id="top10-body">
@@ -494,9 +520,10 @@
   <section class="section">
     <div class="section-title">
       <span>📊 阅读量分布</span>
-      <span class="hint">4 区间 · 0 / 1-100 / 100-1K / 1K+</span>
+      <span class="hint">5 区间 · 未抓到 / 0 / 1-100 / 100-1K / 1K+</span>
     </div>
     <div class="hist" id="hist">
+      <div class="hist-bar"><div class="lbl">未抓到</div><div class="count">—</div><div class="pct">—</div><div class="track"><div class="fill"></div></div></div>
       <div class="hist-bar"><div class="lbl">0 阅读</div><div class="count">—</div><div class="pct">—</div><div class="track"><div class="fill"></div></div></div>
       <div class="hist-bar"><div class="lbl">1-100</div><div class="count">—</div><div class="pct">—</div><div class="track"><div class="fill"></div></div></div>
       <div class="hist-bar"><div class="lbl">100-1K</div><div class="count">—</div><div class="pct">—</div><div class="track"><div class="fill"></div></div></div>
@@ -510,7 +537,7 @@
       <span class="hint">X=文章数 · Y=阅读量 · hover 显示姓名</span>
     </div>
     <div class="scatter-wrap">
-  <svg class="scatter-svg" id="scatter" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet"></svg>
+  <svg class="scatter-svg" id="scatter" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet" role="img" aria-label="文章活跃度散点图, X 轴为文章数, Y 轴为总访问量, 每个点代表一名学生"></svg>
       <div class="scatter-tip" id="scatter-tip"></div>
       <div class="scatter-legend">
         <span><span class="swatch" style="background:#E4ECF5;"></span>低</span>
@@ -548,15 +575,16 @@
       <span class="hint">按 commit 数降序 · 点击跳 Gitee 仓库</span>
     </div>
     <div class="section-table-wrap">
-    <table class="top-table">
-      <thead>
+    <table class="top-table gitee-table">
+      <caption class="sr-only">Gitee 仓库活动 TOP 10 (按提交数排序)</caption>
+      <th scope="col"ead>
         <tr>
-          <th class="rank">#</th>
-          <th>姓名</th>
-          <th>仓库</th>
-          <th>commit</th>
-          <th>⭐ / 🍴</th>
-          <th>最后 commit</th>
+          <th scope="col" class="rank">#</th>
+          <th scope="col">姓名</th>
+          <th scope="col">仓库</th>
+          <th scope="col">commit</th>
+          <th scope="col">⭐ / 🍴</th>
+          <th scope="col">最后 commit</th>
         </tr>
       </thead>
       <tbody id="gitee-top-body">
@@ -572,7 +600,7 @@
       <span class="hint">X=commit 数 · Y=阅读量 · hover 显示姓名</span>
     </div>
     <div class="scatter-wrap">
-      <svg class="scatter-svg" id="gitee-scatter" viewBox="0 0 760 280" preserveAspectRatio="xMidYMid meet"></svg>
+      <svg class="scatter-svg" id="gitee-scatter" viewBox="0 0 760 280" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Gitee 活跃度散点图, X 轴为提交数, Y 轴为 star 数, 每个点代表一名学生"></svg>
     </div>
   </section>
 </main>
@@ -693,7 +721,7 @@ function render() {
       //   JS 的 encodeURIComponent 不转义单引号 (Python 的 quote 会, 所以只在浏览器里复现)。
       //   姓名含 ' 时拼出的属性是非法 JS -> 整行点击失效; 构造 "');alert(1);//" 还能注入执行。
       //   改成: 姓名格用真 <a> (href 里用双引号包裹 + 转义), 行 onclick 只做增强。
-      return `<tr class="${cls}">
+      return `<tr class="${cls}" data-href="student.html?name=${encodeURIComponent(s.name)}" tabindex="0">
         <td class="${rcls}">#${i + 1}</td>
         <td><a href="student.html?name=${encodeURIComponent(s.name)}" style="color:var(--brand);text-decoration:none;">${escapeHtml(s.name)}</a></td>
         <td>${s.post_count || 0}</td>
@@ -704,16 +732,23 @@ function render() {
   }
 
   // Histogram
-  const bins = [0, 0, 0, 0];
+  // ★ 2026-11-04: 原来 `const v = s.total_views || 0` 把「未抓到」(null) 和
+  //   「真的 0 阅读」并进同一个桶 —— 复刻: [null, null, 0, 500] -> bins=[3,0,1,0],
+  //   显示成「0 阅读 3 人」, 其中 2 人其实是没抓到数据。
+  //   改: null/undefined/非数值单独进「未抓到」桶, 铁律同 .dim:
+  //   「没抓到」和「真的是 0」必须能区分。
+  const bins = [0, 0, 0, 0, 0];   // [未抓到, 0阅读, 1-100, 100-1K, 1K+]
   for (const s of stu) {
-    const v = s.total_views || 0;
-    if (v === 0) bins[0]++;
-    else if (v < 100) bins[1]++;
-    else if (v < 1000) bins[2]++;
-    else bins[3]++;
+    const raw = s.total_views;
+    if (raw == null || !Number.isFinite(Number(raw))) { bins[0]++; continue; }
+    const v = Number(raw);
+    if (v === 0) bins[1]++;
+    else if (v < 100) bins[2]++;
+    else if (v < 1000) bins[3]++;
+    else bins[4]++;
   }
   const maxBin = Math.max(...bins, 1);
-  const histLabels = ['0 阅读', '1-100', '100-1K', '1K+'];
+  const histLabels = ['未抓到', '0 阅读', '1-100', '100-1K', '1K+'];
   const histEls = document.querySelectorAll('#hist .hist-bar');
   histEls.forEach((el, i) => {
     el.querySelector('.count').textContent = fmt(bins[i]);
@@ -964,6 +999,25 @@ function renderGiteeScatter(stu) {
     });
     c.addEventListener('mouseleave', () => tip.style.opacity = '0');
     c.addEventListener('click', () => location.href = `student.html?name=${encodeURIComponent(c.dataset.nm)}`);
+  });
+}
+
+// ★ 2026-11-04 修 #17: TOP10 行改成键盘可达。
+//   原来整行靠 <tr onclick> 跳转 —— 只对鼠标有效, Tab 到不了, 读屏读不出这是链接。
+//   现在: 行带 data-href + tabindex="0", 委托处理 click 和 Enter/Space;
+//   姓名格另有真 <a> (href 同样指向该页), 两条路都通。
+const top10Body = document.getElementById('top10-body');
+if (top10Body) {
+  top10Body.addEventListener('click', (e) => {
+    if (e.target.closest('a')) return;          // 点真链接走浏览器默认
+    const row = e.target.closest('tr[data-href]');
+    if (row) location.href = row.dataset.href;
+  });
+  top10Body.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.target.closest('a')) return;
+    const row = e.target.closest('tr[data-href]');
+    if (row) { e.preventDefault(); location.href = row.dataset.href; }
   });
 }
 

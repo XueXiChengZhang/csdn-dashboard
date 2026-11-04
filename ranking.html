@@ -392,13 +392,41 @@ function render() {
     });
 
   // 4) Gitee star TOP 10
-  const byStars = [...stu].sort((a, b) => {
-    const as = (a.gitee && a.gitee.stars) || 0;
-    const bs = (b.gitee && b.gitee.stars) || 0;
-    return bs - as;
+  // ★ 2026-11-04: 原来直接对全部学生排序取前 10 —— 那些"从未抓到仓库"(status='failed')
+  //   或"空仓库"(status='empty') 的 stars 是**默认值 0**, 不是真实值, 混进榜单
+  //   就是把"没抓到"冒充成"0 star"。实测: 34 人里只有 1 人真有 star 数据,
+  //   榜单上另外 9 个全是噪声。
+  //   改: 只纳入 gitee.ok 且 status !== 'empty' 且非 failed 的学生;
+  //   有效样本 < 3 时明说"样本不足", 不摆一个假装有 10 名的榜。
+  const starEl = document.getElementById('rank-gitee-stars');
+  const starValid = stu.filter(s => {
+    const g = s.gitee || {};
+    if (!g.ok) return false;
+    if (g.status === 'empty' || g.empty) return false;
+    if (g.status === 'failed' || g.err) return false;
+    return Number.isFinite(Number(g.stars));
   });
-  renderList('rank-gitee-stars', byStars.slice(0, 10),
-    s => `<strong>${fmt((s.gitee && s.gitee.stars) || 0)}</strong> ⭐`);
+  // 只有**非零** star 才算"有 star 排名价值"。实测: 34 人里 14 人 status='ok'
+  //   (仓库真实存在且有提交), 但其中 13 人 star 就是 0 —— 把这 13 个排进
+  //   "star TOP 10", 榜单看着有 10 个人, 实际只有 1 个非零值, 剩下的 0 是
+  //   "没人给过星"而非"没抓到", 但读者无法分辨, 榜单就失去意义。
+  const starNonZero = starValid.filter(s => (Number(s.gitee.stars) || 0) > 0);
+  if (starNonZero.length < 3) {
+    if (starEl) {
+      starEl.innerHTML = `<li class="empty">样本不足 — 只有 ${starNonZero.length} 人有非零 star`
+        + `<br><span style="font-size:11px;">`
+        + `另有 ${starValid.length - starNonZero.length} 人仓库有效但 star 为 0, `
+        + `其余 ${stu.length - starValid.length} 人仓库未抓到或从未提交 — 都不计入排名</span></li>`;
+    }
+  } else {
+    const byStars = [...starNonZero].sort((a, b) => {
+      const as = Number(a.gitee.stars) || 0;
+      const bs = Number(b.gitee.stars) || 0;
+      return bs - as;
+    });
+    renderList('rank-gitee-stars', byStars.slice(0, 10),
+      s => `<strong>${fmt(Number(s.gitee.stars) || 0)}</strong> ⭐`);
+  }
 
   // 4.5) ★ 2026-10-31: Gitee 最近提交 TOP 10 —— 仓库"更新情况"的正面视图。
   //   按最后一次 push 时间倒序, 只列真正提交过的仓库 (pushed_at 非空)。
