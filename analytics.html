@@ -410,6 +410,9 @@
     transition: all 0.15s;
     }
     .dark-toggle:hover { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+    /* ★ 2026-11-04: 补 .dim 规则 (本轮新加的 undefined 兜底用到了 class="dim")
+       铁律: 未抓到的值必须 dimmed 的 —, 不能和真实数字同色。 */
+    .dim { color: var(--stone); opacity: 0.4; }
     
   </style>
 </head>
@@ -686,9 +689,13 @@ function render() {
       const avg = s.post_count ? Math.round(avSum / s.post_count) : 0;
       const cls = i < 3 ? 'top3' : '';
       const rcls = i < 3 ? 'rank top' : 'rank';
-      return `<tr class="${cls}" onclick="location.href='student.html?name=${encodeURIComponent(s.name)}'">
+      // ★ 2026-11-04 安全修复: 原来在 onclick 里内插 encodeURIComponent(s.name)。
+      //   JS 的 encodeURIComponent 不转义单引号 (Python 的 quote 会, 所以只在浏览器里复现)。
+      //   姓名含 ' 时拼出的属性是非法 JS -> 整行点击失效; 构造 "');alert(1);//" 还能注入执行。
+      //   改成: 姓名格用真 <a> (href 里用双引号包裹 + 转义), 行 onclick 只做增强。
+      return `<tr class="${cls}">
         <td class="${rcls}">#${i + 1}</td>
-        <td>${escapeHtml(s.name)}</td>
+        <td><a href="student.html?name=${encodeURIComponent(s.name)}" style="color:var(--brand);text-decoration:none;">${escapeHtml(s.name)}</a></td>
         <td>${s.post_count || 0}</td>
         <td class="views" title="CSDN 个人主页口径的总访问量">${fmt(s.total_views)}</td>
         <td title="文章阅读合计 ${fmt(avSum)} ÷ ${s.post_count || 0} 篇">${fmt(avg)}</td>
@@ -774,10 +781,12 @@ function render() {
       const cls = i < 3 ? 'top3' : '';
       const dateShort = g.date ? g.date.slice(5, 16).replace('T', ' ') : '—';
       const shaShort = g.sha ? `<code style="font-size:10px;color:var(--brand);">${escapeHtml(g.sha)}</code>` : '—';
-      return `<tr class="${cls}" onclick="window.open('${escapeHtml(g.url)}','_blank','noopener')">
+      // ★ 2026-11-04: 行 onclick 里内插 g.url (来自抓取产物) -> 改成整行无行内事件,
+      //   链接靠下面真 <a> 承担, 消除内联属性注入面。
+      return `<tr class="${cls}">
         <td class="${rcls}">#${i + 1}</td>
         <td><a href="student.html?name=${encodeURIComponent(s.name)}" style="color:var(--brand);text-decoration:none;" onclick="event.stopPropagation();">${escapeHtml(s.name)}</a></td>
-        <td><a href="${escapeHtml(g.url)}" target="_blank" rel="noopener" style="color:var(--olive);text-decoration:none;font-family:ui-monospace,monospace;font-size:11px;" onclick="event.stopPropagation();">${escapeHtml(g.owner + '/' + g.repo)}</a></td>
+        <td>${(g.owner && g.repo) ? `<a href="${escapeHtml(g.url)}" target="_blank" rel="noopener" style="color:var(--olive);text-decoration:none;font-family:ui-monospace,monospace;font-size:11px;" onclick="event.stopPropagation();">${escapeHtml(g.owner + '/' + g.repo)}</a>` : '<span class="dim">—</span>'}</td>
         <td class="views">${fmt(g.commit_count || 0)}</td>
         <td>⭐ ${fmt(g.stars || 0)} / 🍴 ${fmt(g.forks || 0)}</td>
         <td>${dateShort} ${shaShort}</td>
@@ -959,7 +968,8 @@ function renderGiteeScatter(stu) {
 }
 
 loadData();
-setInterval(loadData, 60000);
+// ★ 2026-11-04: 轮询 60s -> 5min (同 index.html, 避免每分钟重拉 237KB)
+setInterval(loadData, 300000);
 </script>
   <script src="assets/apply-dark.js"></script>
   </body>

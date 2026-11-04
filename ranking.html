@@ -419,9 +419,9 @@ function render() {
 
   // 5) 最勤奋 (综合分): 文章数 × 10 + Gitee commit × 2 + 阅读 / 100
   const diligent = [...stu].map(s => {
-    const score = (s.post_count || 0) * 10
-                + ((s.gitee && s.gitee.commit_count) || 0) * 2
-                + Math.floor((s.total_views || 0) / 100);
+    const score = (Number(s.post_count) || 0) * 10
+                + (Number((s.gitee && s.gitee.commit_count) || 0)) * 2
+                + Math.floor((Number(s.total_views) || 0) / 100);
     return { ...s, _score: score };
   }).sort((a, b) => b._score - a._score);
   renderList('rank-diligent', diligent.slice(0, 10),
@@ -430,9 +430,9 @@ function render() {
 
   // 6) 最懒: 综合分升序, 排除 0 阅读且 0 commit 的(完全空)
   const lazy = [...stu].map(s => {
-    const score = (s.post_count || 0) * 10
-                + ((s.gitee && s.gitee.commit_count) || 0) * 2
-                + Math.floor((s.total_views || 0) / 100);
+    const score = (Number(s.post_count) || 0) * 10
+                + (Number((s.gitee && s.gitee.commit_count) || 0)) * 2
+                + Math.floor((Number(s.total_views) || 0) / 100);
     return { ...s, _score: score };
   }).filter(s => s._score > 0 || (s.csdn_url && s.post_count > 0))  // 至少有点东西
     .sort((a, b) => a._score - b._score);
@@ -442,7 +442,8 @@ function render() {
 }
 
 loadData();
-setInterval(loadData, 60000);
+// ★ 2026-11-04: 轮询 60s -> 5min (同 index.html, 避免每分钟重拉 237KB)
+setInterval(loadData, 300000);
 </script>
   <script src="assets/apply-dark.js"></script>
   </body>

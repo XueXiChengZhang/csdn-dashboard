@@ -192,6 +192,84 @@ def check_browser():
     return ok_all
 
 
+def check_dim_rules():
+    """★ 2026-11-04 新增 (#1 回归防护)
+
+    铁律: 未抓到的统计值必须显示 dimmed 的 —, 不能和真实数字同色。
+    事故: student.html 有 .dim 规则, index.html 漏了 —— 复制粘贴时的遗漏。
+          实测缺规则时 .dim 的 color 继承 --olive, opacity=1,
+          "—" 与旁边真实数字视觉上完全无法区分。
+    规则: 哪个页面用 class="dim", 那个页面就必须有 .dim CSS 规则。
+    """
+    print("\n[3] .dim 规则存在性 (未抓到 vs 真的 0 必须可区分)")
+    ok_all = True
+    for f in PAGES:
+        p = os.path.join(ROOT, f)
+        if not os.path.exists(p):
+            continue
+        html = open(p, encoding="utf-8", errors="ignore").read()
+        uses = len(re.findall(r'class="[^"]*\bdim\b', html))
+        if uses == 0:
+            ok_all = add(f"{f} .dim 规则", True, "未使用 class=dim, 无需规则") & ok_all
+            continue
+        has = bool(re.search(r"\.dim\s*\{[^}]*opacity\s*:", html))
+        ok_all = add(f"{f} .dim 规则", has,
+                     f"用了 {uses} 处, 规则{'存在' if has else '缺失!'}") & ok_all
+    return ok_all
+
+
+def check_no_inline_userdata():
+    """★ 2026-11-04 新增 (#2 回归防护)
+
+    事故: analytics.html 在 onclick 里内插 encodeURIComponent(s.name)。
+          JS 的 encodeURIComponent **不转义单引号** (Python 的 quote 会, 所以
+          只能在浏览器/JS 里复现)。姓名含 ' 时拼出的属性是非法 JS ->
+          整行点击失效; 构造 "');alert(1);//" 还能注入执行。
+    规则: on* 事件属性里不允许出现用户数据 (name/url/title 等) 的模板插值。
+    """
+    print("\n[4] 行内事件属性不含用户数据 (onclick 注入防护)")
+    ok_all = True
+    for f in PAGES:
+        p = os.path.join(ROOT, f)
+        if not os.path.exists(p):
+            continue
+        html = open(p, encoding="utf-8", errors="ignore").read()
+        # 找 on*= "..." 里含 ${...} 且引用用户数据的
+        bad = []
+        for m in re.finditer(r'on(?:click|error|load|mouseover)\s*=\s*"([^"]*)"', html):
+            seg = m.group(1)
+            if "${" in seg and re.search(r"\$\{[^}]*\b(s\.|s\[|name|url|title|owner|repo)\b", seg):
+                ln = html[:m.start()].count("\n") + 1
+                bad.append(f"行 {ln}: {seg[:90]}")
+        ok_all = add(f"{f} onclick 无用户数据", not bad,
+                     "干净" if not bad else bad[0]) & ok_all
+    return ok_all
+
+
+def check_local_date():
+    """★ 2026-11-04 新增 (#4 回归防护)
+
+    事故: student.html 热力图用 toISOString().slice(0,10) 取 UTC 日期。
+          东八区本地 00:00-08:00 之间打开页面, 最后一格错成昨天, 日历整体偏一天。
+    规则: 生成"日期字符串"不许用 toISOString().slice(0,10) (那是 UTC)。
+    """
+    print("\n[5] 日期用本地时区 (非 UTC)")
+    ok_all = True
+    for f in PAGES:
+        p = os.path.join(ROOT, f)
+        if not os.path.exists(p):
+            continue
+        html = open(p, encoding="utf-8", errors="ignore").read()
+        hits = []
+        for m in re.finditer(r"toISOString\(\)\.slice\(\s*0\s*,\s*10\s*\)", html):
+            ln = html[:m.start()].count("\n") + 1
+            hits.append(f"行 {ln}")
+        # trend.html 的回退探测用 toISOString 是生成文件名, 不算日期显示 -> 白名单
+        ok_all = add(f"{f} 日期非 UTC", not hits,
+                     "OK" if not hits else f"{len(hits)} 处: {hits[0]}") & ok_all
+    return ok_all
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true", help="跳过浏览器检查")
@@ -205,6 +283,9 @@ def main():
 
     ok = check_js_syntax()
     ok = check_css_braces() and ok
+    ok = check_dim_rules() and ok
+    ok = check_no_inline_userdata() and ok
+    ok = check_local_date() and ok
     if not args.quick:
         ok = check_browser() and ok
 

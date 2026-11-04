@@ -814,17 +814,29 @@ function renderHeat(stu) {
   const today = new Date();
   const days = 84;
   const counts = {}; // 'YYYY-MM-DD' -> count
+  // ★ 2026-11-04 修 UTC 时区错位: toISOString() 取的是 UTC 日期。
+  //   东八区本地 00:00-08:00 之间打开页面, 最后一格会错成昨天, 整个日历偏一天。
+  //   改成本地日期 (getFullYear/getMonth/getDate) 手工拼。
+  const localDateStr = (dt) => {
+    const y = dt.getFullYear();
+    const mo = String(dt.getMonth() + 1).padStart(2, '0');
+    const da = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${mo}-${da}`;
+  };
   // 计算发文日期 (取 posts 的日期 - 如果没有就用 link 末尾日期 fallback)
+  // ★ 2026-11-04: 无日期的文章不再**静默**丢弃 —— 计数并在图下标注, 让读的人知道漏了多少。
+  let undated = 0;
   for (const p of (stu.posts || [])) {
     let d = p.pubDate || '';
     // pubDate 可能是空, 用 link 中的 /details/XXXXXX 提取
     if (!d && p.link) {
       // 没真实日期就放 latest post 那天
       d = (stu.latest_post && stu.latest_post.link === p.link)
-        ? today.toISOString().slice(0, 10)
+        ? localDateStr(today)
         : '';
     }
     if (d && d.length >= 10) counts[d.slice(0, 10)] = (counts[d.slice(0, 10)] || 0) + 1;
+    else undated++;
   }
 
   // 构造 12 周 x 7 天 网格, 从最早的周日到 today
@@ -838,7 +850,7 @@ function renderHeat(stu) {
   let cursor = new Date(start);
   for (let i = 0; i < days + 7; i++) {
     if (cursor > today) break;
-    const ds = cursor.toISOString().slice(0, 10);
+    const ds = localDateStr(cursor);
     const cnt = counts[ds] || 0;
     cells.push({ date: ds, count: cnt });
     cursor.setDate(cursor.getDate() + 1);
@@ -877,7 +889,7 @@ function renderHeat(stu) {
         <span class="swatch" style="background:#5C7DA6;"></span>
         <span class="swatch" style="background:#1B365D;"></span>
         <span>多</span>
-        <span style="margin-left:auto;">共 ${cells.length} 天</span>
+        <span style="margin-left:auto;">共 ${cells.length} 天${undated > 0 ? ` · <span title="这些文章在 CSDN 上没有可用的发布时间, 无法定位到具体某天, 未计入热力图">另有 ${undated} 篇缺日期未计入</span>` : ''}</span>
       </div>
     </div>
   `;

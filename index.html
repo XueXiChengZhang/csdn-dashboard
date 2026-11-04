@@ -765,6 +765,11 @@
       font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     }
     .fetch-meta-grid .empty { color: var(--stone); font-style: italic; }
+    /* ★ 2026-11-04: 补 .dim 规则 (student.html 有, index.html 漏了)
+       铁律: 未抓到的统计值必须显示 dimmed 的 —, 不能和真实数字同色。
+       审查实测: 缺这条时 .dim 的 color 继承 --olive, opacity=1,
+       "—" 与旁边真实数字视觉上完全无法区分。 */
+    .dim { color: var(--stone); opacity: 0.4; }
   </style>
 </head>
 <body>
@@ -894,8 +899,14 @@
     let LAST_UPDATE_ISO = null;
     let CLASS_STATS = null;
     let TIME_RANGE = 'all';  // 'all' | 7 | 30
+    // ★ 2026-11-04: dblclick 防抖用. 用 var 不用 let —— loadData() 里赋值的位置
+    //   早于 dblclick 监听器的声明位置, let 会有 TDZ (暂时性死区) 问题.
+    var _lastLoadAt = 0;
 
     async function loadData() {
+    // ★ 2026-11-04: 记录本次加载时间, 给 dblclick 的 3 秒防抖用
+    //   (_lastLoadAt 在顶部用 var 声明 —— 用 let 会有 TDZ 问题: 本行在声明之前)
+    _lastLoadAt = Date.now();
     const btn = document.getElementById('refresh-btn');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ 刷新中...'; }
     try {
@@ -952,14 +963,38 @@
     }
 
     function renderStats(data) {
-    const total = data.total_students;
-    const posts = data.total_posts;
-    const active = ALL_STUDENTS.filter(s => s.post_count > 0).length;
-    const avg = active > 0 ? (posts / active).toFixed(1) : 0;
-    document.getElementById('stat-total').textContent = total;
-    document.getElementById('stat-posts').textContent = posts;
-    document.getElementById('stat-active').textContent = active;
-    document.getElementById('stat-avg').textContent = avg;
+        const total = data.total_students;
+        const posts = data.total_posts;
+        const active = ALL_STUDENTS.filter(s => s.post_count > 0).length;
+        const avg = active > 0 ? (posts / active).toFixed(1) : 0;
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-posts').textContent = posts;
+        document.getElementById('stat-active').textContent = active;
+        document.getElementById('stat-avg').textContent = avg;
+        // ★ 2026-11-04 口径标注: post_count 含已从 CSDN 下架的帖子。
+        //   实测: 634 篇里 68 篇带 _missing_on_csdn/_deleted_on_csdn (在线 566)。
+        //   【不换分母】—— 分子 article_views_sum 同样含这 68 篇的历史 views,
+        //   分母也含, 两边同口径才自洽; 换成 566 反而会让"平均单篇阅读"虚高 12%。
+        //   正确做法是把口径标出来, 让读的人知道 634 是什么。
+        const offline = ALL_STUDENTS.reduce((n, s) => {
+          const ps = s.posts || [];
+          return n + ps.filter(p => p._missing_on_csdn || p._deleted_on_csdn).length;
+        }, 0);
+        const postsMeta = document.querySelector('#stat-posts')?.closest('.stat')?.querySelector('.stat-meta');
+        if (postsMeta) {
+          postsMeta.textContent = offline > 0
+            ? `含 ${offline} 篇已下架 · 在线 ${posts - offline}`
+            : '所有博客汇总';
+          postsMeta.title = offline > 0
+            ? `累计抓取到的文章总数 ${posts} 篇, 其中 ${offline} 篇已从 CSDN 下架 (仍计入历史阅读量统计)`
+            : '所有博客汇总';
+        }
+        // 平均文章的口径同上, 一并标注
+        const avgMeta = document.querySelector('#stat-avg')?.closest('.stat')?.querySelector('.stat-meta');
+        if (avgMeta && offline > 0) {
+          avgMeta.textContent = '活跃学生人均 · 含已下架';
+          avgMeta.title = `分子分母同口径 (含 ${offline} 篇已下架), 与"平均单篇阅读"一致`;
+        }
     // P1 修复: 动态学生数 (data.total_students 来自 data.json)
     const subEl = document.getElementById('subtitle-count');
     if (subEl) subEl.innerHTML = `${total} 名学生 · 每日自动抓取 CSDN 文章 · 8:00 推送飞书`;
@@ -1574,7 +1609,15 @@
     document.getElementById('refresh-btn').addEventListener('click', () => loadData());
     // v18: 导出 CSV — 当前显示的学生列表 (应用了 filter/sort/time 后)
     document.getElementById('export-btn').addEventListener('click', () => exportCsv());
-    document.addEventListener('dblclick', () => loadData());
+    // ★ 2026-11-04 修 #6: 全局 dblclick 触发全量重下载 237KB。
+    //   原来双击**选中一段文字**也会触发 (双击就是选词!), 属于纯误触。
+    //   改成: 双击时如果存在文本选区就忽略; 且距上次加载超过 3 秒才生效。
+    document.addEventListener('dblclick', (e) => {
+      const sel = window.getSelection && window.getSelection();
+      if (sel && String(sel).length > 0) return;      // 正在选词 -> 不刷新
+      if (Date.now() - _lastLoadAt < 3000) return;     // 3 秒内不重复
+      loadData();
+    });
 
     // v22: 暗色模式 — P3 #10 抽出到 assets/apply-dark.js
     // 旧的 18 行 inline 代码已删除, 改用统一脚本
@@ -1610,7 +1653,11 @@
     });
 
     loadData();
-    setInterval(loadData, 60000);
+    // ★ 2026-11-04 修 #7: 轮询从 60 秒降到 5 分钟。
+//   原来每次都带 ?t=<时间戳>&r=<随机> 强制走网络, 彻底废掉 CDN 缓存,
+//   每个开着页面的用户每分钟拉 237KB —— GitHub Pages 和 CSDN 都容易因此触发风控。
+//   看板的数据本来就是每天抓一次, 5 分钟足够。
+setInterval(loadData, 300000);
 
     // v19: URL deep-link — ?name=xxx 滚动到指定学生卡片并高亮
     // Ma: 分享 dashboard 时可用 (但 search/sort/filter 会影响定位, 所以先清空过滤)

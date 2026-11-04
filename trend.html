@@ -203,12 +203,22 @@
   // ★ 2026-11-01: null 不该显示成 0 —— 与「真的 0 增长」无法区分
   const fmt = n => (n == null || !Number.isFinite(n)) ? '—' : Number(n).toLocaleString('en-US');
 const $ = id => document.getElementById(id);
+// ★ 2026-11-04: trend.html 之前**完全没有**转义函数 (其余 4 页都有 10~33 处)。
+//   姓名来自采集产物 (外部数据), 一旦含 < & 就会破坏表格结构。
+const escapeHtml = (s) => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 // 暗色模式
 const darkBtn = $('dark-toggle');
-if (localStorage.getItem('csdn-dark') === '1') document.documentElement.classList.add('dark');
+// ★ 2026-11-04: 原来用 localStorage['csdn-dark'], 而其余 4 页走 assets/apply-dark.js
+//   用的是 'csdn-dashboard-dark' —— 两个 key 不互通, 在 trend 开了暗色, 跳回 index 变亮色。
+if (localStorage.getItem('csdn-dashboard-dark') === '1' || localStorage.getItem('csdn-dark') === '1')
+  document.documentElement.classList.add('dark');
 darkBtn.onclick = () => {
   const d = document.documentElement.classList.toggle('dark');
+  // 两个 key 都写, 兼容旧值, 同时让其余页面读到
+  localStorage.setItem('csdn-dashboard-dark', d ? '1' : '0');
   localStorage.setItem('csdn-dark', d ? '1' : '0');
   darkBtn.textContent = d ? '☀️' : '🌙';
   if (window.__chartData) { renderLine(window.__chartData); renderBar(window.__chartData); }
@@ -231,16 +241,27 @@ async function loadAll() {
   // 优先读索引, 没有就探测
   try {
     const r = await fetch(dir + 'index.json', { cache: 'no-store' });
-    if (r.ok) names = (await r.json()).files;
+    // ★ 2026-11-04: 原来直接取 .files, 若 index.json 没有 files 键就是 undefined,
+    //   后面 names.length 在 try 之外解引用 -> 整页"加载失败"。
+    //   改成兜底成空数组, 并把长度判断也收进 try。
+    if (r.ok) {
+      const j = await r.json();
+      names = Array.isArray(j && j.files) ? j.files : [];
+    }
   } catch (e) { /* 无索引则走回退 */ }
 
-  if (!names.length) {
+  if (!names || !names.length) {
     // 回退: 从第一个已知文件开始逐个探测
     const start = '2026-09-17.json';
     const d = new Date(start.replace('.json', '') + 'T00:00:00');
     for (let i = 0; i < 120; i++) {
       const day = new Date(d.getTime() + i * 86400000);
-      names.push(day.toISOString().slice(0, 10) + '.json');
+      // ★ 2026-11-04: 原来用 toISOString() (UTC) 生成快照文件名。
+      //   快照按**本地日期**命名, 用 UTC 会在东八区凌晨少/多探一天的文件。
+      const y = day.getFullYear();
+      const mo = String(day.getMonth() + 1).padStart(2, '0');
+      const da = String(day.getDate()).padStart(2, '0');
+      names.push(`${y}-${mo}-${da}.json`);
     }
   }
 
@@ -387,7 +408,7 @@ function renderRank(students) {
   body.innerHTML = students.map((s, i) => `
     <tr>
       <td class="rank">${i + 1}</td>
-      <td>${s.name}</td>
+      <td>${escapeHtml(s.name)}</td>
       <td class="num" style="color:${s.growth >= 0 ? 'var(--ok)' : 'var(--accent)'}">${s.growth >= 0 ? '+' : ''}${fmt(s.growth)}</td>
       <td class="num">${fmt(s.current)}</td>
       <td class="num">${s.posts}</td>
