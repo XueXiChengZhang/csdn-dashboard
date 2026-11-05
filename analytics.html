@@ -918,11 +918,18 @@ function render() {
         if (Number.isFinite(d)) days = Math.max(days == null ? d : Math.min(days, d), 0);
       }
       const daysCell = days != null ? `${days} 天` : '<span class="dim">—</span>';
-      const deltaCell = (g.commits_delta != null && Number.isFinite(Number(g.commits_delta)))
-        ? (Number(g.commits_delta) > 0
-          ? `<span style="color:#166534;font-weight:600;">+${escapeHtml(String(g.commits_delta))}</span>`
-          : `<span style="color:var(--stone);">${Number(g.commits_delta) === 0 ? '0 (无新增)' : '−' + escapeHtml(String(Math.abs(g.commits_delta)))}</span>`)
-        : '<span class="dim" title="本轮采集没有该字段">—</span>';
+      // ⚠️ commits_delta < 0 不是「负新增」—— 是上一次能看到的提交现在没了
+      //   (force push / 删分支 / 删 tag)。「新增提交」不可能是负数, 显示 −2 是错的。
+      const dv = g.commits_delta;
+      const hasDv = dv != null && Number.isFinite(Number(dv));
+      const deltaCell = !hasDv
+        ? '<span class="dim" title="本轮采集没有该字段">—</span>'
+        : Number(dv) > 0
+          ? `<span style="color:#166534;font-weight:600;">+${escapeHtml(String(dv))}</span>`
+          : Number(dv) === 0
+            ? '<span style="color:var(--stone);">0 (无新增)</span>'
+            : '<span style="color:var(--stone);" title="仓库历史被重写（force push / 删分支），上次能看到的 ' +
+              escapeHtml(String(Math.abs(Number(dv)))) + ' 个提交已不在">历史被重写</span>';
       const subj = String(g.subject || g.msg || '').split(/\r?\n/)[0].trim();
       const subjShort = subj.length > 40 ? subj.slice(0, 40) + '…' : subj;
       return `<tr class="${cls}" data-href="${escapeHtml(h)}" tabindex="0">

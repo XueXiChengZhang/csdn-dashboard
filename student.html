@@ -764,11 +764,19 @@ function renderGitee(stu) {
     const tlCreated = created
       ? ` (${escapeHtml(String(Math.max(0, Math.floor((Date.now() - new Date(g.created_at).getTime()) / 86400000)) || 0))} 天前)`
       : '';
-    const tlNew = Number.isFinite(Number(g.commits_delta)) && g.commits_delta != null
-      ? (Number(g.commits_delta) > 0
-        ? `<dd class="tl-new">+${escapeHtml(String(g.commits_delta))} 个提交</dd>`
-        : `<dd style="color:var(--stone);">±0 个提交 (无新增)</dd>`)
-      : '<dd class="dim" title="本轮采集没有该字段">—</dd>';
+    // ⚠️ commits_delta < 0 = 仓库历史被重写 (force push / 删分支),
+    //   不是「无新增」。原先折进 ±0 分支会让学生看到虚假的「无变化」。
+    const dv = g.commits_delta;
+    const hasDv = dv != null && Number.isFinite(Number(dv));
+    const tlNew = !hasDv
+      ? '<dd class="dim" title="本轮采集没有该字段">—</dd>'
+      : Number(dv) > 0
+        ? `<dd class="tl-new">+${escapeHtml(String(dv))} 个提交</dd>`
+        : Number(dv) === 0
+          ? '<dd style="color:var(--stone);">±0 个提交 (无新增)</dd>'
+          : '<dd style="color:var(--stone);" title="force push / 删分支导致历史重写，上次可见的 ' +
+            escapeHtml(String(Math.abs(Number(dv)))) + ' 个提交已不在">历史被重写 (' +
+            escapeHtml(String(Math.abs(Number(dv)))) + ' 个提交已不在)</dd>';
     return `<div class="gitee-card-detail">
       <div class="gitee-ico">💾</div>
       <div class="gitee-info">
