@@ -193,6 +193,29 @@
       margin-top: 6px;
       font-style: italic;
     }
+    /* ★ 2026-11-05: Gitee 更新情况时间线 (多久没动 / 本次新增 / 建仓 / 最新提交) */
+    .gitee-timeline {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 3px 12px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 0.6pt dashed var(--border);
+      font-size: 12px;
+    }
+    .gitee-timeline dt { color: var(--stone); white-space: nowrap; }
+    .gitee-timeline dd { margin: 0; color: var(--olive); min-width: 0; overflow-wrap: anywhere; }
+    .gitee-timeline dd.dim { color: var(--stone); opacity: 0.4; }
+    .gitee-timeline dd a { color: inherit; text-decoration: none; }
+    .gitee-timeline dd a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+    .gitee-timeline .tl-new { color: #166534; font-weight: 600; }
+    .gitee-timeline .tl-newbar {
+      grid-column: 1 / -1;
+      margin-bottom: 2px;
+      background: #dcfce7; color: #166534;
+      padding: 2px 8px; border-radius: 2px; font-size: 12px;
+    }
+    html.dark .gitee-timeline .tl-newbar { background: #14351f; color: #86efac; }
     .gitee-card-detail .gitee-actions {
       display: flex;
       flex-direction: column;
@@ -368,6 +391,8 @@
     table.posts .num.read { color: var(--brand); font-weight: 600; }
     table.posts .ts { font-family: ui-monospace, monospace; font-size: 11px; color: var(--stone); }
     .dim { color: var(--stone); opacity: 0.4; }
+    .gitee-timeline dd a { color: inherit; text-decoration: none; }
+    .gitee-timeline dd a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
     .empty-state {
       background: var(--ivory);
       border: 0.6pt dashed var(--border);
@@ -673,7 +698,25 @@ function render(stu, history, lastUpdate) {
 // v10: Gitee 仓库卡片
 function renderGitee(stu) {
   const g = stu.gitee;
-  if (!g || !g.url) {
+  if (!g) {
+    return `<div class="gitee-card-detail empty">未配置 Gitee 仓库</div>`;
+  }
+  // ★ 2026-11-05: 抓取失败且连 URL 都没有 (如 "bad gitee url") 时, 以前会落到
+  //   「未配置 Gitee 仓库」—— 把"配置写错了"说成"没配置", 老师会以为不用管。
+  if (!g.url && ['notfound', 'failed', 'rate_limit'].includes(g.status)) {
+    return `<div class="gitee-card-detail fail">
+      <div class="gitee-ico">⚠️</div>
+      <div class="gitee-info">
+        <h3 style="color:var(--accent);">Gitee 抓取失败</h3>
+        <div class="repo">${escapeHtml((g.owner || '?') + '/' + (g.repo || '?'))} · ${escapeHtml(g.source || 'all sources failed')}</div>
+        <div class="msg">${escapeHtml(g.err || '未知错误 - 可能 Gitee 限流或仓库不可访问')}</div>
+      </div>
+      <div class="gitee-actions">
+        <a href="analytics.html" style="background:var(--ivory);color:var(--brand);">← 返回班级分析</a>
+      </div>
+    </div>`;
+  }
+  if (!g.url) {
     return `<div class="gitee-card-detail empty">未配置 Gitee 仓库</div>`;
   }
   // ★ 2026-10-31: 先判空仓库 (status==='empty' || empty===true), 再判 ok。
@@ -709,20 +752,54 @@ function renderGitee(stu) {
     ? '<span class="gitee-empty" style="background:#dcfce7;color:#166534;">🆕 有新提交</span>' : '';
     const created = (g.created_at || '').slice(0, 10);
     const desc = (g.description || '').trim();
+    const subjectRaw = String(g.subject || g.msg || '').trim();
+    const subjectFirst = subjectRaw.split(/\r?\n/)[0].trim();
+    const SUBJ_MAX = 60;
+    const subjectShort = subjectFirst.length > SUBJ_MAX ? subjectFirst.slice(0, SUBJ_MAX) + '…' : subjectFirst;
+    // commit_count 有提交时才保证为数字; 抓取不全时可能缺, 缺了不能显示成 0
+    const cc = g.commit_count;
+    const ccCell = Number.isFinite(Number(cc)) && cc != null
+      ? fmt(cc) : '<span class="dim">—</span>';
+    const ccTitle = (cc == null || !Number.isFinite(Number(cc))) ? ' title="本次抓取未拿到 commit 数"' : '';
+    const tlCreated = created
+      ? ` (${escapeHtml(String(Math.max(0, Math.floor((Date.now() - new Date(g.created_at).getTime()) / 86400000)) || 0))} 天前)`
+      : '';
+    // ⚠️ commits_delta < 0 = 仓库历史被重写 (force push / 删分支),
+    //   不是「无新增」。原先折进 ±0 分支会让学生看到虚假的「无变化」。
+    const dv = g.commits_delta;
+    const hasDv = dv != null && Number.isFinite(Number(dv));
+    const tlNew = !hasDv
+      ? '<dd class="dim" title="本轮采集没有该字段">—</dd>'
+      : Number(dv) > 0
+        ? `<dd class="tl-new">+${escapeHtml(String(dv))} 个提交</dd>`
+        : Number(dv) === 0
+          ? '<dd style="color:var(--stone);">±0 个提交 (无新增)</dd>'
+          : '<dd style="color:var(--stone);" title="force push / 删分支导致历史重写，上次可见的 ' +
+            escapeHtml(String(Math.abs(Number(dv)))) + ' 个提交已不在">历史被重写 (' +
+            escapeHtml(String(Math.abs(Number(dv)))) + ' 个提交已不在)</dd>';
     return `<div class="gitee-card-detail">
       <div class="gitee-ico">💾</div>
       <div class="gitee-info">
         <h3>Gitee 仓库 ${fresh}</h3>
-        <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · 抓取自 <code>${escapeHtml(g.source || '?')}</code>${created ? ` · 建仓于 ${escapeHtml(created)}` : ''}</div>
+        <div class="repo">${escapeHtml(g.owner + '/' + g.repo)} · 抓取自 <code>${escapeHtml(g.source || '?')}</code></div>
         <div class="stats">
-          <span><strong>${fmt(g.commit_count || 0)}</strong>commit</span>
+          <span${ccTitle}><strong>${ccCell}</strong>commit</span>
           <span><strong>${fmt(g.stars || 0)}</strong>⭐ star</span>
           <span><strong>${fmt(g.forks || 0)}</strong>🍴 fork</span>
-          <span style="color:var(--stone);">最后提交 ${escapeHtml(dateStr)}${days != null ? ` (${days} 天前)` : ''} ${shaShort}</span>
+          <span style="color:var(--stone);">最新 SHA ${shaShort || '<span class="dim">—</span>'}</span>
         </div>
         ${desc ? `<div class="msg">${escapeHtml(desc)}</div>` : ''}
-        ${g.commits_delta ? `<div class="msg" style="color:#166534;">较上次采集新增 ${fmt(g.commits_delta)} 个提交</div>` : ''}
-        ${(g.msg || g.subject) ? `<div class="msg">"${escapeHtml(g.msg || g.subject)}"</div>` : ''}
+        ${g.updated_since_last_check ? '<div class="tl-newbar">🆕 本轮采集发现新提交</div>' : ''}
+        <dl class="gitee-timeline" aria-label="Gitee 更新情况">
+          <dt>最近更新</dt>
+          <dd>${pushed ? `${Number.isFinite(Number(days)) && days != null ? `${escapeHtml(String(days))} 天前 · ` : ''}${escapeHtml(dateStr)}` : '<span class="dim">—</span>'}</dd>
+          <dt>本次新增</dt>
+          ${tlNew}
+          <dt>建仓于</dt>
+          <dd>${created ? `${escapeHtml(created)}<span style="color:var(--stone);">${tlCreated}</span>` : '<span class="dim">—</span>'}</dd>
+          <dt>最新提交</dt>
+          <dd title="${escapeHtml(subjectRaw)}">${subjectShort ? escapeHtml(subjectShort) : '<span class="dim">— (未抓到提交信息)</span>'}</dd>
+        </dl>
       </div>
       <div class="gitee-actions">
         <a href="${escapeHtml(g.url)}" target="_blank" rel="noopener">访问仓库 ↗</a>

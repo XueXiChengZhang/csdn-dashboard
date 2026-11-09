@@ -1071,6 +1071,10 @@
 
     // 健康度卡片
     card.classList.remove('health-good', 'health-warn', 'health-fail');
+    // ★ 2026-11-05: 口径与下方折叠面板一致 —— 两处都只在 total > 0 时取值。
+    //   原先这里是一行孤立的 `} else {`, 多出的 "}" 把 if 块提前关掉,
+    //   if 打开的那层永远不闭合, renderFetchMeta 在「上次抓取时间」处就结束了,
+    //   后面的代码变成顶层执行 -> 引用未定义变量, 整页加载失败 (gitWithCommits 那个报错)。
     if (total === 0) {
     healthEl.textContent = '—';
     healthMeta.textContent = '尚未运行抓取任务';
@@ -1263,6 +1267,11 @@
     }
 
     // v10: 相对时间
+    // 本地日历日序号 (夏令时安全的整数天差)
+    function localDayNum(d) {
+    return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+    }
+
     function fmtRel(iso) {
     if (!iso) return '';
     try {
@@ -1572,8 +1581,17 @@
     if (g.ok) {
     const pushed = g.pushed_at || g.date;
     const days = g.days_since_update;
-    const fresh = g.updated_since_last_check
-    ? '<span class="gitee-empty" style="background:#dcfce7;color:#166534;">🆕</span>' : '';
+    // ★ 2026-11-05: 徽章区分「本轮新提交」和「今日/昨天更新过」。
+    //   本地时区日界: gitee 采集在 UTC+8 清晨跑, 用 UTC 日期会把昨天的提交算成今天。
+    const todayDays = pushed ? (localDayNum(new Date()) - localDayNum(new Date(pushed))) : NaN;
+    let fresh = '';
+    if (g.updated_since_last_check) {
+    fresh = '<span class="gitee-empty" style="background:#dcfce7;color:#166534;">🆕 新提交</span>';
+    } else if (Number.isFinite(todayDays) && todayDays <= 1) {
+    fresh = todayDays === 0
+    ? '<span class="gitee-empty">今日更新</span>'
+    : '<span class="gitee-empty">昨天更新</span>';
+    }
     return `<div class="gitee-mini" title="${escapeHtml(g.msg || g.subject || '')}">
     <a class="gitee-link" href="${escapeHtml(g.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation();">${escapeHtml(ownerRepo)}</a>
     ${fresh}

@@ -378,7 +378,18 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+      /* ★ 2026-11-05: 最近更新表 375px 下折叠次要列 (仓库名可点进 Gitee 仓库, 这里只留姓名) */
+      .gitee-recent-table th:nth-child(3),
+      .gitee-recent-table td:nth-child(3) { display: none; }
+      .gitee-recent-table th:nth-child(7),
+      .gitee-recent-table td:nth-child(7) {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
+    .gitee-recent-table td:last-child { color: var(--olive); font-size: 12px; }
   /* v21: 暗色模式 — Ma 晚上看 dashboard */
     html.dark {
     --parchment: #1a1a1f;
@@ -439,6 +450,7 @@
     }
     /* ★ 2026-11-04: 可聚焦元素必须有可见焦点圈 (键盘用户靠它定位) */
     #top10-body tr:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+    #gitee-recent-body tr:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
 </style>
 </head>
 <body>
@@ -490,6 +502,16 @@
       <div class="stat-label">Gitee ⭐ / 🍴</div>
       <div class="stat-value" id="stat-gitee-stars">—</div>
       <div class="stat-meta" id="stat-gitee-stars-meta">star + fork 累计</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Gitee 近 7 天有更新</div>
+      <div class="stat-value" id="stat-gitee-week">—</div>
+      <div class="stat-meta" id="stat-gitee-week-meta">近 7 天 · 只要有提交的仓库</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Gitee 本轮有新提交</div>
+      <div class="stat-value" id="stat-gitee-fresh">—</div>
+      <div class="stat-meta" id="stat-gitee-fresh-meta">本轮采集 · 较上次采集</div>
     </div>
   </section>
 
@@ -589,6 +611,32 @@
       </thead>
       <tbody id="gitee-top-body">
         <tr><td colspan="6" class="empty" style="border:none;background:transparent;">加载中…</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">
+      <span>🕒 Gitee 最近更新 TOP 10</span>
+      <span class="hint">按最后 push 倒序 · 仅含有提交的仓库 · 点击行跳个人页</span>
+    </div>
+    <div class="section-table-wrap">
+    <table class="top-table gitee-recent-table">
+      <caption class="sr-only">Gitee 最近更新 TOP 10 (按最后 push 时间倒序)</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="rank">#</th>
+          <th scope="col">学生</th>
+          <th scope="col">仓库</th>
+          <th scope="col">最后更新</th>
+          <th scope="col">距今</th>
+          <th scope="col" title="较上次采集新增的 commit 数; — 表示本轮没有该数据">新增提交</th>
+          <th scope="col">最近提交信息</th>
+        </tr>
+      </thead>
+      <tbody id="gitee-recent-body">
+        <tr><td colspan="7" class="empty" style="border:none;background:transparent;">加载中…</td></tr>
       </tbody>
     </table>
     </div>
@@ -699,6 +747,19 @@ function render() {
     `${gOk.length} 有提交 · ${gEmpty.length} 空仓库 · ${gFail.length} 失败`;
   document.getElementById('stat-gitee-stars').textContent = `${fmt(gTotalStars)} / ${fmt(gTotalForks)}`;
   document.getElementById('stat-gitee-stars-meta').textContent = `star · fork · 共 ${stu.filter(s => s.gitee && s.gitee.url).length} 仓库`;
+
+  // ★ 2026-11-05: 更新情况 — 只看「有提交」的仓库 (gOk)。
+  //   days_since_update 为 null = 没抓到, 不算「近 7 天有更新」, 必须显式排除。
+  const gWeek = gOk.filter(s => s.gitee.days_since_update != null
+    && Number.isFinite(Number(s.gitee.days_since_update))
+    && Number(s.gitee.days_since_update) <= 7);
+  const gFresh = gOk.filter(s => s.gitee.updated_since_last_check === true);
+  document.getElementById('stat-gitee-week').textContent = fmt(gWeek.length);
+  document.getElementById('stat-gitee-week-meta').textContent =
+    `近 7 天 · ${gOk.length} 个有提交的仓库中`;
+  document.getElementById('stat-gitee-fresh').textContent = fmt(gFresh.length);
+  document.getElementById('stat-gitee-fresh-meta').textContent =
+    `本轮采集 · 较上次采集 · ${stu.filter(s => s.gitee).length} 人中有 Gitee 数据`;
 
   // TOP 10 by views
   const sorted = [...stu]
@@ -825,6 +886,60 @@ function render() {
         <td class="views">${fmt(g.commit_count || 0)}</td>
         <td>⭐ ${fmt(g.stars || 0)} / 🍴 ${fmt(g.forks || 0)}</td>
         <td>${dateShort} ${shaShort}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ★ 2026-11-05: Gitee 最近更新 TOP 10 (按 pushed_at 倒序)。
+  //   只收 gOk (有提交的仓库); 没有 pushed_at 的排最后, 不参与排序比较。
+  const gTs = g => { const t = Date.parse(g.pushed_at || ''); return Number.isFinite(t) ? t : -Infinity; };
+  const gRecent = gOk
+    .filter(s => s.gitee.pushed_at)
+    .sort((a, b) => gTs(b.gitee) - gTs(a.gitee))
+    .slice(0, 10);
+  const grBody = document.getElementById('gitee-recent-body');
+  if (gRecent.length === 0) {
+    grBody.innerHTML = '<tr><td colspan="7" class="empty" style="border:none;background:transparent;">暂无有提交记录的 Gitee 仓库</td></tr>';
+  } else {
+    grBody.innerHTML = gRecent.map((s, i) => {
+      const g = s.gitee;
+      const rcls = i < 3 ? 'rank top' : 'rank';
+      const cls = i < 3 ? 'top3' : '';
+      const h = `student.html?name=${encodeURIComponent(s.name)}`;
+      const day = String(g.pushed_at).slice(0, 10);
+      // days_since_update 是采集时点算的; 页面开着时用 pushed_at 现算, 免得一直停在旧数字
+      let days = (g.days_since_update != null && Number.isFinite(Number(g.days_since_update)))
+        ? Number(g.days_since_update) : null;
+      const t = Date.parse(g.pushed_at);
+      if (Number.isFinite(t)) {
+        const now = new Date(), then = new Date(t);
+        const d = Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+          - Date.UTC(then.getFullYear(), then.getMonth(), then.getDate())) / 86400000);
+        if (Number.isFinite(d)) days = Math.max(days == null ? d : Math.min(days, d), 0);
+      }
+      const daysCell = days != null ? `${days} 天` : '<span class="dim">—</span>';
+      // ⚠️ commits_delta < 0 不是「负新增」—— 是上一次能看到的提交现在没了
+      //   (force push / 删分支 / 删 tag)。「新增提交」不可能是负数, 显示 −2 是错的。
+      const dv = g.commits_delta;
+      const hasDv = dv != null && Number.isFinite(Number(dv));
+      const deltaCell = !hasDv
+        ? '<span class="dim" title="本轮采集没有该字段">—</span>'
+        : Number(dv) > 0
+          ? `<span style="color:#166534;font-weight:600;">+${escapeHtml(String(dv))}</span>`
+          : Number(dv) === 0
+            ? '<span style="color:var(--stone);">0 (无新增)</span>'
+            : '<span style="color:var(--stone);" title="仓库历史被重写（force push / 删分支），上次能看到的 ' +
+              escapeHtml(String(Math.abs(Number(dv)))) + ' 个提交已不在">历史被重写</span>';
+      const subj = String(g.subject || g.msg || '').split(/\r?\n/)[0].trim();
+      const subjShort = subj.length > 40 ? subj.slice(0, 40) + '…' : subj;
+      return `<tr class="${cls}" data-href="${escapeHtml(h)}" tabindex="0">
+        <td class="${rcls}">#${i + 1}</td>
+        <td><a href="${escapeHtml(h)}" style="color:var(--brand);text-decoration:none;">${escapeHtml(s.name)}</a></td>
+        <td style="font-family:ui-monospace,monospace;font-size:11px;">${g.url ? `<a href="${escapeHtml(g.url)}" target="_blank" rel="noopener" style="color:var(--olive);text-decoration:none;">${escapeHtml(g.owner + '/' + g.repo)}</a>` : `<span style="color:var(--olive);">${escapeHtml((g.owner || '?') + '/' + (g.repo || '?'))}</span>`}</td>
+        <td>${escapeHtml(day)}</td>
+        <td>${daysCell}</td>
+        <td style="text-align:right;">${deltaCell}</td>
+        <td title="${escapeHtml(subj)}">${subjShort ? escapeHtml(subjShort) : '<span class="dim">—</span>'}</td>
       </tr>`;
     }).join('');
   }
@@ -1006,20 +1121,22 @@ function renderGiteeScatter(stu) {
 //   原来整行靠 <tr onclick> 跳转 —— 只对鼠标有效, Tab 到不了, 读屏读不出这是链接。
 //   现在: 行带 data-href + tabindex="0", 委托处理 click 和 Enter/Space;
 //   姓名格另有真 <a> (href 同样指向该页), 两条路都通。
-const top10Body = document.getElementById('top10-body');
-if (top10Body) {
-  top10Body.addEventListener('click', (e) => {
+function bindRowNav(tbody) {
+  if (!tbody) return;
+  tbody.addEventListener('click', (e) => {
     if (e.target.closest('a')) return;          // 点真链接走浏览器默认
     const row = e.target.closest('tr[data-href]');
     if (row) location.href = row.dataset.href;
   });
-  top10Body.addEventListener('keydown', (e) => {
+  tbody.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     if (e.target.closest('a')) return;
     const row = e.target.closest('tr[data-href]');
     if (row) { e.preventDefault(); location.href = row.dataset.href; }
   });
 }
+bindRowNav(document.getElementById('top10-body'));
+bindRowNav(document.getElementById('gitee-recent-body'));
 
 loadData();
 // ★ 2026-11-04: 轮询 60s -> 5min (同 index.html, 避免每分钟重拉 237KB)

@@ -25,21 +25,7 @@ function check(name, cond, detail = '') {
   else { fail++; console.log(`  ❌ ${name}  (${detail})`); }
 }
 
-/** 从 HTML 里抠出一个具名函数的源码 (支持 function 声明和 const 箭头函数) */
-function extractFunction(html, name) {
-  let start = html.indexOf(`function ${name}`);
-  if (start < 0) {
-    const m = html.match(new RegExp(`const\\s+${name}\\s*=\\s*`));
-    if (!m) throw new Error(`找不到函数 ${name}`);
-    start = m.index;
-  }
-  let depth = 0, i = html.indexOf('{', start), began = false;
-  for (; i < html.length; i++) {
-    if (html[i] === '{') { depth++; began = true; }
-    else if (html[i] === '}') { depth--; if (began && depth === 0) { i++; break; } }
-  }
-  return html.slice(start, i);
-}
+const { extractFunction } = require('./extractjs');
 
 function fmtNum(n) {
   if (n == null) return '—';
@@ -55,10 +41,12 @@ console.log(`data.json: last_update=${data.last_update}  students=${data.student
 // ---------- 1. index.html ----------
 console.log("\n[1] index.html renderStatsRow (学生卡片上的阅读量)");
 const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+// 8a41cc7 删掉了死代码 viewsOf, renderStatsRow 现在直接读 s.total_views;
+// 这里只注入 index.html 自己声明的依赖, 被删的依赖会让测试照实报错.
 const renderStatsRowSrc = extractFunction(indexHtml, 'renderStatsRow');
-const viewsOfSrc = extractFunction(indexHtml, 'viewsOf');
+const fmtNumSrc = extractFunction(indexHtml, 'fmtNum');
 const renderStatsRow = new Function('fmtNum', 'escapeHtml',
-  `${viewsOfSrc}\n${renderStatsRowSrc}\nreturn renderStatsRow;`)(fmtNum, escapeHtml);
+  `${fmtNumSrc}\n${renderStatsRowSrc}\nreturn renderStatsRow;`)(fmtNum, escapeHtml);
 
 let dash = [], nums = [];
 for (const s of data.students) {
@@ -77,6 +65,9 @@ check('抽样数字正确 (李瑞 / 彭轩昊)',
 // ---------- 2. student.html ----------
 console.log("\n[2] student.html 文章表格的阅读量列");
 const studentHtml = fs.readFileSync(path.join(ROOT, 'student.html'), 'utf8');
+// 头部的总访问量/文章阅读合计格走 fmtOrDash, 必须和抠出的表达式一起注入;
+// 它内部调用的 fmt 会解析到 new Function 的第 2 个参数.
+const fmtOrDashSrc = extractFunction(studentHtml, 'fmtOrDash');
 // 原样抠出 hasAnyStat 的判定表达式
 const gateMatch = studentHtml.match(/const hasAnyStat = ([\s\S]*?);\r?\n/);
 check('能从 student.html 抠到 hasAnyStat 判定', !!gateMatch,
@@ -133,7 +124,9 @@ const renderFetchMeta = new Function('document', 'escapeHtml', 'relativeTime',
   `${escapeHtmlSrc}\n${relativeTimeSrc}\n${renderFetchMetaSrc}\nreturn renderFetchMeta;`
 )(fakeDoc, escapeHtml, (iso) => iso);
 
-// 模拟"增量跑完 (438 请求) 之后又刷了一次 Gitee (66 请求)"的 meta
+// 模拟"增量跑完 (438 请求) 之后又刷了一次 Gitee (32 请求)"的 meta.
+// 8a41cc7 修 #9 起 Gitee 请求数取 method_breakdown (30+2), gitee.total_requests 恒为 0,
+// 所以这里不再编造 66 这种采集端不会写出的值.
 renderFetchMeta({
   fetched_at: '2026-10-22T00:24:00',
   duration_ms: 1313,
@@ -141,12 +134,12 @@ renderFetchMeta({
   success_count: 37,
   fail_count: 1,
   incremental: { fetched_at: '2026-10-22T00:24:00', total_requests: 438, students_ok: 33, students_total: 34, new_posts: 2 },
-  gitee: { fetched_at: '2026-10-22T05:30:00', total_requests: 66, ok: 4, empty: 29, students_total: 34, total_commits: 12 },
+  gitee: { fetched_at: '2026-10-22T05:30:00', total_requests: 0, ok: 4, empty: 29, students_total: 34, total_commits: 12 },
   method_breakdown: { csdn_html: 33, csdn_rss: 0, gitee_api: 30, gitee_html: 2, gitee_markdown: 0 },
 });
 const healthMeta = els['stat-health-meta'].innerHTML;
 check('健康度卡片同时显示增量和 Gitee',
-  healthMeta.includes('增量 438') && healthMeta.includes('Gitee 66'),
+  healthMeta.includes('增量 438') && healthMeta.includes('Gitee 32'),
   healthMeta);
 check('健康度卡片不是"尚未运行抓取任务"',
   !healthMeta.includes('尚未运行'), healthMeta);
@@ -199,7 +192,7 @@ const tvMatch = studentHtml.match(
 check('能从 student.html 抠到「总访问量」的表达式', !!tvMatch,
   tvMatch ? tvMatch[1].trim() : '没找到');
 if (tvMatch) {
-  const tvOf = new Function('stu', 'fmt', `return (${tvMatch[1]});`);
+  const tvOf = new Function('stu', 'fmt', `${fmtOrDashSrc}\nreturn (${tvMatch[1]});`);
   check('总访问量 = stu.total_views', tvOf({ total_views: 7379 }, fmtNum) === '7,379',
     String(tvOf({ total_views: 7379 }, fmtNum)));
 }
@@ -207,7 +200,7 @@ if (tvMatch) {
 const avsMatch = studentHtml.match(
   /<div class="head-stat"[^>]*><strong>\$\{(.+?)\}<\/strong>文章阅读合计<\/div>/);
 if (avsMatch) {
-  const avsOf = new Function('stu', 'fmt', `return (${avsMatch[1]});`);
+  const avsOf = new Function('stu', 'fmt', `${fmtOrDashSrc}\nreturn (${avsMatch[1]});`);
   check('文章阅读合计 = stu.article_views_sum',
     avsOf({ article_views_sum: 7337 }, fmtNum) === '7,337',
     String(avsOf({ article_views_sum: 7337 }, fmtNum)));

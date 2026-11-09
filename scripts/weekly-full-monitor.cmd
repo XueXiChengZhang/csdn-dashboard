@@ -137,29 +137,47 @@ set "CDATE="
 for /f %%d in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd"') do set "CDATE=%%d"
 if not defined CDATE set "CDATE=unknown-date"
 
-git add data.json cache/csdn/snapshot.json history-real reports
+REM guard: this block runs against DASHBOARD_DIR (%~dp0..); unset means it was
+REM extracted for an end-to-end test and must not touch the dashboard here.
+if not defined DASHBOARD_DIR goto :GIT_PUSH_DONE
+set "PUSHLOG=%LOGDIR%\weekly-full-push.log"
+REM ---- git push section: logs go to per-script files, never to stdout only ----
+REM Bug3 fix: add 逐个执行 —— 多个路径里任一个不存在会让整个 add 失败,
+REM   进而跳过 commit/push (2026-11-09 端到端实测)
+git add data.json >> "%PUSHLOG%" 2>&1
+git add cache/csdn/snapshot.json >> "%PUSHLOG%" 2>&1
+git add history-real >> "%PUSHLOG%" 2>&1
+git add reports >> "%PUSHLOG%" 2>&1
 git diff --cached --quiet
 if errorlevel 1 (
-    git commit -m "data: %CDATE% weekly full scrape"
-    git -c pack.window=0 -c pack.depth=0 push origin main
+    git commit -m "data: %CDATE% weekly full scrape" >> "%PUSHLOG%" 2>&1
+    set "PUSHHEAD=master"
+    for /f %%b in ('git symbolic-ref --short HEAD') do set "PUSHHEAD=%%b"
+    REM push HEAD:<branch> -- the current branch is not always main, and pushing the
+    REM stale local "main" silently pushed nothing (11 commits stuck local, 2026-11-09)
+    git -c pack.window=0 -c pack.depth=0 push origin HEAD:!PUSHHEAD! >> "%PUSHLOG%" 2>&1
     if errorlevel 1 (
-        echo [%date% %time%] PUSH FAILED, retrying via ssh.github.com:443...
-        REM keep ssh.github.com:443 - both github.com:443 and :22 are unreachable from this host
-        git remote set-url origin ssh://git@ssh.github.com:443/XueXiChengZhang/csdn-dashboard.git
-        git -c pack.window=0 -c pack.depth=0 push origin main
+        echo [%date% %time%] PUSH FAILED, retrying via ssh.github.com:443... >> "%PUSHLOG%" 2>&1
+        set "ORIGURL="
+        for /f "tokens=*" %%u in ('git remote get-url origin') do set "ORIGURL=%%u"
+        REM both github.com:443 and :22 are unreachable from this host; restore the URL
+        REM afterwards because cmd expands the whole if-block before it runs
+        git remote set-url origin ssh://git@ssh.github.com:443/XueXiChengZhang/csdn-dashboard.git >> "%PUSHLOG%" 2>&1
+        git -c pack.window=0 -c pack.depth=0 push origin HEAD:!PUSHHEAD! >> "%PUSHLOG%" 2>&1
+        git remote set-url origin "!ORIGURL!" >> "%PUSHLOG%" 2>&1
     )
 )
-
 REM NOTE: fetch needs a timeout - without one a network hiccup hangs the whole scheduled task
 set "FETCHCMD=$p = Start-Process git -ArgumentList 'fetch','origin','main' -NoNewWindow -PassThru; if (-not $p.WaitForExit(60000)) { $p.Kill(); exit 1 } else { exit $p.ExitCode }"
 powershell -NoProfile -Command "%FETCHCMD%" >nul 2>&1
 for /f "tokens=*" %%i in ('git rev-parse HEAD') do set LOCAL=%%i
 for /f "tokens=*" %%i in ('git rev-parse origin/main') do set REMOTE=%%i
 if not "%LOCAL%"=="%REMOTE%" (
-    echo [%date% %time%] STILL OUT OF SYNC: local=%LOCAL% remote=%REMOTE%
+    echo [%date% %time%] STILL OUT OF SYNC: local=%LOCAL% remote=%REMOTE% >> "%PUSHLOG%" 2>&1
 ) else (
-    echo [%date% %time%] In sync OK
+    echo [%date% %time%] In sync OK >> "%PUSHLOG%" 2>&1
 )
+ :GIT_PUSH_DONE
 
 REM release lock
 "%LOCKPYEXE%" "%LOCKPY%" release "%LOCKFILE%" 2>nul
