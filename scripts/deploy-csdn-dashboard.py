@@ -43,7 +43,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--no-push", action="store_true",
                     help="跳过 git push")
-    ap.add_argument("--no-vercel", action="store_true",
+    ap.add_argument("--no-vercel", action="store_true", default=True,
                     help="跳过 Vercel 部署")
     args = ap.parse_args()
 
