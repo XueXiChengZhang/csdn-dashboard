@@ -1,6 +1,6 @@
 # CSDN Dashboard 部署记录
 
-> 最后更新: 2026-09-17 · 双重部署(GitHub Pages + Vercel)
+> 最后更新: 2026-11-09 · **单一部署(GitHub Pages)**；Vercel 已停用（国内不可达）
 
 ## 📦 仓库信息
 
@@ -17,10 +17,21 @@
 
 | 平台 | URL | 状态 |
 | --- | --- | --- |
-| **GitHub Pages(主)** | `https://xuexichengzhang.github.io/csdn-dashboard/` | ✅ 运行中 |
-| **Vercel(次/镜像)** | `https://csdn-dashboard.vercel.app` | ⏳ 待 token |
+| **GitHub Pages（唯一线上站）** | `https://xuexichengzhang.github.io/csdn-dashboard/` | ✅ 运行中 |
+| ~~Vercel~~ | ~~`https://csdn-dashboard.vercel.app`~~ | ❌ **已停用**（国内不通，2026-11-09） |
 
-> 两边同时部署,互不影响。GitHub Pages 不停。
+> **只用 GitHub Pages。** Vercel 已从部署链路移除，不要再配。原因见下方「⬛ Vercel（已停用）」。
+
+### 线上数据怎么确认是最新的
+
+```bash
+curl -s https://xuexichengzhang.github.io/csdn-dashboard/data.json | \
+  python -c "import sys,json;d=json.load(sys.stdin);print(d['last_update'])"
+```
+
+- 期望：`last_update` 等于**最近一次 cron 跑完的时间**（通常当天 05:30 或 00:45）
+- 若停在几天前：说明 cron 的推送段没执行，看 `logs/gitee-push.log` / `logs/incremental-push.log`
+- GitHub Pages 对 `data.json` 有 CDN 缓存，刚推完可能要等 1–10 分钟
 
 ---
 
@@ -42,9 +53,43 @@
 
 ---
 
-## ⬛ Vercel 部署(新增)
+## ⬛ Vercel（已停用 · 2026-11-09）
 
-### 为什么用 Vercel
+> **结论：不要再用。** 本节保留只为解释历史，原配置记录已折叠在下方。
+
+### 为什么停用
+
+| 项 | 实测 |
+| --- | --- |
+| 域名解析 | `csdn-dashboard.vercel.app` → `108.160.167.167` / `2a03:2880:f136:...` |
+| 国内连通性 | ❌ **443 连接超时**（curl 与浏览器两条通道都失败） |
+| Ma 的决定 | 放弃 Vercel，统一用 GitHub Pages |
+
+### 代码侧已做的处理
+
+| 项 | 处置 |
+| --- | --- |
+| `.vercel/`（project.json + README，含 projectId/orgId） | **已删除**（本就在 `.gitignore`，未跟踪） |
+| `scripts/deploy-csdn-dashboard.py` 的 vercel 步骤 | `--no-vercel` **默认开启** → 只 `git push`，不再调 `vercel deploy`。需显式传 `--with-vercel` 才会走旧路径（保留可回溯） |
+| `vercel.json` / `.vercelignore` | **保留**——GitHub Pages 读不到，删了反而要同步改本文档；无害 |
+
+### 如果将来要在国内用别的平台
+
+优先级建议：**GitHub Pages（现用）→ 国内 OSS/COS 静态托管 → 自建 Nginx**。
+不建议再回到任何需要连境外域名的 PaaS。
+
+---
+
+<details>
+<summary>历史配置（仅供考古，勿照做）</summary>
+
+### 为什么当初用 Vercel
+
+- ✅ 全球 CDN 边缘缓存,加载速度优于 GitHub Pages
+- ✅ 支持自定义 HTTP 头(`Cache-Control` 精细控制 `data.json`)
+- ✅ 自动 HTTPS + HTTP/2
+- ✅ 与 GitHub 集成: push 后自动部署
+- ✅ 免费额度充足(100GB 流量/月,远超本项目需求)
 
 - ✅ 全球 CDN 边缘缓存,加载速度优于 GitHub Pages
 - ✅ 支持自定义 HTTP 头(`Cache-Control` 精细控制 `data.json`)
@@ -160,24 +205,25 @@ vercel deploy --prod --yes
 
 或 push 到 GitHub,Vercel 会自动部署(若已接入 GitHub)。
 
+</details>
+
 ---
 
-## 🆚 GitHub Pages vs Vercel 对比
+## 🆚 平台对比（供以后选型参考）
 
-| 维度 | GitHub Pages | Vercel |
-| --- | --- | --- |
-| **URL** | `*.github.io/csdn-dashboard` | `csdn-dashboard-*.vercel.app` |
-| **速度** | 中等(亚洲访问 GitHub 较慢) | 快(全球 CDN) |
-| **HTTPS** | ✅ 自动 | ✅ 自动 |
-| **HTTP 头控制** | ❌ 不支持 | ✅ 支持 |
-| **`data.json` 缓存** | 难控制(需 `?v=N`) | `no-cache` 直生效 |
-| **自动部署** | push 触发 | push 触发 |
-| **自定义域名** | ✅(CNAME 文件) | ✅(自动 DNS 配置) |
-| **访问保护** | ❌(私有仓库仅登录用户可见) | 🔒 Pro 计划($20/月)|
-| **免费额度** | 无限流量 | 100GB/月 |
-| **适合本项目** | ✅(已经够用) | ✅✅(更专业) |
+| 维度 | **GitHub Pages（现用）** | Vercel（已停用） | 国内 OSS/COS |
+| --- | --- | --- | --- |
+| **国内可达** | ✅ 可用 | ❌ **443 超时** | ✅ 可用 |
+| **URL** | `xuexichengzhang.github.io/csdn-dashboard` | `csdn-dashboard-*.vercel.app` | 自定义域名 |
+| **HTTPS** | ✅ 自动 | ✅ 自动 | ✅ 需配 |
+| **HTTP 头控制** | ❌ 不支持 | ✅ 支持 | ✅ 支持 |
+| **`data.json` 缓存** | 难控（用 `?v=N` 破缓存） | `no-cache` 直生效 | ✅ 可配 |
+| **自动部署** | push 触发 | push 触发 | 需 CI |
+| **费用** | 免费 | 免费额度 | 按量 |
 
-**结论**:本项目两边都跑,GitHub Pages 作旧链接, Vercel 作新主推链接。
+**结论：只用 GitHub Pages。** 它的唯一痛点是 `data.json` 缓存难控——
+本项目用 **URL 加版本号**（`data.json?v=<时间戳>`）绕过，已在 `index.html` 里实现。
+Vercel 虽然头控制更好，但**国内连不上，等于不可用**，不参与比较。
 
 ---
 
@@ -289,7 +335,6 @@ cd D:\WebArchives\csdn-dashboard
 2. `git commit -m "<你的消息>"`
 3. `git push origin main`
 4. GitHub Pages 1-3 分钟内自动重新部署
-5. (若已接入 Vercel GitHub)Vercel 同样自动部署
 
 ### 方式 2: 手动
 
@@ -299,6 +344,45 @@ git add -A
 git commit -m "你的说明"
 git push origin main
 ```
+
+### 方式 3: 计划任务自动跑（**这才是日常真正的入口**）
+
+**平时不需要手动推**，三个 Windows 计划任务跑完后自己提交并推送：
+
+| 计划任务 | 时间 | 做什么 |
+| --- | --- | --- |
+| 增量采集 | 每天 00:00 | 抓 CSDN 新文章 + 轮转补爬 |
+| Gitee 刷新 | 每天 05:30 | 只刷 Gitee，不动 CSDN |
+| 全量兜底 | 每周日 03:00 | 全量重抓（防漂移/漏抓） |
+
+**推送逻辑（2026-11-09 修）**：
+
+```
+git push origin HEAD:<当前分支>
+```
+
+- ❌ 旧写法 `push origin main` 在 HEAD 不在 main 时**静默推不上去**（曾导致线上数据冻结 4 天、11 个提交卡在本地）
+- ✅ 新写法推**当前 HEAD 所在分支**，HEAD 在哪个分支就推哪个
+- 推送与同步检查的输出**落日志**：`logs/gitee-push.log` / `logs/incremental-push.log`
+- `git add` 改为**逐条执行**——原来一次列 4 个路径，任一个不存在就整体失败、跳过 commit/push
+
+**每天该看什么（3 秒判断线上是否正常）**：
+
+```bash
+# 1) 最新数据时间
+curl -s https://xuexichengzhang.github.io/csdn-dashboard/data.json | \
+  python -c "import sys,json;print(json.load(sys.stdin)['last_update'])"
+
+# 2) 推送段有没有跑过
+tail -5 logs/gitee-push.log
+
+# 3) 本地与远端是否对齐
+git rev-parse HEAD
+git rev-parse origin/main        # 两个应相等
+```
+
+> ⚠️ **没有新文章时不会产生提交**（数据没变），此时"线上时间没变"是正常的，不是故障。
+> 判据看 `logs/incremental-*.log` 里的 `🆕新N` 是否为 0。
 
 ## ⚠️ 不推送的文件(.gitignore)
 
