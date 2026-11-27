@@ -1,0 +1,331 @@
+{
+  "date": "2026-11-28",
+  "snapshots": [
+    {
+      "at": "2026-11-28T00:59:37",
+      "total_students": 34,
+      "total_posts": 1078,
+      "class_stats": {
+        "computed_at": "2026-11-28T00:59:37",
+        "students_total": 34,
+        "students_with_csdn": 34,
+        "students_active": 34,
+        "csdn": {
+          "total_posts": 1078,
+          "total_views": 187410,
+          "total_likes": 1017,
+          "total_comments": 2,
+          "total_collections": 1921
+        }
+      },
+      "students_summary": [
+        {
+          "sid": "240110102",
+          "name": "庞嘉良",
+          "post_count": 33,
+          "total_views": 6803,
+          "profile_views": 6803,
+          "article_views_sum": 6782,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110103",
+          "name": "李瑞",
+          "post_count": 17,
+          "total_views": 8564,
+          "profile_views": 8564,
+          "article_views_sum": 8545,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110104",
+          "name": "彭轩昊",
+          "post_count": 7,
+          "total_views": 1350,
+          "profile_views": 1350,
+          "article_views_sum": 1343,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110106",
+          "name": "武明光",
+          "post_count": 34,
+          "total_views": 5469,
+          "profile_views": 5469,
+          "article_views_sum": 5412,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110108",
+          "name": "陈艳",
+          "post_count": 43,
+          "total_views": 7167,
+          "profile_views": 7167,
+          "article_views_sum": 7069,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110110",
+          "name": "李振宇",
+          "post_count": 8,
+          "total_views": 1527,
+          "profile_views": 1527,
+          "article_views_sum": 1471,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110112",
+          "name": "韩博",
+          "post_count": 39,
+          "total_views": 8496,
+          "profile_views": 8496,
+          "article_views_sum": 8350,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110113",
+          "name": "牛佳祺",
+          "post_count": 42,
+          "total_views": 6145,
+          "profile_views": 6145,
+          "article_views_sum": 5916,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110114",
+          "name": "高宾",
+          "post_count": 42,
+          "total_views": 7016,
+          "profile_views": 7016,
+          "article_views_sum": 7185,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110115",
+          "name": "董泽玉",
+          "post_count": 12,
+          "total_views": 2027,
+          "profile_views": 2027,
+          "article_views_sum": 2022,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110117",
+          "name": "韩泽威",
+          "post_count": 42,
+          "total_views": 6444,
+          "profile_views": 6444,
+          "article_views_sum": 6326,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110118",
+          "name": "黄中旭",
+          "post_count": 29,
+          "total_views": 5035,
+          "profile_views": 5035,
+          "article_views_sum": 5002,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110119",
+          "name": "康子健",
+          "post_count": 16,
+          "total_views": 2721,
+          "profile_views": 2721,
+          "article_views_sum": 2710,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110120",
+          "name": "杨智",
+          "post_count": 31,
+          "total_views": 5184,
+          "profile_views": 5184,
+          "article_views_sum": 4855,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110121",
+          "name": "吕致迅",
+          "post_count": 39,
+          "total_views": 6906,
+          "profile_views": 6906,
+          "article_views_sum": 7101,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110122",
+          "name": "季政科",
+          "post_count": 37,
+          "total_views": 5631,
+          "profile_views": 5631,
+          "article_views_sum": 5547,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110126",
+          "name": "刘名昊",
+          "post_count": 7,
+          "total_views": 1266,
+          "profile_views": 1266,
+          "article_views_sum": 1262,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110128",
+          "name": "李可欣",
+          "post_count": 45,
+          "total_views": 6382,
+          "profile_views": 6382,
+          "article_views_sum": 6291,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110129",
+          "name": "冯雪娇",
+          "post_count": 42,
+          "total_views": 7456,
+          "profile_views": 7456,
+          "article_views_sum": 7529,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110130",
+          "name": "吕涵",
+          "post_count": 30,
+          "total_views": 5038,
+          "profile_views": 5038,
+          "article_views_sum": 4978,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110201",
+          "name": "郑翔",
+          "post_count": 35,
+          "total_views": 5934,
+          "profile_views": 5934,
+          "article_views_sum": 5890,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110207",
+          "name": "吴梦瑶",
+          "post_count": 40,
+          "total_views": 6016,
+          "profile_views": 6016,
+          "article_views_sum": 6021,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110209",
+          "name": "沈亿",
+          "post_count": 37,
+          "total_views": 5744,
+          "profile_views": 5744,
+          "article_views_sum": 5981,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110212",
+          "name": "张昊",
+          "post_count": 42,
+          "total_views": 7058,
+          "profile_views": 7058,
+          "article_views_sum": 7057,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110213",
+          "name": "杜广庆",
+          "post_count": 43,
+          "total_views": 10195,
+          "profile_views": 10195,
+          "article_views_sum": 9847,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110215",
+          "name": "郑泽镪",
+          "post_count": 46,
+          "total_views": 8158,
+          "profile_views": 8158,
+          "article_views_sum": 7886,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110220",
+          "name": "任晓莉",
+          "post_count": 34,
+          "total_views": 5596,
+          "profile_views": 5596,
+          "article_views_sum": 5657,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110221",
+          "name": "王森",
+          "post_count": 19,
+          "total_views": 3451,
+          "profile_views": 3451,
+          "article_views_sum": 3429,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110224",
+          "name": "王润田",
+          "post_count": 19,
+          "total_views": 3172,
+          "profile_views": 3172,
+          "article_views_sum": 3149,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110225",
+          "name": "赵丁闫",
+          "post_count": 21,
+          "total_views": 1668,
+          "profile_views": 1668,
+          "article_views_sum": 1627,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110226",
+          "name": "王明硕",
+          "post_count": 39,
+          "total_views": 6304,
+          "profile_views": 6304,
+          "article_views_sum": 6187,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110227",
+          "name": "张宇梦",
+          "post_count": 38,
+          "total_views": 6135,
+          "profile_views": 6135,
+          "article_views_sum": 6168,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110232",
+          "name": "王翼洲",
+          "post_count": 32,
+          "total_views": 5305,
+          "profile_views": 5305,
+          "article_views_sum": 4915,
+          "views_source": "profile"
+        },
+        {
+          "sid": "240110233",
+          "name": "王杰",
+          "post_count": 38,
+          "total_views": 6047,
+          "profile_views": 6047,
+          "article_views_sum": 6127,
+          "views_source": "profile"
+        }
+      ]
+    }
+  ]
+}
